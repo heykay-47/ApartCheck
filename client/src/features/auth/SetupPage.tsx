@@ -46,6 +46,19 @@ export function SetupPage() {
       .catch((error: Error) =>
         form.setError('root', { message: error.message }),
       )
+  if (status.isLoading)
+    return (
+      <main className="auth-page">
+        <p role="status">Checking setup status...</p>
+      </main>
+    )
+  if (status.isError)
+    return (
+      <main className="auth-page">
+        <Feedback message="Unable to check setup status." />
+      </main>
+    )
+  if (status.data?.initialized) return null
   return (
     <main className="auth-page setup-page">
       <p className="eyebrow">INITIALIZATION / 01</p>
@@ -93,7 +106,12 @@ export function SetupPage() {
           )}
         </FormField>
         <Feedback message={form.formState.errors.root?.message} />
-        <button className="primary-button">Create society</button>
+        <button
+          className="primary-button"
+          disabled={status.data?.initialized !== false}
+        >
+          Create society
+        </button>
       </form>
     </main>
   )

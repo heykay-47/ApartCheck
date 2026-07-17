@@ -5,7 +5,7 @@ export function AppShell() {
   const { data: user } = useCurrentUser()
   const logout = useLogout()
   const links: [string, string][] =
-    user?.role === 'admin' || user?.role === 'manager'
+    user?.role === 'admin'
       ? [
           ['/dashboard', 'Dashboard'],
           ['/assets', 'Asset ledger'],
@@ -38,7 +38,20 @@ export function AppShell() {
         <span className="brand-mark">
           APART<span>CHECK</span>
         </span>
-        <NavLink to="/profile">Profile</NavLink>
+        <details className="mobile-nav">
+          <summary>Menu</summary>
+          <nav>
+            {links.map(([to, label]) => (
+              <NavLink key={to} to={to}>
+                {label}
+              </NavLink>
+            ))}
+            <NavLink to="/profile">Profile</NavLink>
+            <button className="text-button" onClick={() => logout.mutate()}>
+              Sign out
+            </button>
+          </nav>
+        </details>
       </div>
       <main className="work-surface">
         <header className="surface-header">

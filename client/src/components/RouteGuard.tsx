@@ -9,7 +9,7 @@ export function RouteGuard({ roles }: { roles?: Role[] }) {
   if (!user.data)
     return (
       <Navigate
-        to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+        to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search + location.hash)}`}
         replace
       />
     )

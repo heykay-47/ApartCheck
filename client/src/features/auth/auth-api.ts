@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../app/api'
 
-export type Role = 'admin' | 'manager' | 'resident'
+export type Role = 'admin' | 'resident' | 'technician'
 export type User = {
   id: string
   name: string

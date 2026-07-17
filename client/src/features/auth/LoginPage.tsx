@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { useLogin } from './auth-api'
 import { FormField } from '../../components/FormField'
 import { Feedback } from '../../components/Feedback'
+import { ApiError } from '../../app/api'
+import { safeReturnTo } from '../../app/return-to'
 const schema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -18,13 +20,23 @@ export function LoginPage() {
   const submit = (data: Form) =>
     login.mutate(data, {
       onSuccess: () => {
-        const target = params.get('returnTo')
-        navigate(
-          target?.startsWith('/') && !target.startsWith('//')
-            ? target
-            : '/dashboard',
-          { replace: true },
-        )
+        navigate(safeReturnTo(params.get('returnTo')) ?? '/dashboard', {
+          replace: true,
+        })
+      },
+      onError: (error) => {
+        if (!(error instanceof ApiError)) return
+        const fields: (keyof Form)[] = ['email', 'password']
+        let first: keyof Form | undefined
+        for (const field of fields) {
+          const message = error.fieldErrors[field]?.[0]
+          if (message) {
+            first ??= field
+            form.setError(field, { type: 'server', message })
+          }
+        }
+        if (first) form.setFocus(first)
+        else form.setError('root', { type: 'server', message: error.message })
       },
     })
   return (

@@ -4,6 +4,11 @@ import { RouterProvider } from 'react-router-dom'
 import { Providers } from './app/providers'
 import { router } from './app/router'
 import './styles/global.css'
+import '@fontsource/barlow-condensed/600.css'
+import '@fontsource/barlow-condensed/700.css'
+import '@fontsource/hind/400.css'
+import '@fontsource/hind/600.css'
+import '@fontsource/ibm-plex-mono/500.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

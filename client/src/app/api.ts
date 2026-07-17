@@ -45,8 +45,13 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
         }
       } | null
     )?.error
-    if (response.status === 401)
-      void queryClient.invalidateQueries({ queryKey: ['current-user'] })
+    if (response.status === 401) {
+      queryClient.setQueryData(['current-user'], { user: undefined })
+      void queryClient.cancelQueries({
+        queryKey: ['current-user'],
+        exact: true,
+      })
+    }
     throw new ApiError(
       response.status,
       error?.code ?? 'REQUEST_FAILED',
