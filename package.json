@@ -1,7 +1,7 @@
 {
   "name": "apartcheck",
   "version": "1.0.0",
-  "description": "",
+  "description": "Phase 1 accountability ledger for apartment fixtures",
   "scripts": {
     "dev": "concurrently -k \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client && npm run build -w server",
@@ -15,6 +15,7 @@
   },
   "type": "module",
   "private": true,
+  "packageManager": "npm@11",
   "engines": {
     "node": ">=22.12.0"
   },
