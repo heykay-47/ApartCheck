@@ -8,9 +8,12 @@ import { errorHandler } from './http/error-handler.js'
 import { apiNotFound } from './http/not-found.js'
 import { originGuard } from './http/origin-guard.js'
 import { requestContext } from './http/request-context.js'
+import cookieParser from 'cookie-parser'
+import { authRoutes } from './features/auth/auth.routes.js'
 
 export function createApp(): Express {
   const app = express()
+  if (env.NODE_ENV === 'test') app.set('trust proxy', 1)
 
   app.use(requestContext)
   app.use(
@@ -25,6 +28,7 @@ export function createApp(): Express {
   )
   app.use(helmet())
   app.use(express.json({ limit: '100kb' }))
+  app.use(cookieParser())
   app.use(originGuard)
 
   app.get('/api/health/live', (_request, response) => {
@@ -37,6 +41,7 @@ export function createApp(): Express {
     }
     next(new AppError(503, 'DATABASE_UNAVAILABLE', 'Database is unavailable.'))
   })
+  app.use('/api', authRoutes)
 
   app.use(apiNotFound)
   app.use(errorHandler)
