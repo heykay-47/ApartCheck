@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { originGuard } from '../src/http/origin-guard.js'
 
-function makeRequest(origin: string | undefined, method = 'POST') {
+function makeRequest(
+  origin: string | undefined,
+  method = 'POST',
+  path = '/api/example',
+) {
   return {
     method,
-    path: '/api/example',
+    path,
     get: vi.fn((name: string) =>
       name.toLowerCase() === 'origin' ? origin : undefined,
     ),
@@ -57,5 +61,19 @@ describe('originGuard', () => {
     originGuard(makeRequest(undefined) as never, makeResponse() as never, next)
 
     expect(next).toHaveBeenCalledOnce()
+  })
+
+  it.each(['/apiary', '/apix'])('ignores non-API path %s', (path) => {
+    const response = makeResponse()
+    const next = vi.fn()
+
+    originGuard(
+      makeRequest('https://evil.example', 'POST', path) as never,
+      response as never,
+      next,
+    )
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(response.status).not.toHaveBeenCalled()
   })
 })

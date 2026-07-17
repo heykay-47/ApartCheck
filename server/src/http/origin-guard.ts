@@ -5,7 +5,10 @@ import { env } from '../config/env.js'
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 export const originGuard: RequestHandler = (request, response, next) => {
-  if (!unsafeMethods.has(request.method) || !request.path.startsWith('/api')) {
+  if (
+    !unsafeMethods.has(request.method) ||
+    (request.path !== '/api' && !request.path.startsWith('/api/'))
+  ) {
     next()
     return
   }
