@@ -1,0 +1,6 @@
+process.env.NODE_ENV = 'test'
+process.env.PORT = '3000'
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/apartcheck-test'
+process.env.JWT_SECRET = 'test-secret-that-is-at-least-32-characters-long'
+process.env.APP_BASE_URL = 'http://localhost:5173'
+process.env.TRUST_PROXY_HOPS = '1'

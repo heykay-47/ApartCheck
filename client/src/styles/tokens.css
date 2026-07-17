@@ -1,0 +1,50 @@
+:root {
+  --color-plaster: #eef0ec;
+  --color-chalk: #fbfcf8;
+  --color-slate: #20343b;
+  --color-pump: #315c66;
+  --color-marigold: #f2b134;
+  --color-verified: #237a63;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body: 'Hind', sans-serif;
+  --font-utility: 'IBM Plex Mono', monospace;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('@fontsource/barlow-condensed/files/barlow-condensed-latin-600-normal.woff2')
+    format('woff2');
+}
+@font-face {
+  font-family: 'Barlow Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('@fontsource/barlow-condensed/files/barlow-condensed-latin-700-normal.woff2')
+    format('woff2');
+}
+@font-face {
+  font-family: Hind;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@fontsource/hind/files/hind-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: Hind;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('@fontsource/hind/files/hind-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2')
+    format('woff2');
+}

@@ -1,9 +1,13 @@
 node_modules/
 dist/
+client/dist/
+server/dist/
 coverage/
 playwright-report/
 test-results/
 .env
 .env.*
 !.env.example
+*.log
+*.tsbuildinfo
 .worktrees/

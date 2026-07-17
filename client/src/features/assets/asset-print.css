@@ -1,0 +1,32 @@
+@media print {
+  @page {
+    size: A6 portrait;
+    margin: 0;
+  }
+  body {
+    background: white !important;
+  }
+  .utility-spine,
+  .mobile-bar,
+  .surface-header,
+  .asset-actions,
+  .asset-form {
+    display: none !important;
+  }
+  .asset-detail,
+  .scan-page {
+    max-width: none;
+    padding: 0;
+  }
+  .identity-plate {
+    width: 105mm;
+    min-height: 148mm;
+    padding: 12mm;
+    color: black;
+    background: white;
+    border: 1px solid black;
+  }
+  .plate-qr img {
+    filter: none;
+  }
+}
