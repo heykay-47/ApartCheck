@@ -35,15 +35,23 @@ canonical public origin for origin checks and generated QR links.
 
 ## Local Setup
 
-Prerequisites: Node `22.12.0`, npm, and Docker or a local MongoDB instance.
+Prerequisites: Node `22.12.0`, npm, and MongoDB with replica-set support. Local
+transactions require replica-set support; standalone MongoDB is not supported.
 Copy `.env.example` to `.env`, then set a `JWT_SECRET` with at least 32
 characters and a reachable `MONGODB_URI`.
 
 ```bash
 npm ci
+docker run --name apartcheck-mongo --detach --publish 27017:27017 mongo:8 --replSet rs0 --bind_ip_all
+docker exec apartcheck-mongo mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
 cp .env.example .env
 npm run dev
 ```
+
+Atlas alternative: create an M0 cluster and database user, then set
+`MONGODB_URI` to Atlas's TLS URI with its replica-set options. Atlas clusters
+provide replica-set support by default. Do not use a standalone local URI,
+because bootstrap and society mutations rely on transactions.
 
 Open `http://localhost:5173`. The first visit reports bootstrap status. Submit
 society name, owner-admin email, and password once. Bootstrap creates exactly
