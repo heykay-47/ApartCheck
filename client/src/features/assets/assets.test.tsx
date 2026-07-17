@@ -1,5 +1,12 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -11,6 +18,9 @@ import { AssetIdentityPlate } from './AssetIdentityPlate'
 import { AssetForm } from './AssetForm'
 import { AssetsPage } from './AssetsPage'
 import { ScanAssetPage } from './ScanAssetPage'
+import { fetchAssetQr } from './asset-api'
+
+const printCss = readFileSync('src/features/assets/asset-print.css', 'utf8')
 
 function renderWithClient(element: React.ReactNode, initialEntries = ['/']) {
   return render(
@@ -145,6 +155,9 @@ describe('asset identity experience', () => {
     await user.type(screen.getByLabelText('Asset name'), 'Passenger lift')
     await user.selectOptions(screen.getByLabelText('Category'), 'lift')
     await user.type(screen.getByLabelText('Location'), 'Tower A lobby')
+    fireEvent.change(screen.getByLabelText('Install date'), {
+      target: { value: '2024-04-12' },
+    })
     await user.click(screen.getByRole('button', { name: 'Create asset' }))
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/assets',
@@ -154,9 +167,26 @@ describe('asset identity experience', () => {
           name: 'Passenger lift',
           category: 'lift',
           locationDescription: 'Tower A lobby',
+          installDate: '2024-04-12T00:00:00.000Z',
         }),
       }),
     )
+  })
+
+  it('fetches QR from approved SVG endpoint', async () => {
+    const createObjectUrl = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValue('blob:qr')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('svg', { status: 200 }),
+    )
+
+    await fetchAssetQr('a1')
+
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/assets/a1/qr.svg', {
+      credentials: 'include',
+    })
+    expect(createObjectUrl).toHaveBeenCalled()
   })
 
   it('renders identity plate fields and QR accessible name', () => {
@@ -169,6 +199,43 @@ describe('asset identity experience', () => {
     expect(
       screen.getByRole('img', { name: 'QR code for LFT-4F2A91' }),
     ).toHaveAttribute('src', 'blob:qr')
+  })
+
+  it('formats install date using UTC date components', () => {
+    renderWithClient(
+      <AssetIdentityPlate
+        asset={{ ...asset, installDate: '2024-04-12T00:00:00.000Z' }}
+        qrUrl="blob:qr"
+      />,
+    )
+    expect(screen.getByText('April 12, 2024')).toBeVisible()
+  })
+
+  it('prints identity plate while hiding shell and actions', () => {
+    expect(printCss).not.toMatch(/\.app-frame[^}]*display:\s*none/)
+    expect(printCss).toMatch(/\.utility-spine[^}]*display:\s*none/)
+    expect(printCss).toMatch(/\.asset-actions[^}]*display:\s*none/)
+    expect(printCss).toMatch(/\.identity-plate\s*\{/)
+  })
+
+  it('revokes resolved QR URL after plate unmounts during fetch', async () => {
+    let resolveResponse!: (response: Response) => void
+    const response = new Promise<Response>((resolve) => {
+      resolveResponse = resolve
+    })
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(response)
+    const createObjectUrl = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValue('blob:late')
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL')
+    const view = renderWithClient(<AssetIdentityPlate asset={asset} allowQr />)
+
+    view.unmount()
+    resolveResponse(new Response('svg', { status: 200 }))
+    await waitFor(() =>
+      expect(revokeObjectUrl).toHaveBeenCalledWith('blob:late'),
+    )
+    expect(createObjectUrl).toHaveBeenCalled()
   })
 
   it('uses one indistinguishable unavailable state for scan failures', async () => {

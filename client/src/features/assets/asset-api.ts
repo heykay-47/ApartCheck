@@ -73,18 +73,25 @@ export function useCreateAsset() {
     mutationFn: (input: AssetInput) =>
       api<{ asset: Asset }>('/api/assets', {
         method: 'POST',
-        body: JSON.stringify(input),
+        body: JSON.stringify(serverInput(input)),
       }),
     onSuccess: () => client.invalidateQueries({ queryKey: ['assets'] }),
   })
 }
+
+function serverInput(input: AssetInput): AssetInput {
+  return input.installDate
+    ? { ...input, installDate: `${input.installDate}T00:00:00.000Z` }
+    : input
+}
+
 export function useUpdateAsset(id: string) {
   const client = useQueryClient()
   return useMutation({
     mutationFn: (input: AssetInput) =>
       api<{ asset: Asset }>(`/api/assets/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify(input),
+        body: JSON.stringify(serverInput(input)),
       }),
     onSuccess: (data) => {
       client.setQueryData(['asset', id], data)
@@ -104,7 +111,7 @@ export function useArchiveAsset() {
   })
 }
 export async function fetchAssetQr(id: string) {
-  const response = await fetch(`/api/assets/${id}/qr`, {
+  const response = await fetch(`/api/assets/${id}/qr.svg`, {
     credentials: 'include',
   })
   if (!response.ok) throw new Error('QR image unavailable.')

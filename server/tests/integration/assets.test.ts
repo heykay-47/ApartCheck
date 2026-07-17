@@ -121,7 +121,7 @@ describe('protected assets and QR APIs', () => {
           locationDescription: 'Somewhere',
         })
       const qr = await request(app)
-        .get(`/api/assets/${asset.id}/qr`)
+        .get(`/api/assets/${asset.id}/qr.svg`)
         .set('Cookie', session)
       if (user.role === 'admin') {
         expect(mutation.status).toBe(200)

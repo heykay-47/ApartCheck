@@ -13,7 +13,7 @@ import {
 export const assetRoutes = Router()
 assetRoutes.get('/', listAssets)
 assetRoutes.post('/', authorize('admin'), createAsset)
-assetRoutes.get('/:id/qr', authorize('admin'), downloadQr)
+assetRoutes.get('/:id/qr.svg', authorize('admin'), downloadQr)
 assetRoutes.get('/:id', getAsset)
 assetRoutes.patch('/:id', authorize('admin'), updateAsset)
 assetRoutes.delete('/:id', authorize('admin'), archiveAsset)

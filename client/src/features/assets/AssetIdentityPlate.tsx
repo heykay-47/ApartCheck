@@ -15,19 +15,30 @@ export function AssetIdentityPlate({
 }) {
   const [qrUrl, setQrUrl] = useState(suppliedQrUrl)
   useEffect(() => {
-    if (suppliedQrUrl || !allowQr) return
+    let cancelled = false
     let current: string | undefined
+    setQrUrl(suppliedQrUrl)
+    if (suppliedQrUrl || !allowQr) {
+      return () => {
+        cancelled = true
+      }
+    }
     void fetchAssetQr(asset.id)
       .then((url) => {
+        if (cancelled) {
+          URL.revokeObjectURL(url)
+          return
+        }
         current = url
         setQrUrl(url)
         onQrReady?.(url)
       })
       .catch(() => undefined)
     return () => {
+      cancelled = true
       if (current) URL.revokeObjectURL(current)
     }
-  }, [allowQr, asset.id, suppliedQrUrl])
+  }, [allowQr, asset.id, onQrReady, suppliedQrUrl])
   const category =
     assetCategories.find((item) => item.value === asset.category)?.label ??
     asset.category
@@ -46,11 +57,12 @@ export function AssetIdentityPlate({
             <dt>Install date</dt>
             <dd>
               {asset.installDate
-                ? new Date(asset.installDate).toLocaleDateString('en-US', {
+                ? new Intl.DateTimeFormat('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                  })
+                    timeZone: 'UTC',
+                  }).format(new Date(asset.installDate))
                 : 'Not recorded'}
             </dd>
           </div>
