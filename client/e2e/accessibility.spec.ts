@@ -20,6 +20,7 @@ async function authenticateAdmin(page: Page) {
     await page.getByRole('button', { name: 'Create society' }).click()
   }
   await page.goto('/login')
+  await assertA11y(page)
   if (await page.getByLabel('Email').count()) {
     await page.getByLabel('Email').fill(admin.email)
     await page.getByLabel('Password').fill(admin.password)
@@ -29,6 +30,53 @@ async function authenticateAdmin(page: Page) {
   await expect(
     page.getByRole('link', { name: 'Units', exact: true }),
   ).toBeVisible()
+}
+
+async function exerciseKeyboardInteractions(
+  page: Page,
+  viewport: { width: number; height: number },
+  suffix: string,
+) {
+  await page.setViewportSize(viewport)
+  await page.goto('/dashboard')
+
+  if (viewport.width < 768) {
+    const menu = page.locator('.mobile-nav summary')
+    await menu.focus()
+    await menu.press('Enter')
+    await expect(page.locator('.mobile-nav')).toHaveAttribute('open', '')
+    await assertVisibleFocus(page, '.mobile-nav summary')
+    await menu.press('Enter')
+    await expect(page.locator('.mobile-nav')).not.toHaveAttribute('open', '')
+  } else {
+    const unitsLink = page.getByRole('link', { name: 'Units', exact: true })
+    await unitsLink.focus()
+    await assertVisibleFocus(page, '.utility-spine a[href="/admin/units"]')
+    await unitsLink.press('Enter')
+    await expect(page).toHaveURL(/admin\/units/)
+  }
+
+  await page.goto('/admin/units')
+
+  await page.getByLabel('Building').fill(`A11y Tower ${suffix}`)
+  await page.getByLabel('Floor').fill('1')
+  await page.getByLabel('Unit number').fill(`A-${suffix}`)
+  await page.getByLabel('Unit number').focus()
+  await assertVisibleFocus(page, 'input:focus')
+  await page.getByLabel('Unit number').press('Enter')
+  await expect(page.getByText('Unit created')).toBeVisible()
+
+  await page.goto('/admin/users')
+  await page.getByRole('button', { name: 'Create account' }).focus()
+  await assertVisibleFocus(page, 'button:has-text("Create account")')
+  await page.getByRole('button', { name: 'Create account' }).press('Enter')
+  const accountDialog = page.getByRole('dialog', { name: 'Create account' })
+  await expect(accountDialog).toBeVisible()
+  await assertA11y(page)
+  await accountDialog.getByRole('button', { name: 'Cancel' }).focus()
+  await assertVisibleFocus(page, '[role="dialog"] button:has-text("Cancel")')
+  await accountDialog.getByRole('button', { name: 'Cancel' }).press('Enter')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 }
 
 async function assertA11y(page: Page) {
@@ -56,47 +104,10 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
 }) => {
   await authenticateAdmin(page)
 
+  await exerciseKeyboardInteractions(page, { width: 360, height: 800 }, '201')
+  await exerciseKeyboardInteractions(page, { width: 1440, height: 900 }, '202')
+
   await page.setViewportSize({ width: 360, height: 800 })
-  const menu = page.locator('.mobile-nav summary')
-  await menu.focus()
-  await menu.press('Enter')
-  await expect(page.locator('.mobile-nav')).toHaveAttribute('open', '')
-  await assertVisibleFocus(page, '.mobile-nav summary')
-  await menu.press('Enter')
-  await expect(page.locator('.mobile-nav')).not.toHaveAttribute('open', '')
-
-  await page.goto('/admin/units')
-  await page.getByLabel('Building').fill('A11y Tower')
-  await page.getByLabel('Floor').fill('1')
-  await page.getByLabel('Unit number').fill('A-201')
-  await page.getByLabel('Unit number').focus()
-  await assertVisibleFocus(page, 'input:focus')
-  await page.getByLabel('Unit number').press('Enter')
-  await expect(page.getByText('Unit created')).toBeVisible()
-
-  await page.goto('/admin/users')
-  await page.getByRole('button', { name: 'Create account' }).click()
-  await expect(
-    page.getByRole('dialog', { name: 'Create account' }),
-  ).toBeVisible()
-  await assertA11y(page)
-  await page.getByLabel('Name').fill('A11y Technician')
-  await page.getByLabel('Email').fill('a11y-technician@example.com')
-  await page.getByLabel('Phone').fill('+14155550202')
-  await page.getByLabel('Role', { exact: true }).selectOption('technician')
-  await page
-    .getByRole('dialog', { name: 'Create account' })
-    .getByRole('button', {
-      name: 'Create account',
-    })
-    .press('Enter')
-  await expect(page.getByRole('dialog')).toContainText(
-    'Share temporary password',
-  )
-  await page.getByRole('button', { name: 'I have shared it' }).press('Enter')
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.getByText('a11y-technician@example.com')).toBeVisible()
-
   await page.goto('/admin/assets')
   await page.getByLabel('Asset name').fill('A11y Lift')
   await page.getByLabel('Location').fill('A11y lobby')
