@@ -8,7 +8,9 @@ export const getCurrentSociety: RequestHandler = async (
   next,
 ) => {
   try {
-    response.json(await SocietyService.getCurrent(request.actor.societyId))
+    response.json({
+      society: await SocietyService.getCurrent(request.actor.societyId),
+    })
   } catch (error) {
     next(error)
   }
@@ -21,9 +23,12 @@ export const updateCurrentSociety: RequestHandler = async (
 ) => {
   try {
     const input = societyUpdateSchema.parse(request.body)
-    response.json(
-      await SocietyService.updateCurrent(request.actor.societyId, input),
-    )
+    response.json({
+      society: await SocietyService.updateCurrent(
+        request.actor.societyId,
+        input,
+      ),
+    })
   } catch (error) {
     next(error)
   }

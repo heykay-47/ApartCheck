@@ -30,7 +30,7 @@ export const createUnit: RequestHandler = async (request, response, next) => {
       request.actor.societyId,
       unitCreateSchema.parse(request.body),
     )
-    response.status(201).json(unit)
+    response.status(201).json({ unit })
   } catch (error) {
     next(error)
   }
@@ -38,9 +38,9 @@ export const createUnit: RequestHandler = async (request, response, next) => {
 
 export const getUnit: RequestHandler = async (request, response, next) => {
   try {
-    response.json(
-      await UnitService.get(request.actor.societyId, unitId(request)),
-    )
+    response.json({
+      unit: await UnitService.get(request.actor.societyId, unitId(request)),
+    })
   } catch (error) {
     next(error)
   }
@@ -48,13 +48,13 @@ export const getUnit: RequestHandler = async (request, response, next) => {
 
 export const updateUnit: RequestHandler = async (request, response, next) => {
   try {
-    response.json(
-      await UnitService.update(
+    response.json({
+      unit: await UnitService.update(
         request.actor.societyId,
         unitId(request),
         unitUpdateSchema.parse(request.body),
       ),
-    )
+    })
   } catch (error) {
     next(error)
   }

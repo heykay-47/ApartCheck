@@ -50,7 +50,9 @@ describe('society and unit administration', () => {
         .get('/api/society')
         .set('Cookie', await login(app, user.email))
       expect(response.status).toBe(200)
-      expect(response.body).toMatchObject({ id: society.id, name: 'Society A' })
+      expect(response.body).toEqual({
+        society: expect.objectContaining({ id: society.id, name: 'Society A' }),
+      })
     }
 
     const residentUpdate = await request(app)
@@ -64,9 +66,11 @@ describe('society and unit administration', () => {
       .set('Cookie', await login(app, admin.email))
       .send({ name: 'Updated Society', address: 'Updated Address' })
     expect(update.status).toBe(200)
-    expect(update.body).toMatchObject({
-      name: 'Updated Society',
-      address: 'Updated Address',
+    expect(update.body).toEqual({
+      society: expect.objectContaining({
+        name: 'Updated Society',
+        address: 'Updated Address',
+      }),
     })
   })
 
@@ -95,6 +99,7 @@ describe('society and unit administration', () => {
         .set('Cookie', adminCookie)
         .send({ building, floor: 'Ground', unitNumber })
       expect(response.status).toBe(201)
+      expect(response.body).toHaveProperty('unit')
     }
 
     const list = await request(app)
@@ -137,6 +142,13 @@ describe('society and unit administration', () => {
       .set('Cookie', session)
       .send({ building: ' Tower A ', floor: 'G', unitNumber: 'A1' })
     expect(first.status).toBe(201)
+    expect(first.body).toEqual({
+      unit: expect.objectContaining({
+        building: 'Tower A',
+        floor: 'G',
+        unitNumber: 'A1',
+      }),
+    })
 
     const duplicate = await request(app)
       .post('/api/units')
@@ -175,12 +187,62 @@ describe('society and unit administration', () => {
       .set('Cookie', session)
       .send({ building: 'Updated Tower', floor: '1', unitNumber: '101' })
     expect(updated.status).toBe(200)
+    expect(updated.body).toEqual({
+      unit: expect.objectContaining({
+        building: 'Updated Tower',
+        floor: '1',
+        unitNumber: '101',
+      }),
+    })
+
+    const read = await request(app)
+      .get(`/api/units/${unit.id}`)
+      .set('Cookie', session)
+    expect(read.status).toBe(200)
+    expect(read.body).toEqual({
+      unit: expect.objectContaining({ id: unit.id }),
+    })
 
     const archived = await request(app)
       .delete(`/api/units/${unit.id}`)
       .set('Cookie', session)
     expect(archived.status).toBe(204)
     expect((await UnitModel.findById(unit.id))?.archivedAt).not.toBeNull()
+  })
+
+  it('rejects update when changed identity conflicts with existing unit', async () => {
+    const society = await createSocietyFixture()
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const existing = await createUnitFixture({
+      societyId: society._id,
+      building: 'Tower A',
+      floor: '1',
+      unitNumber: '101',
+    })
+    const changing = await createUnitFixture({
+      societyId: society._id,
+      building: 'Tower B',
+      floor: '2',
+      unitNumber: '202',
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    const response = await request(app)
+      .patch(`/api/units/${changing.id}`)
+      .set('Cookie', session)
+      .send({
+        building: ` ${existing.building.toLowerCase()} `,
+        floor: ' 1 ',
+        unitNumber: '101',
+      })
+
+    expect(response.status).toBe(409)
+    expect(response.body.error.code).toBe('DUPLICATE_UNIT')
   })
 
   it('isolates unit reads and mutations by society', async () => {

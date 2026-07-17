@@ -15,6 +15,10 @@ function duplicateUnit(): AppError {
   return new AppError(409, 'DUPLICATE_UNIT', 'Unit already exists.')
 }
 
+function normalize(value: string): string {
+  return value.trim().toLowerCase()
+}
+
 export const UnitService = {
   async list(societyId: string, input: UnitList) {
     const filter: Record<string, unknown> = {
@@ -59,7 +63,14 @@ export const UnitService = {
     try {
       const unit = await UnitModel.findOneAndUpdate(
         { _id: unitId, societyId, archivedAt: null },
-        { $set: input },
+        {
+          $set: {
+            ...input,
+            buildingKey: normalize(input.building),
+            floorKey: normalize(input.floor),
+            unitNumberKey: normalize(input.unitNumber),
+          },
+        },
         { returnDocument: 'after', runValidators: true },
       )
       if (!unit) throw unitNotFound()
