@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import { AppError } from '../../http/app-error.js'
 import { generateTemporaryPassword, hashPassword } from '../auth/password.js'
 import { UnitModel } from '../units/unit.model.js'
+import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { UserModel, type UserRole } from './user.model.js'
 import type {
   UserCreateInput,
@@ -21,9 +22,14 @@ const notFound = () => new AppError(404, 'USER_NOT_FOUND', 'User not found.')
 const unitNotFound = () =>
   new AppError(404, 'UNIT_NOT_FOUND', 'Unit not found.')
 
-async function assertUnit(societyId: string, unitId: string): Promise<void> {
-  if (!(await UnitModel.exists({ _id: unitId, societyId, archivedAt: null })))
-    throw unitNotFound()
+async function assertUnit(
+  societyId: string,
+  unitId: string,
+  session?: mongoose.ClientSession,
+): Promise<void> {
+  const query = UnitModel.exists({ _id: unitId, societyId, archivedAt: null })
+  if (session) query.session(session)
+  if (!(await query)) throw unitNotFound()
 }
 
 function safe(user: Parameters<typeof serializeSafeUser>[0]) {
@@ -96,19 +102,29 @@ export const UserService = {
     societyId: string,
     input: UserCreateInput,
   ): Promise<TemporaryCredentialResponse> {
-    if (input.role === 'resident') await assertUnit(societyId, input.unitId!)
     const temporaryPassword = generateTemporaryPassword()
     try {
-      const user = await UserModel.create({
-        ...input,
-        societyId,
-        unitId: input.role === 'resident' ? input.unitId! : null,
-        passwordHash: await hashPassword(temporaryPassword),
-        mustChangePassword: true,
-        tokenVersion: 0,
-        active: true,
+      return await mongoose.connection.transaction(async (session) => {
+        await guardSocietyMutation(societyId, session)
+        if (input.role === 'resident')
+          await assertUnit(societyId, input.unitId!, session)
+        const user = await UserModel.create(
+          [
+            {
+              ...input,
+              societyId,
+              unitId: input.role === 'resident' ? input.unitId! : null,
+              passwordHash: await hashPassword(temporaryPassword),
+              mustChangePassword: true,
+              tokenVersion: 0,
+              active: true,
+            },
+          ],
+          { session },
+        ).then(([created]) => created)
+        if (!user) throw new Error('User creation returned no document.')
+        return credential(user, temporaryPassword)
       })
-      return credential(user, temporaryPassword)
     } catch (error) {
       if ((error as { code?: number }).code === 11000)
         throw new AppError(
@@ -121,9 +137,8 @@ export const UserService = {
   },
 
   async update(societyId: string, id: string, input: UserUpdateInput) {
-    if (input.role === 'resident' && input.unitId)
-      await assertUnit(societyId, input.unitId)
     return mongoose.connection.transaction(async (session) => {
+      await guardSocietyMutation(societyId, session)
       const current = await UserModel.findOne({ _id: id, societyId })
         .session(session)
         .select('+tokenVersion')
@@ -133,7 +148,8 @@ export const UserService = {
         nextRole === 'resident' ? (input.unitId ?? current.unitId) : null
       if (nextRole === 'resident' && !nextUnit)
         throw new AppError(400, 'VALIDATION_ERROR', 'Residents require a unit.')
-      if (nextRole === 'resident') await assertUnit(societyId, String(nextUnit))
+      if (nextRole === 'resident')
+        await assertUnit(societyId, String(nextUnit), session)
       await assertLastAdmin(societyId, id, nextRole, session)
       const updated = await UserModel.findOneAndUpdate(
         { _id: id, societyId },
@@ -150,6 +166,7 @@ export const UserService = {
 
   async setStatus(societyId: string, id: string, active: boolean) {
     return mongoose.connection.transaction(async (session) => {
+      await guardSocietyMutation(societyId, session)
       const current = await UserModel.findOne({ _id: id, societyId })
         .session(session)
         .select('+tokenVersion')

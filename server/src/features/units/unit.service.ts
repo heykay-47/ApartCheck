@@ -1,4 +1,6 @@
+import mongoose from 'mongoose'
 import { AppError } from '../../http/app-error.js'
+import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { UserModel } from '../users/user.model.js'
 import { UnitModel } from './unit.model.js'
 import type { UnitInput, UnitList } from './unit.schema.js'
@@ -92,30 +94,33 @@ export const UnitService = {
   },
 
   async archive(societyId: string, unitId: string) {
-    const unit = await UnitModel.findOne({
-      _id: unitId,
-      societyId,
-      archivedAt: null,
-    })
-    if (!unit) throw unitNotFound()
-    const activeResidents = await UserModel.countDocuments({
-      societyId,
-      unitId: unit._id,
-      role: 'resident',
-      active: true,
-    })
-    if (activeResidents > 0) {
-      throw new AppError(
-        409,
-        'UNIT_HAS_ACTIVE_RESIDENTS',
-        'Unit has active residents and cannot be archived.',
+    await mongoose.connection.transaction(async (session) => {
+      await guardSocietyMutation(societyId, session)
+      const unit = await UnitModel.findOne({
+        _id: unitId,
+        societyId,
+        archivedAt: null,
+      }).session(session)
+      if (!unit) throw unitNotFound()
+      const activeResidents = await UserModel.countDocuments({
+        societyId,
+        unitId: unit._id,
+        role: 'resident',
+        active: true,
+      }).session(session)
+      if (activeResidents > 0) {
+        throw new AppError(
+          409,
+          'UNIT_HAS_ACTIVE_RESIDENTS',
+          'Unit has active residents and cannot be archived.',
+        )
+      }
+      const archived = await UnitModel.findOneAndUpdate(
+        { _id: unitId, societyId, archivedAt: null },
+        { $set: { archivedAt: new Date() } },
+        { returnDocument: 'after', session },
       )
-    }
-    const archived = await UnitModel.findOneAndUpdate(
-      { _id: unitId, societyId, archivedAt: null },
-      { $set: { archivedAt: new Date() } },
-      { returnDocument: 'after' },
-    )
-    if (!archived) throw unitNotFound()
+      if (!archived) throw unitNotFound()
+    })
   },
 }

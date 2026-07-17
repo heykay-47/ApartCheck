@@ -4,6 +4,7 @@ export interface Society {
   name: string
   address: string
   singletonKey: string
+  mutationVersion: number
   createdAt: Date
   updatedAt: Date
 }
@@ -13,6 +14,7 @@ const societySchema = new Schema<Society>(
     name: { type: String, required: true, trim: true },
     address: { type: String, required: true, trim: true },
     singletonKey: { type: String, required: true },
+    mutationVersion: { type: Number, default: 0, select: false },
   },
   {
     timestamps: true,

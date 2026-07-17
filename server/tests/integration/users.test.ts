@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { createApp } from '../../src/app.js'
 import { verifyPassword } from '../../src/features/auth/password.js'
 import { UserModel } from '../../src/features/users/user.model.js'
+import { UserService } from '../../src/features/users/user.service.js'
+import { UnitModel } from '../../src/features/units/unit.model.js'
+import { UnitService } from '../../src/features/units/unit.service.js'
 import {
   createSocietyFixture,
   createUnitFixture,
@@ -221,6 +224,78 @@ describe('user administration', () => {
       })
     expect(lastAdmin.status).toBe(409)
     expect(lastAdmin.body.error.code).toBe('LAST_ACTIVE_ADMIN')
+  })
+
+  it('serializes concurrent admin demotions so one active admin remains', async () => {
+    const society = await createSocietyFixture()
+    const first = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const second = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+
+    const results = await Promise.allSettled([
+      UserService.update(society.id, first.id, {
+        name: first.name,
+        email: first.email,
+        phone: first.phone,
+        role: 'technician',
+      }),
+      UserService.update(society.id, second.id, {
+        name: second.name,
+        email: second.email,
+        phone: second.phone,
+        role: 'technician',
+      }),
+    ])
+
+    expect(
+      results.filter((result) => result.status === 'fulfilled'),
+    ).toHaveLength(1)
+    expect(
+      results.filter((result) => result.status === 'rejected'),
+    ).toHaveLength(1)
+    expect(
+      await UserModel.countDocuments({
+        societyId: society._id,
+        role: 'admin',
+        active: true,
+      }),
+    ).toBe(1)
+  })
+
+  it('does not commit a resident assignment after concurrent unit archival', async () => {
+    const society = await createSocietyFixture()
+    const unit = await createUnitFixture({ societyId: society._id })
+
+    const results = await Promise.allSettled([
+      UserService.create(society.id, {
+        name: 'Concurrent Resident',
+        email: 'concurrent-resident@example.com',
+        phone: '+919876543214',
+        role: 'resident',
+        unitId: unit.id,
+      }),
+      UnitService.archive(society.id, unit.id),
+    ])
+
+    expect(
+      results.filter((result) => result.status === 'fulfilled'),
+    ).toHaveLength(1)
+    expect(
+      results.filter((result) => result.status === 'rejected'),
+    ).toHaveLength(1)
+    const storedUnit = await UnitModel.findById(unit.id)
+    const resident = await UserModel.findOne({
+      email: 'concurrent-resident@example.com',
+    })
+    expect(storedUnit?.archivedAt === null || resident === null).toBe(true)
+    if (resident) expect(storedUnit?.archivedAt).toBeNull()
   })
 
   it('allows every role to update only their own name and phone', async () => {
