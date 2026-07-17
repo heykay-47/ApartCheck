@@ -1,4 +1,6 @@
 import express, { Router, type Express } from 'express'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import helmet from 'helmet'
 import { pinoHttp } from 'pino-http'
 import mongoose from 'mongoose'
@@ -17,7 +19,16 @@ import { unitRoutes } from './features/units/unit.routes.js'
 import { userRoutes } from './features/users/user.routes.js'
 import { assetRoutes, scanRoutes } from './features/assets/asset.routes.js'
 
-export function createApp(): Express {
+type AppOptions = {
+  clientDistPath?: string
+}
+
+const defaultClientDistPath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../client/dist',
+)
+
+export function createApp(options: AppOptions = {}): Express {
   const app = express()
   app.set('trust proxy', env.TRUST_PROXY_HOPS)
 
@@ -83,6 +94,41 @@ export function createApp(): Express {
   }
 
   app.use(apiNotFound)
+
+  const clientDistPath =
+    options.clientDistPath ??
+    (env.NODE_ENV === 'production' ? defaultClientDistPath : undefined)
+  if (clientDistPath) {
+    app.use(
+      express.static(clientDistPath, {
+        index: false,
+        maxAge: '1h',
+        setHeaders: (response, filePath) => {
+          if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+            response.setHeader(
+              'Cache-Control',
+              'public, max-age=31536000, immutable',
+            )
+          }
+        },
+      }),
+    )
+    app.use((request, response, next) => {
+      if (request.method !== 'GET' || request.path.startsWith('/api/')) {
+        next()
+        return
+      }
+      response.sendFile(
+        path.join(clientDistPath, 'index.html'),
+        {
+          headers: { 'Cache-Control': 'no-cache' },
+        },
+        (error) => {
+          if (error) next(error)
+        },
+      )
+    })
+  }
   app.use(errorHandler)
 
   void env
