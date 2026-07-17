@@ -3,6 +3,7 @@ declare global {
     interface Actor {
       userId: string
       societyId: string
+      tokenVersion: number
       role: 'resident' | 'admin' | 'technician'
       mustChangePassword: boolean
       name: string

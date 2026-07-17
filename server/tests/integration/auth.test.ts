@@ -102,6 +102,28 @@ describe('authentication lifecycle', () => {
     ).toBe(200)
   })
 
+  it('populates actor token version and applies shared protection to every resource route', async () => {
+    const user = await createUserFixture({ mustChangePassword: false })
+    const app = createApp()
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: user.email, password })
+    const sessionCookie = cookie(login)
+
+    const primary = await request(app)
+      .get('/api/test/protected')
+      .set('Cookie', sessionCookie)
+    const secondary = await request(app)
+      .get('/api/test/protected-secondary')
+      .set('Cookie', sessionCookie)
+
+    expect(primary.body).toMatchObject({
+      userId: user.id,
+      tokenVersion: user.tokenVersion,
+    })
+    expect(secondary.body).toEqual({ protected: true })
+  })
+
   it('limits repeated failed logins', async () => {
     const user = await createUserFixture()
     const app = createApp()

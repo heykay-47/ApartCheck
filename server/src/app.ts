@@ -10,9 +10,8 @@ import { originGuard } from './http/origin-guard.js'
 import { requestContext } from './http/request-context.js'
 import cookieParser from 'cookie-parser'
 import { authRoutes } from './features/auth/auth.routes.js'
-import { authenticate } from './http/authenticate.js'
-import { requirePasswordChanged } from './http/require-password-change.js'
 import { authorize } from './http/authorize.js'
+import { createProtectedApiRouter } from './http/protected-api.js'
 
 export function createApp(): Express {
   const app = express()
@@ -45,19 +44,25 @@ export function createApp(): Express {
     next(new AppError(503, 'DATABASE_UNAVAILABLE', 'Database is unavailable.'))
   })
   app.use('/api', authRoutes)
-  const resourceRoutes = Router()
-  resourceRoutes.use(authenticate)
-  resourceRoutes.use(requirePasswordChanged)
+  const protectedApiRoutes = createProtectedApiRouter()
   if (env.NODE_ENV === 'test') {
-    resourceRoutes.get('/protected', (request, response) =>
-      response.json({ userId: request.actor.userId }),
+    const testResourceRoutes = Router()
+    testResourceRoutes.get('/protected', (request, response) =>
+      response.json({
+        userId: request.actor.userId,
+        tokenVersion: request.actor.tokenVersion,
+      }),
     )
-    resourceRoutes.get('/admin', authorize('admin'), (_request, response) =>
+    testResourceRoutes.get('/protected-secondary', (_request, response) =>
+      response.json({ protected: true }),
+    )
+    testResourceRoutes.get('/admin', authorize('admin'), (_request, response) =>
       response.json({ status: 'ok' }),
     )
+    protectedApiRoutes.use(testResourceRoutes)
   }
-  // Mount later protected resource routers under this authenticated boundary.
-  app.use('/api/test', resourceRoutes)
+  // Mount all future protected resource routers under this shared boundary.
+  app.use('/api/test', protectedApiRoutes)
 
   app.use(apiNotFound)
   app.use(errorHandler)
