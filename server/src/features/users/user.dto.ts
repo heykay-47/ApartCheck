@@ -11,6 +11,17 @@ export type PublicUser = {
   mustChangePassword: boolean
 }
 
+export type SafeUser = PublicUser & {
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type TemporaryCredentialResponse = {
+  user: SafeUser
+  temporaryPassword: string
+}
+
 type UserForSerialization = Pick<
   User,
   'name' | 'email' | 'phone' | 'role' | 'mustChangePassword'
@@ -31,5 +42,20 @@ export function serializePublicUser(user: UserForSerialization): PublicUser {
     societyId: String(user.societyId),
     unitId: user.unitId === null ? null : String(user.unitId),
     mustChangePassword: user.mustChangePassword,
+  }
+}
+
+type SafeUserForSerialization = UserForSerialization & {
+  active: boolean
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
+export function serializeSafeUser(user: SafeUserForSerialization): SafeUser {
+  return {
+    ...serializePublicUser(user),
+    active: user.active,
+    createdAt: new Date(user.createdAt).toISOString(),
+    updatedAt: new Date(user.updatedAt).toISOString(),
   }
 }

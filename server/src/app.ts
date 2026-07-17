@@ -14,6 +14,7 @@ import { authorize } from './http/authorize.js'
 import { createProtectedApiRouter } from './http/protected-api.js'
 import { societyRoutes } from './features/societies/society.routes.js'
 import { unitRoutes } from './features/units/unit.routes.js'
+import { userRoutes } from './features/users/user.routes.js'
 
 export function createApp(): Express {
   const app = express()
@@ -52,6 +53,9 @@ export function createApp(): Express {
   protectedUnitRoutes.use(unitRoutes)
   app.use('/api/society', protectedSocietyRoutes)
   app.use('/api/units', protectedUnitRoutes)
+  const protectedUserRoutes = createProtectedApiRouter()
+  protectedUserRoutes.use(userRoutes)
+  app.use('/api/users', protectedUserRoutes)
   if (env.NODE_ENV === 'test') {
     const testProtectedApiRoutes = createProtectedApiRouter()
     const testResourceRoutes = Router()
