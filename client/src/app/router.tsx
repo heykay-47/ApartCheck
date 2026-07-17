@@ -7,9 +7,9 @@ import { ChangePasswordPage } from '../features/auth/ChangePasswordPage'
 import { ProfilePage } from '../features/auth/ProfilePage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { ProtectedPlaceholderPage } from '../components/ProtectedPlaceholderPage'
-import { AdminPlaceholderPage } from '../components/AdminPlaceholderPage'
 import { SocietySettingsPage } from '../features/society/SocietySettingsPage'
 import { UnitsPage } from '../features/units/UnitsPage'
+import { UsersPage } from '../features/users/UsersPage'
 
 export const routes = [
   { path: '/', element: <Navigate to="/dashboard" replace /> },
@@ -49,7 +49,7 @@ export const routes = [
             path: '/admin',
             element: <RouteGuard roles={['admin']} />,
             children: [
-              { path: 'users', element: <AdminPlaceholderPage /> },
+              { path: 'users', element: <UsersPage /> },
               { path: 'units', element: <UnitsPage /> },
               { path: 'society', element: <SocietySettingsPage /> },
             ],
