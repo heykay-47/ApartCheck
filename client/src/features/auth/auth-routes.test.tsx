@@ -295,6 +295,19 @@ describe('auth routes', () => {
           await screen.findAllByRole('link', { name: 'Users' }),
         ).not.toHaveLength(0)
       else expect(screen.queryByRole('link', { name: 'Users' })).toBeNull()
+      if (hasAdminLinks) {
+        expect(
+          await screen.findAllByRole('link', { name: 'Units' }),
+        ).not.toHaveLength(0)
+        expect(
+          await screen.findAllByRole('link', { name: 'Society settings' }),
+        ).not.toHaveLength(0)
+      } else {
+        expect(screen.queryByRole('link', { name: 'Units' })).toBeNull()
+        expect(
+          screen.queryByRole('link', { name: 'Society settings' }),
+        ).toBeNull()
+      }
       expect(
         screen.getAllByRole('button', { name: 'Sign out' }),
       ).not.toHaveLength(0)

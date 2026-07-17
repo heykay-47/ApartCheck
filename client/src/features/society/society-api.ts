@@ -19,6 +19,6 @@ export function useUpdateSociety() {
         method: 'PATCH',
         body: JSON.stringify(input),
       }),
-    onSuccess: (response) => client.setQueryData(['society'], response.society),
+    onSuccess: (response) => client.setQueryData(['society'], response),
   })
 }

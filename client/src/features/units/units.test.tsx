@@ -7,6 +7,7 @@ import { queryClient } from '../../app/query-client'
 import { ApiError } from '../../app/api'
 import { AppShell } from '../../components/AppShell'
 import { AdminDashboard } from '../dashboard/AdminDashboard'
+import { SocietySettingsPage } from '../society/SocietySettingsPage'
 import { UnitForm } from './UnitForm'
 import { UnitsPage } from './UnitsPage'
 
@@ -64,6 +65,41 @@ describe('society and unit interfaces', () => {
     await screen.findAllByRole('link', { name: 'Dashboard' })
     expect(screen.queryByRole('link', { name: 'Units' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'Society settings' })).toBeNull()
+  })
+
+  it('renders updated society settings after save', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            society: { id: 's1', name: 'Old name', address: 'Old address' },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            society: { id: 's1', name: 'New name', address: 'New address' },
+          }),
+          { status: 200 },
+        ),
+      )
+
+    renderWithClient(<SocietySettingsPage />)
+    expect(await screen.findByDisplayValue('Old name')).toBeVisible()
+    await user.clear(screen.getByLabelText('Society name'))
+    await user.type(screen.getByLabelText('Society name'), 'New name')
+    await user.clear(screen.getByLabelText('Address'))
+    await user.type(screen.getByLabelText('Address'), 'New address')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByDisplayValue('New name')).toBeVisible()
+    expect(screen.getByDisplayValue('New address')).toBeVisible()
+    expect(queryClient.getQueryData(['society'])).toEqual({
+      society: { id: 's1', name: 'New name', address: 'New address' },
+    })
   })
 
   it('creates a unit, offers create another, and invalidates units', async () => {

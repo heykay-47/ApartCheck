@@ -10,6 +10,8 @@ export function AppShell() {
           ['/dashboard', 'Dashboard'],
           ['/assets', 'Asset ledger'],
           ['/admin/users', 'Users'],
+          ['/admin/units', 'Units'],
+          ['/admin/society', 'Society settings'],
         ]
       : [
           ['/dashboard', 'Dashboard'],
