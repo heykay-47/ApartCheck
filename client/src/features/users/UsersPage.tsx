@@ -1,4 +1,4 @@
-import { useDeferredValue, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import { ApiError } from '../../app/api'
 import { Feedback } from '../../components/Feedback'
 import { TemporaryPasswordDialog } from './TemporaryPasswordDialog'
@@ -20,6 +20,7 @@ export function UsersPage() {
   const [editing, setEditing] = useState<User | null>(null)
   const [credential, setCredential] =
     useState<TemporaryCredentialResponse | null>(null)
+  const [statusErrors, setStatusErrors] = useState<Record<string, string>>({})
   const deferredSearch = useDeferredValue(search)
   const users = useUsers({
     page,
@@ -30,6 +31,9 @@ export function UsersPage() {
   })
   const reset = useResetUserPassword()
   const status = useSetUserStatus()
+  useEffect(() => {
+    setStatusErrors({})
+  }, [users.dataUpdatedAt])
   const actionError =
     (reset.error ?? status.error) instanceof ApiError
       ? ((reset.error ?? status.error) as ApiError)
@@ -42,6 +46,22 @@ export function UsersPage() {
 
   function issuePassword(user: User) {
     reset.mutate(user.id, { onSuccess: showCredential })
+  }
+
+  function setUserStatus(user: User) {
+    status.mutate(
+      { id: user.id, active: !user.active },
+      {
+        onError: (error) => {
+          if (error instanceof ApiError && error.code === 'LAST_ACTIVE_ADMIN') {
+            setStatusErrors((current) => ({
+              ...current,
+              [user.id]: error.message,
+            }))
+          }
+        },
+      },
+    )
   }
 
   return (
@@ -134,17 +154,20 @@ export function UsersPage() {
                   className="text-button"
                   onClick={() => issuePassword(user)}
                   aria-label={`Issue new temporary password for ${user.name}`}
+                  disabled={reset.isPending}
                 >
                   Issue new temporary password
                 </button>
                 <button
                   className="text-button"
-                  onClick={() =>
-                    status.mutate({ id: user.id, active: !user.active })
-                  }
+                  onClick={() => setUserStatus(user)}
+                  disabled={status.isPending || Boolean(statusErrors[user.id])}
                 >
                   {user.active ? 'Disable account' : 'Re-enable account'}
                 </button>
+                {statusErrors[user.id] ? (
+                  <small role="status">{statusErrors[user.id]}</small>
+                ) : null}
               </div>
             </div>
           ))}

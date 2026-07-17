@@ -189,4 +189,109 @@ describe('user management interfaces', () => {
       }),
     ).toBeVisible()
   })
+
+  it('disables password reset while request is pending', async () => {
+    const user = userEvent.setup()
+    let resolveReset!: (response: Response) => void
+    const resetResponse = new Promise<Response>((resolve) => {
+      resolveReset = resolve
+    })
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input, init) => {
+        if (init?.method === 'POST') return resetResponse
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: 'u1',
+                name: 'Mira',
+                email: 'mira@example.com',
+                phone: '+919876543210',
+                role: 'admin',
+                active: true,
+              },
+            ],
+            page: 1,
+            pageSize: 25,
+            total: 1,
+            pages: 1,
+          }),
+          { status: 200 },
+        )
+      })
+
+    renderWithClient(<UsersPage />)
+    const reset = await screen.findByRole('button', {
+      name: 'Issue new temporary password for Mira',
+    })
+    await user.click(reset)
+    expect(reset).toBeDisabled()
+    await user.click(reset)
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+
+    resolveReset(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: 'u1',
+            name: 'Mira',
+            email: 'mira@example.com',
+            phone: '+919876543210',
+            role: 'admin',
+            active: true,
+          },
+          temporaryPassword: 'Temp-pass-123456',
+        }),
+        { status: 200 },
+      ),
+    )
+  })
+
+  it('retains last-admin status errors and blocks that row action', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => {
+      if (init?.method === 'PATCH') {
+        return new Response(
+          JSON.stringify({
+            error: {
+              code: 'LAST_ACTIVE_ADMIN',
+              message: 'Keep one active administrator.',
+            },
+          }),
+          { status: 409 },
+        )
+      }
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: 'u1',
+              name: 'Mira',
+              email: 'mira@example.com',
+              phone: '+919876543210',
+              role: 'admin',
+              active: true,
+            },
+          ],
+          page: 1,
+          pageSize: 25,
+          total: 1,
+          pages: 1,
+        }),
+        { status: 200 },
+      )
+    })
+
+    renderWithClient(<UsersPage />)
+    const disable = await screen.findByRole('button', {
+      name: 'Disable account',
+    })
+    await user.click(disable)
+
+    expect(
+      (await screen.findAllByText('Keep one active administrator.')).length,
+    ).toBe(2)
+    expect(disable).toBeDisabled()
+  })
 })
