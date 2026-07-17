@@ -1,4 +1,4 @@
-import express, { type Express } from 'express'
+import express, { Router, type Express } from 'express'
 import helmet from 'helmet'
 import { pinoHttp } from 'pino-http'
 import mongoose from 'mongoose'
@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser'
 import { authRoutes } from './features/auth/auth.routes.js'
 import { authenticate } from './http/authenticate.js'
 import { requirePasswordChanged } from './http/require-password-change.js'
+import { authorize } from './http/authorize.js'
 
 export function createApp(): Express {
   const app = express()
@@ -44,14 +45,19 @@ export function createApp(): Express {
     next(new AppError(503, 'DATABASE_UNAVAILABLE', 'Database is unavailable.'))
   })
   app.use('/api', authRoutes)
+  const resourceRoutes = Router()
+  resourceRoutes.use(authenticate)
+  resourceRoutes.use(requirePasswordChanged)
   if (env.NODE_ENV === 'test') {
-    app.get(
-      '/api/test/protected',
-      authenticate,
-      requirePasswordChanged,
-      (request, response) => response.json({ userId: request.actor.userId }),
+    resourceRoutes.get('/protected', (request, response) =>
+      response.json({ userId: request.actor.userId }),
+    )
+    resourceRoutes.get('/admin', authorize('admin'), (_request, response) =>
+      response.json({ status: 'ok' }),
     )
   }
+  // Mount later protected resource routers under this authenticated boundary.
+  app.use('/api/test', resourceRoutes)
 
   app.use(apiNotFound)
   app.use(errorHandler)

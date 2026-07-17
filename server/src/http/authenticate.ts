@@ -36,7 +36,10 @@ export const authenticate: RequestHandler = async (
       societyId: user.societyId.toString(),
       role: user.role,
       mustChangePassword: user.mustChangePassword,
-      tokenVersion: user.tokenVersion,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      unitId: user.unitId?.toString() ?? null,
     }
     next()
   } catch (error) {

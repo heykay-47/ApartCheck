@@ -11,6 +11,7 @@ import {
   login,
 } from './auth.service.js'
 import { clearSessionCookie, setSessionCookie, signSession } from './session.js'
+import { serializePublicUser } from '../users/user.dto.js'
 
 export const bootstrapStatus: RequestHandler = async (
   _request,
@@ -38,7 +39,10 @@ export const createBootstrap: RequestHandler = async (
       tokenVersion: 0,
     })
     setSessionCookie(response, token)
-    response.status(201).json({ society: result.society, user: result.user })
+    response.status(201).json({
+      society: result.society,
+      user: serializePublicUser(result.user),
+    })
   } catch (error) {
     next(error)
   }
@@ -56,7 +60,7 @@ export const createLogin: RequestHandler = async (request, response, next) => {
         tokenVersion: user.tokenVersion,
       }),
     )
-    response.json({ user: user.toJSON() })
+    response.json({ user: serializePublicUser(user) })
   } catch (error) {
     next(error)
   }
@@ -69,7 +73,10 @@ export const logout: RequestHandler = (_request, response) => {
 
 export const currentSession: RequestHandler = (request, response) => {
   response.json({
-    user: { ...request.actor, id: request.actor.userId },
+    user: serializePublicUser({
+      ...request.actor,
+      id: request.actor.userId,
+    }),
   })
 }
 
@@ -93,7 +100,7 @@ export const changePassword: RequestHandler = async (
         tokenVersion: user.tokenVersion,
       }),
     )
-    response.json({ user: user.toJSON() })
+    response.json({ user: serializePublicUser(user) })
   } catch (error) {
     next(error)
   }

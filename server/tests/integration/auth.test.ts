@@ -1,6 +1,8 @@
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import { describe, expect, it } from 'vitest'
 import { createApp } from '../../src/app.js'
+import { env } from '../../src/config/env.js'
 import { getSessionCookieName } from '../../src/features/auth/session.js'
 import { UserModel } from '../../src/features/users/user.model.js'
 import {
@@ -25,11 +27,17 @@ describe('authentication lifecycle', () => {
       .send({ email: user.email, password })
 
     expect(login.status).toBe(200)
+    expect(login.body.user).not.toHaveProperty('tokenVersion')
+    expect(login.body.user).not.toHaveProperty('active')
+    expect(login.body.user).not.toHaveProperty('createdAt')
     const session = await request(app)
       .get('/api/auth/me')
       .set('Cookie', cookie(login))
     expect(session.status).toBe(200)
     expect(session.body.user).toMatchObject({ id: user.id, role: user.role })
+    expect(session.body.user).not.toHaveProperty('tokenVersion')
+    expect(session.body.user).not.toHaveProperty('active')
+    expect(session.body.user).not.toHaveProperty('createdAt')
 
     expect(
       (
@@ -79,6 +87,9 @@ describe('authentication lifecycle', () => {
         newPassword: 'new-apartcheck-password',
       })
     expect(changed.status).toBe(200)
+    expect(changed.body.user).not.toHaveProperty('tokenVersion')
+    expect(changed.body.user).not.toHaveProperty('active')
+    expect(changed.body.user).not.toHaveProperty('createdAt')
 
     const replacement = cookie(changed)
     expect(
@@ -105,13 +116,29 @@ describe('authentication lifecycle', () => {
     expect(responses.some((response) => response.status === 429)).toBe(true)
   })
 
-  it('does not trust a JWT role claim over the active user record', async () => {
+  it('uses the database role instead of a forged JWT role claim', async () => {
     const society = await createSocietyFixture()
     const user = await createUserFixture({
       societyId: society._id,
       role: 'resident',
+      mustChangePassword: false,
     })
-    expect(user.role).toBe('resident')
-    expect(getSessionCookieName()).toBe('apartcheck_session')
+    const token = jwt.sign(
+      {
+        sub: user.id,
+        societyId: society.id,
+        role: 'admin',
+        tokenVersion: user.tokenVersion,
+      },
+      env.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '8h' },
+    )
+
+    const response = await request(createApp())
+      .get('/api/test/admin')
+      .set('Cookie', `${getSessionCookieName()}=${token}`)
+
+    expect(response.status).toBe(403)
+    expect(response.body.error.code).toBe('FORBIDDEN')
   })
 })

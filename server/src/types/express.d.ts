@@ -5,7 +5,10 @@ declare global {
       societyId: string
       role: 'resident' | 'admin' | 'technician'
       mustChangePassword: boolean
-      tokenVersion: number
+      name: string
+      email: string
+      phone: string
+      unitId: string | null
     }
 
     interface Request {
