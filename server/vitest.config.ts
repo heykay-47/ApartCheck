@@ -6,5 +6,6 @@ export default defineConfig({
     setupFiles: ['./tests/test-env.ts', './tests/setup.ts'],
     globals: false,
     maxWorkers: 1,
+    exclude: ['dist/**'],
   },
 })

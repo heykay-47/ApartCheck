@@ -43,7 +43,11 @@ export function AssetIdentityPlate({
     assetCategories.find((item) => item.value === asset.category)?.label ??
     asset.category
   return (
-    <article className="identity-plate" data-asset-code={asset.assetCode}>
+    <article
+      className="identity-plate"
+      data-testid="identity-plate"
+      data-asset-code={asset.assetCode}
+    >
       <div className="plate-copy">
         <p className="eyebrow">ASSET IDENTITY / {category}</p>
         <p className="asset-code">{asset.assetCode}</p>

@@ -5,7 +5,8 @@ import { UserModel } from '../src/features/users/user.model.js'
 import { AssetModel } from '../src/features/assets/asset.model.js'
 
 process.env.NODE_ENV = 'test'
-process.env.PORT = '3000'
+const port = Number(process.env.PORT ?? process.env.E2E_SERVER_PORT ?? 3000)
+process.env.PORT = String(port)
 process.env.JWT_SECRET = 'apartcheck-e2e-secret-at-least-32-bytes'
 process.env.APP_BASE_URL = 'http://127.0.0.1:5173'
 
@@ -26,8 +27,8 @@ await Promise.all([
   AssetModel.init(),
 ])
 
-const server = createApp().listen(3000, '127.0.0.1', () => {
-  process.stdout.write('ApartCheck e2e server listening on 3000\n')
+const server = createApp().listen(port, '127.0.0.1', () => {
+  process.stdout.write(`ApartCheck e2e server listening on ${port}\n`)
 })
 
 let stopping = false
