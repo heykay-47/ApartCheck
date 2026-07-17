@@ -107,17 +107,38 @@ describe('society and unit administration', () => {
       .set('Cookie', adminCookie)
     expect(list.status).toBe(200)
     expect(list.body).toMatchObject({
-      page: 1,
-      pageSize: 2,
-      total: 3,
-      pages: 2,
+      units: expect.any(Array),
+      pagination: { page: 1, pageSize: 2, total: 3, pages: 2 },
     })
-    expect(list.body.items).toHaveLength(2)
+    expect(list.body.units).toHaveLength(2)
 
     const denied = await request(app)
       .get('/api/units')
       .set('Cookie', await login(app, resident.email))
     expect(denied.status).toBe(403)
+  })
+
+  it('returns unit not found for malformed unit IDs', async () => {
+    const society = await createSocietyFixture()
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    for (const response of [
+      await request(app).get('/api/units/not-an-id').set('Cookie', session),
+      await request(app)
+        .patch('/api/units/not-an-id')
+        .set('Cookie', session)
+        .send({ building: 'A', floor: '1', unitNumber: '1' }),
+      await request(app).delete('/api/units/not-an-id').set('Cookie', session),
+    ]) {
+      expect(response.status).toBe(404)
+      expect(response.body.error.code).toBe('UNIT_NOT_FOUND')
+    }
   })
 
   it('rejects unknown fields and duplicate normalized unit identity', async () => {

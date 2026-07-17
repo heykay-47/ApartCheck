@@ -60,8 +60,8 @@ export function AssetsPage() {
         </div>
         {assets.isLoading ? (
           <p>Loading assets...</p>
-        ) : assets.data?.items.length ? (
-          assets.data.items.map((asset) => (
+        ) : assets.data?.assets.length ? (
+          assets.data.assets.map((asset) => (
             <Link
               className="asset-row"
               to={`/assets/${asset.id}`}

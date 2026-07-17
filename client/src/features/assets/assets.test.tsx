@@ -107,11 +107,8 @@ describe('asset identity experience', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            items: [],
-            page: 1,
-            pageSize: 25,
-            total: 0,
-            pages: 0,
+            assets: [],
+            pagination: { page: 1, pageSize: 25, total: 0, pages: 0 },
           }),
           { status: 200 },
         ),

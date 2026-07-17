@@ -25,9 +25,8 @@ export type UserFilters = {
 }
 
 export type UserList = UserFilters & {
-  items: User[]
-  total: number
-  pages: number
+  users: User[]
+  pagination: { page: number; pageSize: number; total: number; pages: number }
 }
 
 export type TemporaryCredentialResponse = {

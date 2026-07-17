@@ -10,7 +10,7 @@ const environmentSchema = z.object({
   MONGODB_URI: z.string().min(1),
   JWT_SECRET: z.string().min(32),
   APP_BASE_URL: z.string().url(),
-  TRUST_PROXY_HOPS: z.coerce.number().int().nonnegative().default(1),
+  TRUST_PROXY_HOPS: z.coerce.number().int().nonnegative().default(0),
 })
 
 export const env = environmentSchema.parse(process.env)

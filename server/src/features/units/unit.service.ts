@@ -13,6 +13,10 @@ function unitNotFound(): AppError {
   return new AppError(404, 'UNIT_NOT_FOUND', 'Unit not found.')
 }
 
+function assertUnitId(unitId: string): void {
+  if (!mongoose.Types.ObjectId.isValid(unitId)) throw unitNotFound()
+}
+
 function duplicateUnit(): AppError {
   return new AppError(409, 'DUPLICATE_UNIT', 'Unit already exists.')
 }
@@ -44,11 +48,13 @@ export const UnitService = {
       UnitModel.countDocuments(filter),
     ])
     return {
-      items,
-      page: input.page,
-      pageSize: input.pageSize,
-      total,
-      pages: Math.ceil(total / input.pageSize),
+      units: items,
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        pages: Math.ceil(total / input.pageSize),
+      },
     }
   },
 
@@ -62,6 +68,7 @@ export const UnitService = {
   },
 
   async update(societyId: string, unitId: string, input: UnitInput) {
+    assertUnitId(unitId)
     try {
       const unit = await UnitModel.findOneAndUpdate(
         { _id: unitId, societyId, archivedAt: null },
@@ -84,6 +91,7 @@ export const UnitService = {
   },
 
   async get(societyId: string, unitId: string) {
+    assertUnitId(unitId)
     const unit = await UnitModel.findOne({
       _id: unitId,
       societyId,
@@ -94,6 +102,7 @@ export const UnitService = {
   },
 
   async archive(societyId: string, unitId: string) {
+    assertUnitId(unitId)
     await mongoose.connection.transaction(async (session) => {
       await guardSocietyMutation(societyId, session)
       const unit = await UnitModel.findOne({

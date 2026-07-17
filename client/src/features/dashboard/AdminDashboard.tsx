@@ -2,7 +2,9 @@ import { useQueries } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../../app/api'
 
-type CountResponse = { total: number }
+type CountResponse = {
+  pagination: { page: number; pageSize: number; total: number; pages: number }
+}
 export function AdminDashboard() {
   const results = useQueries({
     queries: ['units', 'users', 'assets'].map((resource) => ({
@@ -27,12 +29,15 @@ export function AdminDashboard() {
           <Link className="setup-row" to={href} key={resource}>
             <span>{String(index + 1).padStart(2, '0')}</span>
             <strong>
-              {results[index]?.data?.total
-                ? `${results[index].data?.total} ${resource}`
+              {results[index]?.data?.pagination.total
+                ? `${results[index].data?.pagination.total} ${resource}`
                 : action}
             </strong>
             <span>
-              {results[index]?.data?.total ? 'Recorded' : 'Start here'} →
+              {results[index]?.data?.pagination.total
+                ? 'Recorded'
+                : 'Start here'}{' '}
+              →
             </span>
           </Link>
         ))}

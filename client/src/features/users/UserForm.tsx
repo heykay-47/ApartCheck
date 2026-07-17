@@ -112,7 +112,7 @@ export function UserForm({
               onChange={(e) => update('unitId', e.target.value)}
             >
               <option value="">Select active unit</option>
-              {(units.data?.items ?? []).map((unit) => {
+              {(units.data?.units ?? []).map((unit) => {
                 const archivedAt = (
                   unit as Unit & { archivedAt?: string | null }
                 ).archivedAt

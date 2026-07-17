@@ -22,6 +22,10 @@ const notFound = () => new AppError(404, 'USER_NOT_FOUND', 'User not found.')
 const unitNotFound = () =>
   new AppError(404, 'UNIT_NOT_FOUND', 'Unit not found.')
 
+function assertUserId(id: string): void {
+  if (!mongoose.Types.ObjectId.isValid(id)) throw notFound()
+}
+
 async function assertUnit(
   societyId: string,
   unitId: string,
@@ -90,11 +94,13 @@ export const UserService = {
       UserModel.countDocuments(filter),
     ])
     return {
-      items: documents.map(safe),
-      page: input.page,
-      pageSize: input.pageSize,
-      total,
-      pages: Math.ceil(total / input.pageSize),
+      users: documents.map(safe),
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        pages: Math.ceil(total / input.pageSize),
+      },
     }
   },
 
@@ -137,6 +143,7 @@ export const UserService = {
   },
 
   async update(societyId: string, id: string, input: UserUpdateInput) {
+    assertUserId(id)
     return mongoose.connection.transaction(async (session) => {
       await guardSocietyMutation(societyId, session)
       const current = await UserModel.findOne({ _id: id, societyId })
@@ -165,6 +172,7 @@ export const UserService = {
   },
 
   async setStatus(societyId: string, id: string, active: boolean) {
+    assertUserId(id)
     return mongoose.connection.transaction(async (session) => {
       await guardSocietyMutation(societyId, session)
       const current = await UserModel.findOne({ _id: id, societyId })
@@ -185,6 +193,7 @@ export const UserService = {
     societyId: string,
     id: string,
   ): Promise<TemporaryCredentialResponse> {
+    assertUserId(id)
     const temporaryPassword = generateTemporaryPassword()
     const updated = await UserModel.findOneAndUpdate(
       { _id: id, societyId },

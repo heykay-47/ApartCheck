@@ -9,9 +9,8 @@ export type Unit = {
 }
 export type UnitFilters = { page: number; pageSize: number; search: string }
 export type UnitList = UnitFilters & {
-  items: Unit[]
-  total: number
-  pages: number
+  units: Unit[]
+  pagination: { page: number; pageSize: number; total: number; pages: number }
 }
 
 export function useUnits(filters: UnitFilters) {
@@ -46,8 +45,15 @@ export function useArchiveUnit() {
     onSuccess: (_, id) => {
       client.setQueriesData<UnitList>({ queryKey: ['units'] }, (current) => {
         if (!current) return current
-        const items = current.items.filter((unit) => unit.id !== id)
-        return { ...current, items, total: Math.max(0, current.total - 1) }
+        const units = current.units.filter((unit) => unit.id !== id)
+        return {
+          ...current,
+          units,
+          pagination: {
+            ...current.pagination,
+            total: Math.max(0, current.pagination.total - 1),
+          },
+        }
       })
       return client.invalidateQueries({ queryKey: ['units'] })
     },

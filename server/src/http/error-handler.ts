@@ -4,6 +4,19 @@ import { AppError } from './app-error.js'
 type MongoError = Error & { code?: number }
 type ZodLikeError = Error & { name: string; issues?: unknown }
 
+function fieldErrors(issues: unknown): Record<string, string[]> {
+  if (!Array.isArray(issues)) return {}
+  return issues.reduce<Record<string, string[]>>((errors, issue) => {
+    if (!issue || typeof issue !== 'object') return errors
+    const path = (issue as { path?: unknown }).path
+    const message = (issue as { message?: unknown }).message
+    const field =
+      Array.isArray(path) && typeof path[0] === 'string' ? path[0] : '_root'
+    if (typeof message === 'string') (errors[field] ??= []).push(message)
+    return errors
+  }, {})
+}
+
 export const errorHandler: ErrorRequestHandler = (
   error,
   request,
@@ -26,7 +39,7 @@ export const errorHandler: ErrorRequestHandler = (
       400,
       'VALIDATION_ERROR',
       'Request validation failed.',
-      (error as ZodLikeError).issues,
+      fieldErrors((error as ZodLikeError).issues),
     )
   } else if ((error as MongoError)?.code === 11000) {
     appError = new AppError(

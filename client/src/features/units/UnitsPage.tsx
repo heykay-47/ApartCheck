@@ -41,7 +41,7 @@ export function UnitsPage() {
           <div className="section-heading">
             <h2>Unit ledger</h2>
             <span className="record-count">
-              {units.data?.total ?? 0} records
+              {units.data?.pagination.total ?? 0} records
             </span>
           </div>
           <label className="search-field">
@@ -54,9 +54,9 @@ export function UnitsPage() {
           </label>
           {units.isLoading ? (
             <p>Loading units...</p>
-          ) : units.data?.items.length ? (
+          ) : units.data?.units.length ? (
             <div className="unit-ledger">
-              {units.data.items.map((unit) => (
+              {units.data.units.map((unit) => (
                 <div className="unit-row" key={unit.id}>
                   <div>
                     <span>Unit number</span>
@@ -86,7 +86,7 @@ export function UnitsPage() {
               accounts.
             </p>
           )}
-          {units.data && units.data.pages > 1 ? (
+          {units.data && units.data.pagination.pages > 1 ? (
             <div className="pagination">
               <button
                 className="text-button"
@@ -96,11 +96,11 @@ export function UnitsPage() {
                 Previous
               </button>
               <span>
-                Page {page} of {units.data.pages}
+                Page {page} of {units.data.pagination.pages}
               </span>
               <button
                 className="text-button"
-                disabled={page === units.data.pages}
+                disabled={page === units.data.pagination.pages}
                 onClick={() => setPage(page + 1)}
               >
                 Next
@@ -145,7 +145,6 @@ export function UnitsPage() {
           </button>
         </div>
       ) : null}
-      <style>{`.unit-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:42px;margin-top:48px}.section-heading{display:flex;align-items:baseline;justify-content:space-between;border-top:2px solid var(--color-slate);border-bottom:1px solid rgb(32 52 59 / .35)}.section-heading h2,.ruled-panel h2{font-family:var(--font-display);font-size:2.4rem;margin:12px 0}.record-count,.unit-row span,.search-field{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase}.search-field{display:grid;gap:8px;margin:24px 0}.search-field input{min-height:44px;padding:10px;border:1px solid var(--color-slate);background:var(--color-chalk);font:inherit;text-transform:none;letter-spacing:normal}.unit-row{display:grid;grid-template-columns:1.2fr 1fr .7fr auto;gap:16px;align-items:center;padding:17px 0;border-bottom:1px solid rgb(32 52 59 / .35)}.unit-row div{display:grid;gap:5px}.unit-row strong{font-size:1.05rem}.archive-button{color:var(--color-pump)}.ruled-panel{border-top:2px solid var(--color-slate);border-bottom:1px solid rgb(32 52 59 / .35);padding:0 18px 20px}.pagination{display:flex;justify-content:space-between;padding:20px 0;font-family:var(--font-utility);font-size:.8rem}.empty-state{border-bottom:1px solid rgb(32 52 59 / .35);padding:28px 0}.confirm-panel{position:fixed;right:24px;bottom:24px;z-index:2;max-width:440px;padding:24px;background:var(--color-chalk);border:2px solid var(--color-slate);box-shadow:8px 8px 0 var(--color-slate)}.confirm-panel h2{font-family:var(--font-display);font-size:2.5rem;margin:0 0 12px}.confirm-panel .text-button{margin-left:18px}.unit-created{display:grid;gap:10px}@media(max-width:800px){.unit-layout{grid-template-columns:1fr;gap:36px}.unit-row{grid-template-columns:1fr 1fr}.unit-row .archive-button{justify-self:start}.ruled-panel{padding-left:0;padding-right:0}}@media(max-width:480px){.unit-row{grid-template-columns:1fr}.confirm-panel{right:14px;bottom:14px;left:14px}}`}</style>
     </section>
   )
 }

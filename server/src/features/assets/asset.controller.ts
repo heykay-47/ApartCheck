@@ -24,7 +24,7 @@ export const listAssets: RequestHandler = async (request, response, next) => {
       request.actor.societyId,
       assetListSchema.parse(request.query),
     )
-    response.json({ ...result, items: result.items.map(safeAsset) })
+    response.json({ ...result, assets: result.assets.map(safeAsset) })
   } catch (error) {
     next(error)
   }

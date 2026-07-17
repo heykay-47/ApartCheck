@@ -28,7 +28,7 @@ describe('user management interfaces', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
-          items: [
+          units: [
             {
               id: 'u1',
               building: 'Tower A',
@@ -44,10 +44,7 @@ describe('user management interfaces', () => {
               archivedAt: '2026-01-01',
             },
           ],
-          page: 1,
-          pageSize: 100,
-          total: 2,
-          pages: 1,
+          pagination: { page: 1, pageSize: 100, total: 2, pages: 1 },
         }),
         { status: 200 },
       ),
@@ -85,11 +82,8 @@ describe('user management interfaces', () => {
       }
       return new Response(
         JSON.stringify({
-          items: [],
-          page: 1,
-          pageSize: 100,
-          total: 0,
-          pages: 0,
+          users: [],
+          pagination: { page: 1, pageSize: 100, total: 0, pages: 0 },
         }),
         { status: 200 },
       )
@@ -163,7 +157,7 @@ describe('user management interfaces', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
-          items: [
+          users: [
             {
               id: 'u1',
               name: 'Mira',
@@ -173,10 +167,7 @@ describe('user management interfaces', () => {
               active: true,
             },
           ],
-          page: 1,
-          pageSize: 25,
-          total: 1,
-          pages: 1,
+          pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
         }),
         { status: 200 },
       ),
@@ -202,7 +193,7 @@ describe('user management interfaces', () => {
         if (init?.method === 'POST') return resetResponse
         return new Response(
           JSON.stringify({
-            items: [
+            users: [
               {
                 id: 'u1',
                 name: 'Mira',
@@ -212,10 +203,7 @@ describe('user management interfaces', () => {
                 active: true,
               },
             ],
-            page: 1,
-            pageSize: 25,
-            total: 1,
-            pages: 1,
+            pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
           }),
           { status: 200 },
         )
@@ -264,7 +252,7 @@ describe('user management interfaces', () => {
       }
       return new Response(
         JSON.stringify({
-          items: [
+          users: [
             {
               id: 'u1',
               name: 'Mira',
@@ -274,10 +262,7 @@ describe('user management interfaces', () => {
               active: true,
             },
           ],
-          page: 1,
-          pageSize: 25,
-          total: 1,
-          pages: 1,
+          pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
         }),
         { status: 200 },
       )

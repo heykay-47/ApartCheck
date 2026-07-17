@@ -148,18 +148,16 @@ describe('user administration', () => {
       .set('Cookie', await login(app, admin.email))
     expect(response.status).toBe(200)
     expect(response.body).toMatchObject({
-      page: 1,
-      pageSize: 1,
-      total: 1,
-      pages: 1,
+      users: expect.any(Array),
+      pagination: { page: 1, pageSize: 1, total: 1, pages: 1 },
     })
-    expect(response.body.items[0]).toMatchObject({
+    expect(response.body.users[0]).toMatchObject({
       id: resident.id,
       role: 'resident',
     })
-    expect(response.body.items[0]).not.toHaveProperty('passwordHash')
-    expect(response.body.items[0]).not.toHaveProperty('qrToken')
-    expect(response.body.items[0]).not.toHaveProperty('temporaryPassword')
+    expect(response.body.users[0]).not.toHaveProperty('passwordHash')
+    expect(response.body.users[0]).not.toHaveProperty('qrToken')
+    expect(response.body.users[0]).not.toHaveProperty('temporaryPassword')
 
     const denied = await request(app)
       .get('/api/users')
@@ -312,8 +310,6 @@ describe('user administration', () => {
       .send({
         name: 'Changed',
         phone: ' +919876543213 ',
-        role: 'admin',
-        id: 'other',
       })
     expect(response.status).toBe(200)
     expect(response.body.user).toMatchObject({
@@ -322,5 +318,55 @@ describe('user administration', () => {
       phone: '+919876543213',
     })
     expect(response.body.user.role).toBe('resident')
+  })
+
+  it('rejects unknown fields in self updates', async () => {
+    const society = await createSocietyFixture()
+    const resident = await createUserFixture({
+      societyId: society._id,
+      role: 'resident',
+      mustChangePassword: false,
+    })
+    const app = createApp()
+    const response = await request(app)
+      .patch('/api/users/me')
+      .set('Cookie', await login(app, resident.email))
+      .send({ name: 'Changed', phone: '+919876543213', role: 'admin' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error.code).toBe('VALIDATION_ERROR')
+  })
+
+  it('returns user not found for malformed supported user IDs', async () => {
+    const society = await createSocietyFixture()
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    for (const response of [
+      await request(app)
+        .patch('/api/users/not-an-id')
+        .set('Cookie', session)
+        .send({
+          name: 'A',
+          email: 'a@example.com',
+          phone: '+919876543215',
+          role: 'admin',
+        }),
+      await request(app)
+        .patch('/api/users/not-an-id/status')
+        .set('Cookie', session)
+        .send({ active: false }),
+      await request(app)
+        .post('/api/users/not-an-id/reset-password')
+        .set('Cookie', session),
+    ]) {
+      expect(response.status).toBe(404)
+      expect(response.body.error.code).toBe('USER_NOT_FOUND')
+    }
   })
 })

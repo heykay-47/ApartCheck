@@ -46,10 +46,12 @@ export const userUpdateSchema = z
 
 export const userStatusSchema = z.object({ active: z.boolean() }).strict()
 // Identity fields are deliberately stripped; actor identity comes from session.
-export const userSelfUpdateSchema = z.object({
-  name: z.string().trim().min(1),
-  phone,
-})
+export const userSelfUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    phone,
+  })
+  .strict()
 
 export const userListSchema = z
   .object({

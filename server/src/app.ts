@@ -11,7 +11,7 @@ import { apiNotFound } from './http/not-found.js'
 import { originGuard } from './http/origin-guard.js'
 import { requestContext } from './http/request-context.js'
 import cookieParser from 'cookie-parser'
-import { authRoutes } from './features/auth/auth.routes.js'
+import { createAuthRoutes } from './features/auth/auth.routes.js'
 import { authorize } from './http/authorize.js'
 import { createProtectedApiRouter } from './http/protected-api.js'
 import { societyRoutes } from './features/societies/society.routes.js'
@@ -30,7 +30,10 @@ const defaultClientDistPath = path.resolve(
 
 export function createApp(options: AppOptions = {}): Express {
   const app = express()
-  app.set('trust proxy', env.TRUST_PROXY_HOPS)
+  app.set(
+    'trust proxy',
+    env.NODE_ENV === 'production' ? env.TRUST_PROXY_HOPS : 0,
+  )
 
   app.use(requestContext)
   app.use(
@@ -58,7 +61,7 @@ export function createApp(options: AppOptions = {}): Express {
     }
     next(new AppError(503, 'DATABASE_UNAVAILABLE', 'Database is unavailable.'))
   })
-  app.use('/api', authRoutes)
+  app.use('/api', createAuthRoutes())
   const protectedSocietyRoutes = createProtectedApiRouter()
   protectedSocietyRoutes.use(societyRoutes)
   const protectedUnitRoutes = createProtectedApiRouter()

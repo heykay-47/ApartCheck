@@ -30,10 +30,19 @@ describe('society and unit interfaces', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const path = String(input)
       const payload = path.includes('/units')
-        ? { items: [], page: 1, pageSize: 1, total: 0, pages: 0 }
+        ? {
+            units: [],
+            pagination: { page: 1, pageSize: 1, total: 0, pages: 0 },
+          }
         : path.includes('/users')
-          ? { items: [], page: 1, pageSize: 1, total: 0, pages: 0 }
-          : { items: [], page: 1, pageSize: 1, total: 0, pages: 0 }
+          ? {
+              users: [],
+              pagination: { page: 1, pageSize: 1, total: 0, pages: 0 },
+            }
+          : {
+              assets: [],
+              pagination: { page: 1, pageSize: 1, total: 0, pages: 0 },
+            }
       return new Response(JSON.stringify(payload), { status: 200 })
     })
 
@@ -159,13 +168,10 @@ describe('society and unit interfaces', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            items: [
+            units: [
               { id: 'u1', building: 'Tower A', floor: 'G', unitNumber: 'A1' },
             ],
-            page: 1,
-            pageSize: 25,
-            total: 1,
-            pages: 1,
+            pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
           }),
           { status: 200 },
         ),
@@ -187,13 +193,10 @@ describe('society and unit interfaces', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            items: [
+            units: [
               { id: 'u1', building: 'Tower A', floor: 'G', unitNumber: 'A1' },
             ],
-            page: 1,
-            pageSize: 25,
-            total: 1,
-            pages: 1,
+            pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
           }),
           { status: 200 },
         ),

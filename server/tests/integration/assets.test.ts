@@ -103,8 +103,14 @@ describe('protected assets and QR APIs', () => {
         .get('/api/assets?category=plumbing&search=pump')
         .set('Cookie', session)
       expect(list.status).toBe(200)
-      expect(list.body.items).toHaveLength(1)
-      expect(list.body.items[0]).not.toHaveProperty('qrToken')
+      expect(list.body.assets).toHaveLength(1)
+      expect(list.body.assets[0]).not.toHaveProperty('qrToken')
+      expect(list.body.pagination).toEqual({
+        page: 1,
+        pageSize: 25,
+        total: 1,
+        pages: 1,
+      })
 
       const read = await request(app)
         .get(`/api/assets/${asset.id}`)
@@ -222,10 +228,8 @@ describe('protected assets and QR APIs', () => {
       .set('Cookie', session)
     expect(list.status).toBe(200)
     expect(list.body).toMatchObject({
-      page: 1,
-      pageSize: 1,
-      total: 1,
-      pages: 1,
+      assets: expect.any(Array),
+      pagination: { page: 1, pageSize: 1, total: 1, pages: 1 },
     })
     expect(
       (
@@ -234,5 +238,35 @@ describe('protected assets and QR APIs', () => {
           .set('Cookie', session)
       ).body.error.code,
     ).toBe('ASSET_NOT_FOUND')
+  })
+
+  it('returns resource not found for malformed asset IDs', async () => {
+    const society = await createSocietyFixture()
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    for (const response of [
+      await request(app).get('/api/assets/not-an-id').set('Cookie', session),
+      await request(app)
+        .patch('/api/assets/not-an-id')
+        .set('Cookie', session)
+        .send({
+          name: 'Name',
+          category: 'lift',
+          locationDescription: 'Location',
+        }),
+      await request(app).delete('/api/assets/not-an-id').set('Cookie', session),
+      await request(app)
+        .get('/api/assets/not-an-id/qr.svg')
+        .set('Cookie', session),
+    ]) {
+      expect(response.status).toBe(404)
+      expect(response.body.error.code).toBe('ASSET_NOT_FOUND')
+    }
   })
 })

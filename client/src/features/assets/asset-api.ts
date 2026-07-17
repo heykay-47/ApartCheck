@@ -18,7 +18,12 @@ export type AssetFilters = {
   category: AssetCategory | ''
 }
 export type AssetList = AssetFilters & {
-  items: Asset[]
+  assets: Asset[]
+  pagination: Pagination
+}
+export type Pagination = {
+  page: number
+  pageSize: number
   total: number
   pages: number
 }

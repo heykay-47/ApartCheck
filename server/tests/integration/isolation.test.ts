@@ -46,6 +46,12 @@ describe('society isolation', () => {
       .send({ email: adminA.email, password })
     const session = cookie(login)
 
+    const userList = await request(app)
+      .get('/api/users?search=secret')
+      .set('Cookie', session)
+    expect(userList.status).toBe(200)
+    expect(userList.body.users).toEqual([])
+
     const responses = [
       await request(app).get(`/api/units/${unitB.id}`).set('Cookie', session),
       await request(app)
@@ -59,7 +65,6 @@ describe('society isolation', () => {
       await request(app)
         .delete(`/api/units/${unitB.id}`)
         .set('Cookie', session),
-      await request(app).get(`/api/users/${userB.id}`).set('Cookie', session),
       await request(app)
         .patch(`/api/users/${userB.id}`)
         .set('Cookie', session)

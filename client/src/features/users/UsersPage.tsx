@@ -123,9 +123,9 @@ export function UsersPage() {
       <Feedback message={actionError?.message} />
       {users.isLoading ? (
         <p>Loading users...</p>
-      ) : users.data?.items.length ? (
+      ) : users.data?.users.length ? (
         <div className="user-ledger">
-          {users.data.items.map((user) => (
+          {users.data.users.map((user) => (
             <div className="user-row" key={user.id}>
               <div>
                 <span>Name</span>
@@ -177,7 +177,7 @@ export function UsersPage() {
           No user accounts yet. Create the first account for this society.
         </p>
       )}
-      {users.data && users.data.pages > 1 ? (
+      {users.data && users.data.pagination.pages > 1 ? (
         <div className="pagination">
           <button
             className="text-button"
@@ -187,11 +187,11 @@ export function UsersPage() {
             Previous
           </button>
           <span>
-            Page {page} of {users.data.pages}
+            Page {page} of {users.data.pagination.pages}
           </span>
           <button
             className="text-button"
-            disabled={page === users.data.pages}
+            disabled={page === users.data.pagination.pages}
             onClick={() => setPage(page + 1)}
           >
             Next
@@ -233,7 +233,6 @@ export function UsersPage() {
           onClose={() => setCredential(null)}
         />
       ) : null}
-      <style>{`.users-heading{margin-top:48px}.users-heading h2{font-family:var(--font-display);font-size:2.4rem;margin:12px 0}.user-filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin:24px 0}.user-filters label{display:grid;gap:8px;font-family:var(--font-utility);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em}.user-filters input,.user-filters select,.user-form select{min-height:44px;padding:10px;border:1px solid var(--color-slate);background:var(--color-chalk);font:inherit;text-transform:none;letter-spacing:normal}.user-ledger{border-top:2px solid var(--color-slate)}.user-row{display:grid;grid-template-columns:1.5fr .8fr .8fr 1.5fr;gap:16px;align-items:center;padding:17px 0;border-bottom:1px solid rgb(32 52 59 / .35)}.user-row div{display:grid;gap:4px}.user-row span{font-family:var(--font-utility);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}.user-row small{font-size:.9rem}.user-actions{justify-items:start}.user-actions .text-button{color:var(--color-pump)}.credential-backdrop{position:fixed;inset:0;z-index:3;display:grid;place-items:center;padding:18px;background:rgb(32 52 59 / .72)}.credential-dialog{width:min(560px,100%);max-height:calc(100vh - 36px);overflow:auto;padding:28px;background:var(--color-chalk);border:2px solid var(--color-slate);box-shadow:10px 10px 0 var(--color-slate)}.credential-dialog h2{font-family:var(--font-display);font-size:3.2rem;line-height:.95;margin:8px 0 18px}.temporary-password{font-family:var(--font-utility)!important;letter-spacing:.05em}.dialog-actions{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:18px}@media(max-width:700px){.user-filters,.user-row{grid-template-columns:1fr}.users-heading{display:grid;gap:12px}.user-actions{justify-items:start}}`}</style>
     </section>
   )
 }

@@ -4,6 +4,7 @@ import { AssetModel } from './asset.model.js'
 import { generateAssetCode, generateQrToken } from './asset-code.js'
 import type { AssetInput, AssetList } from './asset.schema.js'
 import QRCode from 'qrcode'
+import mongoose from 'mongoose'
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -15,6 +16,10 @@ function unavailable(): AppError {
 
 function notFound(): AppError {
   return new AppError(404, 'ASSET_NOT_FOUND', 'Asset not found.')
+}
+
+function assertAssetId(assetId: string): void {
+  if (!mongoose.Types.ObjectId.isValid(assetId)) throw notFound()
 }
 
 function documentInput(input: AssetInput) {
@@ -49,11 +54,13 @@ export const AssetService = {
       AssetModel.countDocuments(filter),
     ])
     return {
-      items,
-      page: input.page,
-      pageSize: input.pageSize,
-      total,
-      pages: Math.ceil(total / input.pageSize),
+      assets: items,
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        pages: Math.ceil(total / input.pageSize),
+      },
     }
   },
 
@@ -74,6 +81,7 @@ export const AssetService = {
   },
 
   async get(societyId: string, assetId: string) {
+    assertAssetId(assetId)
     const asset = await AssetModel.findOne({
       _id: assetId,
       societyId,
@@ -84,6 +92,7 @@ export const AssetService = {
   },
 
   async update(societyId: string, assetId: string, input: AssetInput) {
+    assertAssetId(assetId)
     const asset = await AssetModel.findOneAndUpdate(
       { _id: assetId, societyId, archivedAt: null },
       { $set: documentInput(input) },
@@ -94,6 +103,7 @@ export const AssetService = {
   },
 
   async archive(societyId: string, assetId: string) {
+    assertAssetId(assetId)
     const asset = await AssetModel.findOneAndUpdate(
       { _id: assetId, societyId, archivedAt: null },
       { $set: { archivedAt: new Date() } },
@@ -102,6 +112,7 @@ export const AssetService = {
   },
 
   async qr(societyId: string, assetId: string) {
+    assertAssetId(assetId)
     const asset = await AssetModel.findOne({
       _id: assetId,
       societyId,

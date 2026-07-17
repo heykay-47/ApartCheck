@@ -32,6 +32,22 @@ describe('API error contract', () => {
     })
   })
 
+  it('indexes Zod issues by field while preserving canonical validation shape', async () => {
+    const response = await request(createApp())
+      .post('/api/auth/login')
+      .send({ email: 'not-an-email', password: '' })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed.',
+        requestId: expect.any(String),
+        fieldErrors: { email: expect.arrayContaining([expect.any(String)]) },
+      },
+    })
+  })
+
   it('returns database unavailable until mongoose is connected', async () => {
     const response = await request(createApp()).get('/api/health/ready')
 
