@@ -1,12 +1,13 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
-import { RouteGuard, PublicOnly, AccessDenied } from '../components/RouteGuard'
+import { RouteGuard, PublicOnly } from '../components/RouteGuard'
 import { LoginPage } from '../features/auth/LoginPage'
 import { SetupPage } from '../features/auth/SetupPage'
 import { ChangePasswordPage } from '../features/auth/ChangePasswordPage'
 import { ProfilePage } from '../features/auth/ProfilePage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { ProtectedPlaceholderPage } from '../components/ProtectedPlaceholderPage'
+import { AdminPlaceholderPage } from '../components/AdminPlaceholderPage'
 
 export const routes = [
   { path: '/', element: <Navigate to="/dashboard" replace /> },
@@ -45,7 +46,7 @@ export const routes = [
           {
             path: '/admin',
             element: <RouteGuard roles={['admin']} />,
-            children: [{ path: 'users', element: <AccessDenied /> }],
+            children: [{ path: 'users', element: <AdminPlaceholderPage /> }],
           },
         ],
       },

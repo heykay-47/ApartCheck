@@ -151,6 +151,34 @@ describe('auth routes', () => {
     ).toBeVisible()
   })
 
+  it('shows an admin placeholder for authorized admin navigation', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: '1',
+            role: 'admin',
+            mustChangePassword: false,
+            name: 'Admin',
+          },
+        }),
+        { status: 200 },
+      ),
+    )
+    const router = createMemoryRouter(routes, {
+      initialEntries: ['/admin/users'],
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
+    expect(
+      await screen.findByRole('heading', { name: 'User management' }),
+    ).toBeVisible()
+    expect(screen.queryByRole('heading', { name: /access denied/i })).toBeNull()
+  })
+
   it('redirects authenticated login page to dashboard', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
