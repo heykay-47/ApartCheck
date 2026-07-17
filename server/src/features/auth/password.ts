@@ -25,10 +25,19 @@ export async function verifyPassword(
   return bcrypt.compare(password, passwordHash)
 }
 
-export function generateTemporaryPassword(): string {
-  const bytes = randomBytes(16)
-  return Array.from(
-    bytes,
-    (byte) => temporaryAlphabet[byte % temporaryAlphabet.length],
-  ).join('')
+export function generateTemporaryPassword(
+  getRandomBytes: typeof randomBytes = randomBytes,
+): string {
+  const maximumAcceptableByte = 256 - (256 % temporaryAlphabet.length)
+  const characters: string[] = []
+
+  while (characters.length < 16) {
+    for (const byte of getRandomBytes(16)) {
+      if (byte >= maximumAcceptableByte) continue
+      characters.push(temporaryAlphabet[byte % temporaryAlphabet.length]!)
+      if (characters.length === 16) break
+    }
+  }
+
+  return characters.join('')
 }

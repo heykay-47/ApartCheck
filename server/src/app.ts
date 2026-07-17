@@ -13,7 +13,7 @@ import { authRoutes } from './features/auth/auth.routes.js'
 
 export function createApp(): Express {
   const app = express()
-  if (env.NODE_ENV === 'test') app.set('trust proxy', 1)
+  app.set('trust proxy', env.TRUST_PROXY_HOPS)
 
   app.use(requestContext)
   app.use(

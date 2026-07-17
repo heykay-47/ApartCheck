@@ -8,9 +8,6 @@ import { AssetModel } from './features/assets/asset.model.js'
 
 export async function startServer(): Promise<void> {
   const app = createApp()
-  if (env.NODE_ENV === 'production') {
-    app.set('trust proxy', 1)
-  }
 
   await connectDatabase(env.MONGODB_URI)
   await Promise.all([

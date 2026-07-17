@@ -1,5 +1,5 @@
 import type { Response } from 'express'
-import jwt, { type SignOptions } from 'jsonwebtoken'
+import jwt, { type JwtPayload, type SignOptions } from 'jsonwebtoken'
 import { env } from '../../config/env.js'
 
 export type SessionPayload = {
@@ -36,9 +36,38 @@ export function signSession(payload: SessionPayload): string {
 }
 
 export function verifySession(token: string): SessionPayload {
-  return jwt.verify(token, env.JWT_SECRET, {
+  const decoded = jwt.verify(token, env.JWT_SECRET, {
     algorithms: ['HS256'],
-  }) as SessionPayload
+  })
+
+  if (!isValidSessionPayload(decoded)) {
+    throw new Error('Invalid session payload.')
+  }
+
+  return {
+    sub: decoded.sub,
+    societyId: decoded.societyId,
+    tokenVersion: decoded.tokenVersion,
+  }
+}
+
+function isValidNumericDate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0
+}
+
+function isValidSessionPayload(
+  decoded: string | JwtPayload,
+): decoded is JwtPayload & SessionPayload {
+  return (
+    typeof decoded !== 'string' &&
+    typeof decoded.sub === 'string' &&
+    typeof decoded.societyId === 'string' &&
+    Number.isInteger(decoded.tokenVersion) &&
+    decoded.tokenVersion >= 0 &&
+    isValidNumericDate(decoded.iat) &&
+    isValidNumericDate(decoded.exp) &&
+    (decoded.nbf === undefined || isValidNumericDate(decoded.nbf))
+  )
 }
 
 export function setSessionCookie(response: Response, token: string): void {

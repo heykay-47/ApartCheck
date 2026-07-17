@@ -5,12 +5,16 @@ import { UserModel } from '../users/user.model.js'
 import { hashPassword } from './password.js'
 import type { BootstrapInput } from './auth.schema.js'
 
-function isDuplicateError(error: unknown): boolean {
+function isSocietySingletonDuplicate(error: unknown): boolean {
   return (
     typeof error === 'object' &&
     error !== null &&
     'code' in error &&
-    error.code === 11000
+    error.code === 11000 &&
+    'keyPattern' in error &&
+    typeof error.keyPattern === 'object' &&
+    error.keyPattern !== null &&
+    'singletonKey' in error.keyPattern
   )
 }
 
@@ -62,7 +66,7 @@ export async function bootstrap(input: BootstrapInput) {
       }
     })
   } catch (error) {
-    if (isDuplicateError(error)) {
+    if (isSocietySingletonDuplicate(error)) {
       throw new AppError(
         409,
         'BOOTSTRAP_COMPLETE',

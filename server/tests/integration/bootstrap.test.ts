@@ -1,6 +1,8 @@
 import request from 'supertest'
 import mongoose from 'mongoose'
+import jwt from 'jsonwebtoken'
 import { describe, expect, it } from 'vitest'
+import { env } from '../../src/config/env.js'
 import { createApp } from '../../src/app.js'
 import { SocietyModel } from '../../src/features/societies/society.model.js'
 import { UserModel } from '../../src/features/users/user.model.js'
@@ -46,6 +48,14 @@ describe('password primitives', () => {
     expect(password).toHaveLength(16)
     expect(password).toMatch(/^[A-Za-z0-9]+$/)
   })
+
+  it('rejects random bytes outside the largest unbiased alphabet range', () => {
+    const batches = [Buffer.from([255, ...Array(15).fill(0)]), Buffer.alloc(16)]
+
+    expect(
+      generateTemporaryPassword(() => batches.shift() ?? Buffer.alloc(16)),
+    ).toHaveLength(16)
+  })
 })
 
 describe('session primitives', () => {
@@ -62,6 +72,47 @@ describe('session primitives', () => {
       societyId: 'society-id',
       tokenVersion: 0,
     })
+  })
+
+  it.each([
+    { sub: 123 },
+    { societyId: 123 },
+    { tokenVersion: -1 },
+    { tokenVersion: 1.5 },
+  ])('rejects malformed session claim %s', (claims) => {
+    const token = signSession({
+      sub: 'user-id',
+      societyId: 'society-id',
+      tokenVersion: 0,
+      ...claims,
+    } as never)
+
+    expect(() => verifySession(token)).toThrow()
+  })
+
+  it('rejects a session without standard time claims', () => {
+    const token = jwt.sign(
+      { sub: 'user-id', societyId: 'society-id', tokenVersion: 0 },
+      env.JWT_SECRET,
+      { algorithm: 'HS256', noTimestamp: true },
+    )
+
+    expect(() => verifySession(token)).toThrow()
+  })
+
+  it('rejects an expired session', () => {
+    const token = jwt.sign(
+      {
+        sub: 'user-id',
+        societyId: 'society-id',
+        tokenVersion: 0,
+        exp: Math.floor(Date.now() / 1000) - 1,
+      },
+      env.JWT_SECRET,
+      { algorithm: 'HS256', noTimestamp: true },
+    )
+
+    expect(() => verifySession(token)).toThrow()
   })
 
   it('uses matching cookie attributes for set and clear helpers', () => {
@@ -175,6 +226,34 @@ describe('bootstrap API', () => {
     expect(response.headers['set-cookie']).toBeUndefined()
   })
 
+  it('preserves duplicate admin email as a resource conflict', async () => {
+    const society = await SocietyModel.create({
+      name: 'Existing',
+      address: 'Chennai',
+      singletonKey: 'fixture',
+    })
+    await UserModel.create({
+      name: 'Existing Admin',
+      email: bootstrapBody.admin.email,
+      phone: bootstrapBody.admin.phone,
+      passwordHash: await hashPassword(bootstrapBody.admin.password),
+      role: 'admin',
+      societyId: society._id,
+      unitId: null,
+      mustChangePassword: false,
+      tokenVersion: 0,
+      active: true,
+    })
+
+    const response = await request(createApp())
+      .post('/api/bootstrap')
+      .set('X-Forwarded-For', '10.0.0.101')
+      .send(bootstrapBody)
+
+    expect(response.status).toBe(409)
+    expect(response.body.error.code).toBe('DUPLICATE_RESOURCE')
+  })
+
   it('limits bootstrap attempts to five per IP per hour', async () => {
     const app = createApp()
     const responses = await Promise.all(
@@ -187,6 +266,26 @@ describe('bootstrap API', () => {
             admin: {
               ...bootstrapBody.admin,
               email: `user-${index}@example.com`,
+            },
+          }),
+      ),
+    )
+
+    expect(responses.some((response) => response.status === 429)).toBe(true)
+  })
+
+  it('uses the trusted Render proxy hop instead of trusting arbitrary forwarded IPs', async () => {
+    const app = createApp()
+    const responses = await Promise.all(
+      Array.from({ length: 6 }, (_, index) =>
+        request(app)
+          .post('/api/bootstrap')
+          .set('X-Forwarded-For', `10.0.0.${index}, 192.0.2.1`)
+          .send({
+            ...bootstrapBody,
+            admin: {
+              ...bootstrapBody.admin,
+              email: `proxy-${index}@example.com`,
             },
           }),
       ),
