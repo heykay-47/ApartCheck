@@ -6,10 +6,13 @@ import { SetupPage } from '../features/auth/SetupPage'
 import { ChangePasswordPage } from '../features/auth/ChangePasswordPage'
 import { ProfilePage } from '../features/auth/ProfilePage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
-import { ProtectedPlaceholderPage } from '../components/ProtectedPlaceholderPage'
 import { SocietySettingsPage } from '../features/society/SocietySettingsPage'
 import { UnitsPage } from '../features/units/UnitsPage'
 import { UsersPage } from '../features/users/UsersPage'
+import { AssetsPage } from '../features/assets/AssetsPage'
+import { AssetDetailPage } from '../features/assets/AssetDetailPage'
+import { ScanAssetPage } from '../features/assets/ScanAssetPage'
+import { AssetForm } from '../features/assets/AssetForm'
 
 export const routes = [
   { path: '/', element: <Navigate to="/dashboard" replace /> },
@@ -31,19 +34,15 @@ export const routes = [
           { path: '/profile', element: <ProfilePage /> },
           {
             path: '/assets',
-            element: <ProtectedPlaceholderPage title="Asset ledger" />,
+            element: <AssetsPage />,
           },
           {
             path: '/assets/:id',
-            element: (
-              <ProtectedPlaceholderPage title="Asset detail" param="id" />
-            ),
+            element: <AssetDetailPage />,
           },
           {
             path: '/scan/:qrToken',
-            element: (
-              <ProtectedPlaceholderPage title="Scan asset" param="qrToken" />
-            ),
+            element: <ScanAssetPage />,
           },
           {
             path: '/admin',
@@ -52,6 +51,7 @@ export const routes = [
               { path: 'users', element: <UsersPage /> },
               { path: 'units', element: <UnitsPage /> },
               { path: 'society', element: <SocietySettingsPage /> },
+              { path: 'assets', element: <AssetForm /> },
             ],
           },
         ],

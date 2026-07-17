@@ -7,6 +7,9 @@ export function AssetDashboard() {
         Open the asset ledger to inspect what is known, where it lives, and what
         needs attention next.
       </p>
+      <a className="primary-button" href="/assets">
+        Open asset ledger
+      </a>
       <div className="ledger-grid">
         <article>
           <span className="metric">--</span>
