@@ -1,0 +1,11 @@
+:root {
+  --color-plaster: #eef0ec;
+  --color-chalk: #fbfcf8;
+  --color-slate: #20343b;
+  --color-pump: #315c66;
+  --color-marigold: #f2b134;
+  --color-verified: #237a63;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body: 'Hind', sans-serif;
+  --font-utility: 'IBM Plex Mono', monospace;
+}

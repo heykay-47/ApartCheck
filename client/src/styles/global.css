@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+@import './tokens.css';
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--color-plaster);
+  color: var(--color-slate);
+  font-family: var(--font-body);
+  font-size: 17px;
+}
+@media (max-width: 700px) {
+  .app-frame {
+    display: block;
+  }
+  .utility-spine {
+    display: none;
+  }
+  .mobile-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--color-slate);
+  }
+  .mobile-bar a {
+    color: white;
+  }
+  .surface-header {
+    padding: 14px 18px;
+  }
+  .page,
+  .auth-page {
+    padding: 48px 18px;
+    margin: 0;
+  }
+  .page h1,
+  .auth-page h1 {
+    font-size: clamp(3.2rem, 17vw, 5rem);
+  }
+  .ledger-grid {
+    grid-template-columns: 1fr;
+    margin-top: 36px;
+  }
+  .profile-list div {
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
