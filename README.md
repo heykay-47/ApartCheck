@@ -82,6 +82,9 @@ npm run start -w server
 Never commit `.env`, Atlas URIs, passwords, or JWT secrets. Render values
 marked `sync: false` are entered in the service dashboard.
 
+The checked-in `render.yaml` sets `TRUST_PROXY_HOPS=1` for Render's single
+trusted proxy, so rate limiting uses the client IP rather than the proxy IP.
+
 ## Tests And CI
 
 Unit and integration tests use `MongoMemoryReplSet` with one replica-set

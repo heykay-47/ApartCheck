@@ -49,3 +49,9 @@ These prior runs do not change current Task 14 browser status.
 - Added runtime `dotenv` dependency and regression coverage that imports config from a temporary `.env` before validation.
 - Changed local example URI to `?replicaSet=rs0` and added Docker `mongod --replSet` plus `rs.initiate` commands.
 - Documented Atlas replica-set alternative and corrected gate claims after local browser installation failure.
+
+## Final Review Fix
+
+- Set `TRUST_PROXY_HOPS=1` explicitly in production `render.yaml` so Render's
+  single trusted proxy is configured and rate limiting sees client IPs.
+- README now records that Render deployment setting and its rate-limiting purpose.
