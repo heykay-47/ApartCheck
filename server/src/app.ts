@@ -12,6 +12,8 @@ import cookieParser from 'cookie-parser'
 import { authRoutes } from './features/auth/auth.routes.js'
 import { authorize } from './http/authorize.js'
 import { createProtectedApiRouter } from './http/protected-api.js'
+import { societyRoutes } from './features/societies/society.routes.js'
+import { unitRoutes } from './features/units/unit.routes.js'
 
 export function createApp(): Express {
   const app = express()
@@ -44,8 +46,14 @@ export function createApp(): Express {
     next(new AppError(503, 'DATABASE_UNAVAILABLE', 'Database is unavailable.'))
   })
   app.use('/api', authRoutes)
-  const protectedApiRoutes = createProtectedApiRouter()
+  const protectedSocietyRoutes = createProtectedApiRouter()
+  protectedSocietyRoutes.use(societyRoutes)
+  const protectedUnitRoutes = createProtectedApiRouter()
+  protectedUnitRoutes.use(unitRoutes)
+  app.use('/api/society', protectedSocietyRoutes)
+  app.use('/api/units', protectedUnitRoutes)
   if (env.NODE_ENV === 'test') {
+    const testProtectedApiRoutes = createProtectedApiRouter()
     const testResourceRoutes = Router()
     testResourceRoutes.get('/protected', (request, response) =>
       response.json({
@@ -59,10 +67,9 @@ export function createApp(): Express {
     testResourceRoutes.get('/admin', authorize('admin'), (_request, response) =>
       response.json({ status: 'ok' }),
     )
-    protectedApiRoutes.use(testResourceRoutes)
+    testProtectedApiRoutes.use(testResourceRoutes)
+    app.use('/api/test', testProtectedApiRoutes)
   }
-  // Mount all future protected resource routers under this shared boundary.
-  app.use('/api/test', protectedApiRoutes)
 
   app.use(apiNotFound)
   app.use(errorHandler)
