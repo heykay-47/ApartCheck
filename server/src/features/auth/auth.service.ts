@@ -2,8 +2,11 @@ import mongoose from 'mongoose'
 import { AppError } from '../../http/app-error.js'
 import { SocietyModel } from '../societies/society.model.js'
 import { UserModel } from '../users/user.model.js'
-import { hashPassword } from './password.js'
+import { hashPassword, verifyPassword } from './password.js'
 import type { BootstrapInput } from './auth.schema.js'
+
+const invalidCredentials = () =>
+  new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password.')
 
 function isSocietySingletonDuplicate(error: unknown): boolean {
   return (
@@ -75,4 +78,43 @@ export async function bootstrap(input: BootstrapInput) {
     }
     throw error
   }
+}
+
+export async function login(email: string, password: string) {
+  const user = await UserModel.findOne({ email }).select(
+    '+passwordHash +tokenVersion',
+  )
+  if (
+    !user ||
+    !user.active ||
+    !(await verifyPassword(password, user.passwordHash))
+  ) {
+    throw invalidCredentials()
+  }
+  return user
+}
+
+export async function changeOwnPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  const user = await UserModel.findOne({ _id: userId, active: true }).select(
+    '+passwordHash +tokenVersion',
+  )
+  if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
+    throw invalidCredentials()
+  }
+
+  const passwordHash = await hashPassword(newPassword)
+  const updated = await UserModel.findOneAndUpdate(
+    { _id: userId, active: true, tokenVersion: user.tokenVersion },
+    {
+      $set: { passwordHash, mustChangePassword: false },
+      $inc: { tokenVersion: 1 },
+    },
+    { returnDocument: 'after' },
+  ).select('+tokenVersion')
+  if (!updated) throw new AppError(401, 'INVALID_SESSION', 'Invalid session.')
+  return updated
 }

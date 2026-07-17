@@ -10,6 +10,8 @@ import { originGuard } from './http/origin-guard.js'
 import { requestContext } from './http/request-context.js'
 import cookieParser from 'cookie-parser'
 import { authRoutes } from './features/auth/auth.routes.js'
+import { authenticate } from './http/authenticate.js'
+import { requirePasswordChanged } from './http/require-password-change.js'
 
 export function createApp(): Express {
   const app = express()
@@ -42,6 +44,14 @@ export function createApp(): Express {
     next(new AppError(503, 'DATABASE_UNAVAILABLE', 'Database is unavailable.'))
   })
   app.use('/api', authRoutes)
+  if (env.NODE_ENV === 'test') {
+    app.get(
+      '/api/test/protected',
+      authenticate,
+      requirePasswordChanged,
+      (request, response) => response.json({ userId: request.actor.userId }),
+    )
+  }
 
   app.use(apiNotFound)
   app.use(errorHandler)
