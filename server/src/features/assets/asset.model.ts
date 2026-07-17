@@ -39,7 +39,7 @@ const assetSchema = new Schema<Asset>(
           ret.societyId = ret.societyId.toString()
         delete ret._id
         delete ret.__v
-        delete ret.qrToken
+        if (!_document.isSelected('qrToken')) delete ret.qrToken
         return ret
       },
     },

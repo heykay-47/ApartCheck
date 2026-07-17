@@ -91,12 +91,16 @@ describe('persistence models', () => {
   it('applies defaults and safe JSON serialization', async () => {
     const user = await createUserFixture()
     const asset = await createAssetFixture()
+    const persistedAsset = await AssetModel.findById(asset._id)
 
     expect(user.tokenVersion).toBe(0)
     expect(user.active).toBe(true)
     expect(asset.archivedAt).toBeNull()
+    expect(persistedAsset).not.toBeNull()
 
-    const serialized = JSON.parse(JSON.stringify({ user, asset })) as {
+    const serialized = JSON.parse(
+      JSON.stringify({ user, asset: persistedAsset }),
+    ) as {
       user: Record<string, unknown>
       asset: Record<string, unknown>
     }
@@ -106,6 +110,19 @@ describe('persistence models', () => {
     expect(serialized.user).not.toHaveProperty('passwordHash')
     expect(serialized.asset.id).toBe(asset.id)
     expect(serialized.asset).not.toHaveProperty('qrToken')
+  })
+
+  it('preserves qrToken when explicitly selected for QR generation', async () => {
+    const asset = await createAssetFixture({ qrToken: 'qr-token-for-service' })
+
+    const selected = await AssetModel.findById(asset._id).select('+qrToken')
+    expect(selected).not.toBeNull()
+
+    const serialized = JSON.parse(JSON.stringify(selected)) as Record<
+      string,
+      unknown
+    >
+    expect(serialized.qrToken).toBe('qr-token-for-service')
   })
 
   it('allows fixture societies without changing the product singleton key', async () => {
