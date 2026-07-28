@@ -61,6 +61,6 @@ userSchema.pre('validate', function () {
   }
 })
 
-userSchema.index({ email: 1 }, { unique: true })
+userSchema.index({ societyId: 1, email: 1 }, { unique: true })
 
 export const UserModel = model<User>('User', userSchema)

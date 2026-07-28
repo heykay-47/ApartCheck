@@ -229,7 +229,7 @@ describe('bootstrap API', () => {
     expect(response.headers['set-cookie']).toBeUndefined()
   })
 
-  it('preserves duplicate admin email as a resource conflict', async () => {
+  it('allows the same admin email in different societies', async () => {
     const society = await SocietyModel.create({
       name: 'Existing',
       address: 'Chennai',
@@ -253,8 +253,8 @@ describe('bootstrap API', () => {
       .set('X-Forwarded-For', '10.0.0.101')
       .send(bootstrapBody)
 
-    expect(response.status).toBe(409)
-    expect(response.body.error.code).toBe('DUPLICATE_RESOURCE')
+    expect(response.status).toBe(201)
+    expect(response.body.user.email).toBe(bootstrapBody.admin.email)
   })
 
   it('limits bootstrap attempts to five per IP per hour', async () => {
