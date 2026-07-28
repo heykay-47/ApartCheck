@@ -49,14 +49,28 @@ describe('persistence models', () => {
     ).rejects.toMatchObject({ code: 11000 })
   })
 
-  it('enforces global normalized email uniqueness', async () => {
-    await createUserFixture({ email: 'resident@example.com' })
+  it('enforces normalized email uniqueness within a society', async () => {
+    const firstSociety = await createSocietyFixture()
+    const secondSociety = await createSocietyFixture()
+
+    await createUserFixture({
+      societyId: firstSociety._id,
+      email: 'resident@example.com',
+    })
 
     await expect(
-      createUserFixture({ email: ' RESIDENT@EXAMPLE.COM ' }),
-    ).rejects.toMatchObject({
-      code: 11000,
-    })
+      createUserFixture({
+        societyId: firstSociety._id,
+        email: ' RESIDENT@EXAMPLE.COM ',
+      }),
+    ).rejects.toMatchObject({ code: 11000 })
+
+    await expect(
+      createUserFixture({
+        societyId: secondSociety._id,
+        email: ' RESIDENT@EXAMPLE.COM ',
+      }),
+    ).resolves.toMatchObject({ email: 'resident@example.com' })
   })
 
   it('requires unitId for residents', async () => {
@@ -143,7 +157,7 @@ describe('persistence models', () => {
       { unique: true },
     ])
     expect(UserModel.schema.indexes()).toContainEqual([
-      { email: 1 },
+      { societyId: 1, email: 1 },
       { unique: true },
     ])
     expect(AssetModel.schema.indexes()).toContainEqual([
