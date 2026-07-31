@@ -186,7 +186,9 @@ describe('society and unit interfaces', () => {
 
     await waitFor(() => expect(screen.queryByText('A1')).toBeNull())
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Unit ledger' })).toHaveFocus(),
+      expect(
+        screen.getByRole('heading', { name: 'Unit ledger' }),
+      ).toHaveFocus(),
     )
   })
 
