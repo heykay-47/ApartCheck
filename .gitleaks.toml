@@ -1,0 +1,28 @@
+title = "ApartCheck Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic temporary passwords in client tests"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^client/src/features/users/users\.test\.tsx$''']
+regexes = ['''temporaryPassword:\s*['"](?:Temp-pass-123456|one-time-secret)['"]''']
+
+[[allowlists]]
+description = "Documented JWT placeholder in environment template"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^\.env\.example$''']
+regexes = ['''JWT_SECRET=replace-with-at-least-32-characters''']
+
+[[allowlists]]
+description = "Deterministic JWT secret in isolated test environment"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^server/tests/test-env\.ts$''']
+regexes = ['''process\.env\.JWT_SECRET\s*=\s*['"]test-secret-that-is-at-least-32-characters-long['"]''']
