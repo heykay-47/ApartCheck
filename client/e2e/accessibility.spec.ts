@@ -18,7 +18,9 @@ async function authenticateAdmin(page: Page) {
     await page.getByLabel('Phone').fill('+14155550201')
     await page.getByLabel('Password').fill(admin.password)
     await page.getByRole('button', { name: 'Create society' }).click()
+    await expect(page).toHaveURL(/dashboard/)
   }
+  await page.context().clearCookies()
   await page.goto('/login')
   await assertA11y(page)
   if (await page.getByLabel('Email').count()) {
