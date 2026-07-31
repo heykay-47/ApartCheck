@@ -20,6 +20,9 @@ export function AppShell() {
         ]
   return (
     <div className="app-frame">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <aside className="utility-spine">
         <div className="brand-mark">
           APART<span>CHECK</span>
@@ -56,7 +59,7 @@ export function AppShell() {
           </nav>
         </details>
       </div>
-      <main className="work-surface">
+      <main className="work-surface" id="main-content" tabIndex={-1}>
         <header className="surface-header">
           <span>FIELD RECORD / {new Date().getFullYear()}</span>
           <span>{user?.role?.toUpperCase()}</span>

@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useState } from 'react'
 import { ApiError } from '../../app/api'
 import { Feedback } from '../../components/Feedback'
+import { Modal } from '../../components/Modal'
 import { TemporaryPasswordDialog } from './TemporaryPasswordDialog'
 import { UserForm } from './UserForm'
 import {
@@ -199,33 +200,33 @@ export function UsersPage() {
         </div>
       ) : null}
       {showForm ? (
-        <div className="credential-backdrop" role="presentation">
-          <section
-            className="credential-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="account-heading"
-          >
-            <p className="eyebrow">
-              {editing ? 'ACCOUNT RECORD' : 'NEW ACCOUNT'}
-            </p>
-            <h2 id="account-heading">
-              {editing ? 'Edit account' : 'Create account'}
-            </h2>
-            <UserForm
-              {...(editing ? { user: editing } : {})}
-              onSuccess={(response) => {
-                setShowForm(false)
-                setEditing(null)
-                if (response) setCredential(response)
-              }}
-              onCancel={() => {
-                setShowForm(false)
-                setEditing(null)
-              }}
-            />
-          </section>
-        </div>
+        <Modal
+          className="credential-dialog"
+          labelledBy="account-heading"
+          onClose={() => {
+            setShowForm(false)
+            setEditing(null)
+          }}
+        >
+          <p className="eyebrow">
+            {editing ? 'ACCOUNT RECORD' : 'NEW ACCOUNT'}
+          </p>
+          <h2 id="account-heading">
+            {editing ? 'Edit account' : 'Create account'}
+          </h2>
+          <UserForm
+            {...(editing ? { user: editing } : {})}
+            onSuccess={(response) => {
+              setShowForm(false)
+              setEditing(null)
+              if (response) setCredential(response)
+            }}
+            onCancel={() => {
+              setShowForm(false)
+              setEditing(null)
+            }}
+          />
+        </Modal>
       ) : null}
       {credential ? (
         <TemporaryPasswordDialog

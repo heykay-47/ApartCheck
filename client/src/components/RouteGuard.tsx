@@ -32,10 +32,10 @@ export function PublicOnly() {
 }
 export function AccessDenied() {
   return (
-    <main className="message-page">
+    <section className="message-page">
       <p className="eyebrow">PERMISSION / 403</p>
       <h1>Access denied</h1>
       <p>Your role does not include this ledger.</p>
-    </main>
+    </section>
   )
 }

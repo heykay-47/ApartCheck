@@ -113,6 +113,33 @@ describe('user management interfaces', () => {
     )
   })
 
+  it('contains modal focus, closes on Escape, and restores trigger focus', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          users: [],
+          pagination: { page: 1, pageSize: 25, total: 0, pages: 0 },
+        }),
+        { status: 200 },
+      ),
+    )
+
+    renderWithClient(<UsersPage />)
+    const trigger = await screen.findByRole('button', {
+      name: 'Create account',
+    })
+    await user.click(trigger)
+
+    const dialog = screen.getByRole('dialog', { name: 'Create account' })
+    expect(screen.getByLabelText('Name')).toHaveFocus()
+    expect(dialog).toHaveAttribute('open')
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'Create account' })).toBeNull()
+    expect(trigger).toHaveFocus()
+  })
+
   it('copies only current password', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn().mockResolvedValue(undefined)

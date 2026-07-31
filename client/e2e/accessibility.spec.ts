@@ -40,6 +40,14 @@ async function exerciseKeyboardInteractions(
   await page.setViewportSize(viewport)
   await page.goto('/dashboard')
 
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' })
+  await expect(skipLink).toBeAttached()
+  await page.keyboard.press('Tab')
+  await expect(skipLink).toBeFocused()
+  await expect(skipLink).toBeVisible()
+  await skipLink.press('Enter')
+  await expect(page.locator('#main-content')).toBeFocused()
+
   if (viewport.width < 768) {
     const menu = page.locator('.mobile-nav summary')
     await menu.focus()
@@ -74,7 +82,7 @@ async function exerciseKeyboardInteractions(
   await expect(accountDialog).toBeVisible()
   await assertA11y(page)
   await accountDialog.getByRole('button', { name: 'Cancel' }).focus()
-  await assertVisibleFocus(page, '[role="dialog"] button:has-text("Cancel")')
+  await assertVisibleFocus(page, 'dialog button:has-text("Cancel")')
   await accountDialog.getByRole('button', { name: 'Cancel' }).press('Enter')
   await expect(page.getByRole('dialog')).toHaveCount(0)
 }

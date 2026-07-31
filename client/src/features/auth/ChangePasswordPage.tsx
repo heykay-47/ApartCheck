@@ -16,7 +16,7 @@ export function ChangePasswordPage() {
     resolver: zodResolver(schema),
   })
   return (
-    <main className="auth-page">
+    <section className="auth-page">
       <p className="eyebrow">SECURITY / REQUIRED</p>
       <h1>Replace temporary access.</h1>
       <p className="lede">
@@ -56,6 +56,6 @@ export function ChangePasswordPage() {
         />
         <button className="primary-button">Save password</button>
       </form>
-    </main>
+    </section>
   )
 }

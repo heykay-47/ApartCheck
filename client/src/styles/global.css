@@ -17,6 +17,20 @@ body {
   outline: 2px solid var(--color-marigold);
   outline-offset: 3px;
 }
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  padding: 10px 14px;
+  transform: translateY(calc(-100% - 24px));
+  background: var(--color-slate);
+  color: var(--color-chalk);
+  font-family: var(--font-utility);
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
 .app-frame {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
@@ -431,23 +445,20 @@ body {
 .user-actions {
   justify-items: start;
 }
-.credential-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgb(32 52 59 / 0.72);
-}
 .credential-dialog {
   width: min(560px, 100%);
   max-height: calc(100vh - 36px);
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 28px;
+  color: var(--color-slate);
   background: var(--color-chalk);
   border: 2px solid var(--color-slate);
   box-shadow: 10px 10px 0 var(--color-slate);
+}
+.credential-dialog::backdrop,
+.confirm-panel::backdrop {
+  background: rgb(32 52 59 / 0.72);
 }
 .credential-dialog h2 {
   margin: 8px 0 18px;

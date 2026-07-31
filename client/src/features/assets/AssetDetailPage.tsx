@@ -13,21 +13,21 @@ export function AssetDetailPage() {
   const [editing, setEditing] = useState(false)
   if (asset.isLoading)
     return (
-      <main className="page">
+      <section className="page">
         <p>Loading asset...</p>
-      </main>
+      </section>
     )
   if (!asset.data)
     return (
-      <main className="message-page">
+      <section className="message-page">
         <p className="eyebrow">RECORD / UNAVAILABLE</p>
         <p>
           This asset is unavailable. Check the label or ask the society admin.
         </p>
-      </main>
+      </section>
     )
   return (
-    <main className="page asset-detail">
+    <section className="page asset-detail">
       <p className="eyebrow">ASSET DETAIL / {asset.data.assetCode}</p>
       <AssetIdentityPlate asset={asset.data} allowQr={user?.role === 'admin'} />
       <div className="asset-actions">
@@ -57,6 +57,6 @@ export function AssetDetailPage() {
       {editing ? (
         <AssetForm asset={asset.data} onSaved={() => setEditing(false)} />
       ) : null}
-    </main>
+    </section>
   )
 }

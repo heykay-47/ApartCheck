@@ -20,24 +20,24 @@ export function ScanAssetPage() {
   }, [scan.data])
   if (scan.isLoading)
     return (
-      <main className="page">
+      <section className="page">
         <p className="eyebrow">SCAN / RESOLVING</p>
         <h1>Scan asset</h1>
         <p className="asset-code">{qrToken}</p>
         <p>Resolving asset label...</p>
-      </main>
+      </section>
     )
   if (scan.isError || !scan.data)
     return (
-      <main className="message-page unavailable-state">
+      <section className="message-page unavailable-state">
         <p className="eyebrow">SCAN / UNAVAILABLE</p>
         <p>
           This asset is unavailable. Check the label or ask the society admin.
         </p>
-      </main>
+      </section>
     )
   return (
-    <main className="page scan-page">
+    <section className="page scan-page">
       <p className="eyebrow">SCAN / VERIFIED</p>
       <div
         data-testid="scan-result"
@@ -46,6 +46,6 @@ export function ScanAssetPage() {
       >
         <AssetIdentityPlate asset={scan.data} />
       </div>
-    </main>
+    </section>
   )
 }

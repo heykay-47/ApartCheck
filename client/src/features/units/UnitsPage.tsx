@@ -1,6 +1,7 @@
 import { useDeferredValue, useState } from 'react'
 import { ApiError } from '../../app/api'
 import { Feedback } from '../../components/Feedback'
+import { Modal } from '../../components/Modal'
 import { UnitForm } from './UnitForm'
 import { useArchiveUnit, useUnits, type Unit } from './unit-api'
 
@@ -115,11 +116,10 @@ export function UnitsPage() {
         </aside>
       </div>
       {archive ? (
-        <div
+        <Modal
           className="confirm-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="archive-heading"
+          labelledBy="archive-heading"
+          onClose={() => setArchive(null)}
         >
           <h2 id="archive-heading">Archive unit {archive.unitNumber}?</h2>
           <p>
@@ -143,7 +143,7 @@ export function UnitsPage() {
           <button className="text-button" onClick={() => setArchive(null)}>
             Cancel
           </button>
-        </div>
+        </Modal>
       ) : null}
     </section>
   )

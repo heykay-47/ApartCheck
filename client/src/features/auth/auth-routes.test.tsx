@@ -122,6 +122,8 @@ describe('auth routes', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/change-password'),
     )
+    await screen.findByRole('heading', { name: 'Replace temporary access.' })
+    expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
   it('shows access denied for resident admin navigation', async () => {
@@ -287,6 +289,11 @@ describe('auth routes', () => {
           </MemoryRouter>
         </QueryClientProvider>,
       )
+      const skipLink = screen.getByRole('link', {
+        name: 'Skip to main content',
+      })
+      expect(skipLink).toHaveAttribute('href', '#main-content')
+      expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content')
       expect(
         await screen.findAllByRole('link', { name: 'Asset ledger' }),
       ).not.toHaveLength(0)
