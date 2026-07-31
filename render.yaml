@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: apartcheck
+    name: apartcheck-heykay-47
     runtime: node
     plan: free
     buildCommand: npm ci && npm run build

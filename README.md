@@ -37,14 +37,14 @@ canonical public origin for origin checks and generated QR links.
 
 Prerequisites: Node `22.12.0`, npm, and MongoDB with replica-set support. Local
 transactions require replica-set support; standalone MongoDB is not supported.
-Copy `.env.example` to `.env`, then set a `JWT_SECRET` with at least 32
-characters and a reachable `MONGODB_URI`.
+Copy `.env.example` to `server/.env`, then set a `JWT_SECRET` with at least 32
+characters and a reachable `MONGODB_URI`. Keep `TRUST_PROXY_HOPS=0` locally.
 
 ```bash
 npm ci
 docker run --name apartcheck-mongo --detach --publish 27017:27017 mongo:8 --replSet rs0 --bind_ip_all
 docker exec apartcheck-mongo mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
-cp .env.example .env
+cp .env.example server/.env
 npm run dev
 ```
 
@@ -75,7 +75,7 @@ npm run start -w server
 | `MONGODB_URI`      | Yes      | MongoDB connection URI                                                        |
 | `JWT_SECRET`       | Yes      | Session signing secret, minimum 32 characters; use random production material |
 | `APP_BASE_URL`     | Yes      | Browser origin used by origin guard and QR URLs                               |
-| `TRUST_PROXY_HOPS` | No       | Trusted proxy count; use `1` behind Render                                    |
+| `TRUST_PROXY_HOPS` | No       | Trusted proxy count; use `0` locally and `1` behind Render                    |
 | `VITE_API_TARGET`  | E2E only | API target for the Vite dev proxy                                             |
 | `E2E_SERVER_PORT`  | E2E only | Ephemeral API port used by Playwright setup                                   |
 
