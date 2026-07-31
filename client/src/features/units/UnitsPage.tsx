@@ -1,4 +1,4 @@
-import { useDeferredValue, useState } from 'react'
+import { useDeferredValue, useRef, useState } from 'react'
 import { ApiError } from '../../app/api'
 import { Feedback } from '../../components/Feedback'
 import { Modal } from '../../components/Modal'
@@ -9,6 +9,7 @@ export function UnitsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [archive, setArchive] = useState<Unit | null>(null)
+  const ledgerHeadingRef = useRef<HTMLHeadingElement>(null)
   const deferredSearch = useDeferredValue(search)
   const units = useUnits({ page, pageSize: 25, search: deferredSearch })
   const archiveMutation = useArchiveUnit()
@@ -25,7 +26,10 @@ export function UnitsPage() {
   function confirmArchive() {
     if (!archive) return
     archiveMutation.mutate(archive.id, {
-      onSuccess: () => setArchive(null),
+      onSuccess: () => {
+        setArchive(null)
+        requestAnimationFrame(() => ledgerHeadingRef.current?.focus())
+      },
     })
   }
 
@@ -40,7 +44,9 @@ export function UnitsPage() {
       <div className="unit-layout">
         <div>
           <div className="section-heading">
-            <h2>Unit ledger</h2>
+            <h2 ref={ledgerHeadingRef} tabIndex={-1}>
+              Unit ledger
+            </h2>
             <span className="record-count">
               {units.data?.pagination.total ?? 0} records
             </span>

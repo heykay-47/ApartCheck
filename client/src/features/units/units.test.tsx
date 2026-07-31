@@ -185,6 +185,9 @@ describe('society and unit interfaces', () => {
     await user.click(screen.getByRole('button', { name: 'Archive unit' }))
 
     await waitFor(() => expect(screen.queryByText('A1')).toBeNull())
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Unit ledger' })).toHaveFocus(),
+    )
   })
 
   it('shows recovery guidance when residents block archive', async () => {

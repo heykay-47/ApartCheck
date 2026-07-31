@@ -140,6 +140,57 @@ describe('user management interfaces', () => {
     expect(trigger).toHaveFocus()
   })
 
+  it('clears a temporary password when its dialog closes with Escape', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => {
+      if (init?.method === 'POST') {
+        return new Response(
+          JSON.stringify({
+            user: {
+              id: 'u1',
+              name: 'Mira',
+              email: 'mira@example.com',
+              phone: '+919876543210',
+              role: 'admin',
+              active: true,
+            },
+            temporaryPassword: 'Temp-pass-123456',
+          }),
+          { status: 201 },
+        )
+      }
+      return new Response(
+        JSON.stringify({
+          users: [],
+          pagination: { page: 1, pageSize: 100, total: 0, pages: 0 },
+        }),
+        { status: 200 },
+      )
+    })
+
+    renderWithClient(<UsersPage />)
+    await user.click(
+      await screen.findByRole('button', { name: 'Create account' }),
+    )
+    await user.type(screen.getByLabelText('Name'), 'Mira')
+    await user.type(screen.getByLabelText('Email'), 'mira@example.com')
+    await user.type(screen.getByLabelText('Phone'), '+919876543210')
+    await user.click(
+      screen.getAllByRole('button', { name: 'Create account' })[1]!,
+    )
+    expect(await screen.findByDisplayValue('Temp-pass-123456')).toBeVisible()
+
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByDisplayValue('Temp-pass-123456')).toBeNull()
+    expect(JSON.stringify(queryClient.getQueryCache().getAll())).not.toContain(
+      'Temp-pass-123456',
+    )
+    expect(
+      JSON.stringify(queryClient.getMutationCache().getAll()),
+    ).not.toContain('Temp-pass-123456')
+  })
+
   it('copies only current password', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn().mockResolvedValue(undefined)
