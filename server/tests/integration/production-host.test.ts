@@ -2,8 +2,9 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import request from 'supertest'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../../src/app.js'
+import { env } from '../../src/config/env.js'
 
 const fixtures: string[] = []
 
@@ -14,6 +15,35 @@ afterEach(async () => {
 })
 
 describe('production SPA host', () => {
+  it('serves the built client from the workspace sibling directory', async () => {
+    const workspaceRoot = await mkdtemp(
+      path.join(os.tmpdir(), 'apartcheck-workspace-'),
+    )
+    fixtures.push(workspaceRoot)
+    const checkoutPath = path.join(workspaceRoot, '.checkout')
+    const serverPath = path.join(checkoutPath, 'server')
+    const clientDistPath = path.join(checkoutPath, 'client', 'dist')
+    await mkdir(serverPath, { recursive: true })
+    await mkdir(clientDistPath, { recursive: true })
+    await writeFile(
+      path.join(clientDistPath, 'index.html'),
+      '<html>production shell</html>',
+    )
+    vi.spyOn(process, 'cwd').mockReturnValue(serverPath)
+    const previousNodeEnv = env.NODE_ENV
+    env.NODE_ENV = 'production'
+
+    try {
+      const response = await request(createApp()).get('/')
+
+      expect(response.status).toBe(200)
+      expect(response.text).toContain('production shell')
+    } finally {
+      env.NODE_ENV = previousNodeEnv
+      vi.restoreAllMocks()
+    }
+  })
+
   it('serves SPA routes and assets without replacing API errors', async () => {
     const clientDistPath = await mkdtemp(
       path.join(os.tmpdir(), 'apartcheck-client-'),

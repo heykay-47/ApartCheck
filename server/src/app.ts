@@ -1,6 +1,5 @@
 import express, { Router, type Express } from 'express'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import helmet from 'helmet'
 import { pinoHttp } from 'pino-http'
 import mongoose from 'mongoose'
@@ -22,11 +21,6 @@ import { assetRoutes, scanRoutes } from './features/assets/asset.routes.js'
 type AppOptions = {
   clientDistPath?: string
 }
-
-const defaultClientDistPath = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../client/dist',
-)
 
 export function createApp(options: AppOptions = {}): Express {
   const app = express()
@@ -100,7 +94,9 @@ export function createApp(options: AppOptions = {}): Express {
 
   const clientDistPath =
     options.clientDistPath ??
-    (env.NODE_ENV === 'production' ? defaultClientDistPath : undefined)
+    (env.NODE_ENV === 'production'
+      ? path.resolve(process.cwd(), '../client/dist')
+      : undefined)
   if (clientDistPath) {
     app.use(
       express.static(clientDistPath, {
@@ -122,8 +118,9 @@ export function createApp(options: AppOptions = {}): Express {
         return
       }
       response.sendFile(
-        path.join(clientDistPath, 'index.html'),
+        'index.html',
         {
+          root: clientDistPath,
           headers: { 'Cache-Control': 'no-cache' },
         },
         (error) => {
