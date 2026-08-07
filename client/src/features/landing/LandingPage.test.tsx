@@ -58,6 +58,33 @@ describe('landing page', () => {
     expect(screen.getByText(/demo credentials are private/i)).toBeVisible()
   })
 
+  it('uses the exact action labels for every repeated call to action', () => {
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+
+    const sourceActions = screen.getAllByRole('link', {
+      name: 'Inspect source',
+    })
+    expect(sourceActions).toHaveLength(3)
+    sourceActions.forEach((action) =>
+      expect(action).toHaveAttribute(
+        'href',
+        'https://github.com/heykay-47/ApartCheck',
+      ),
+    )
+
+    const workRecordActions = screen.getAllByRole('link', {
+      name: 'Open the work record',
+    })
+    expect(workRecordActions).toHaveLength(2)
+    workRecordActions.forEach((action) =>
+      expect(action).toHaveAttribute('href', '/login'),
+    )
+  })
+
   it('serves the landing page at the public root', async () => {
     queryClient.clear()
     const router = createMemoryRouter(routes, { initialEntries: ['/'] })

@@ -80,7 +80,7 @@ export function LandingPage(): JSX.Element {
                 target="_blank"
                 rel="noreferrer"
               >
-                Inspect the source
+                Inspect source
               </a>
               <Link className="landing-secondary-action" to="/login">
                 Open the work record
@@ -215,7 +215,7 @@ export function LandingPage(): JSX.Element {
               Inspect source
             </a>
             <Link className="landing-secondary-action" to="/login">
-              Open live sign-in
+              Open the work record
             </Link>
           </div>
         </section>
