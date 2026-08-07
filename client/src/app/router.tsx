@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { RouteGuard, PublicOnly } from '../components/RouteGuard'
 import { LoginPage } from '../features/auth/LoginPage'
@@ -13,9 +13,10 @@ import { AssetsPage } from '../features/assets/AssetsPage'
 import { AssetDetailPage } from '../features/assets/AssetDetailPage'
 import { ScanAssetPage } from '../features/assets/ScanAssetPage'
 import { AssetForm } from '../features/assets/AssetForm'
+import { LandingPage } from '../features/landing/LandingPage'
 
 export const routes = [
-  { path: '/', element: <Navigate to="/dashboard" replace /> },
+  { path: '/', element: <LandingPage /> },
   {
     element: <PublicOnly />,
     children: [
