@@ -127,18 +127,18 @@ account disable invalidate older sessions.
 
 ## Render Deployment
 
-`render.yaml` defines one free Node web service. It runs `npm ci && npm run
-build`, starts `npm run start -w server`, uses `/api/health/ready` for health
-checks, and declares Node `22.12.0`. Render may cold-start the free service;
-the first request can take longer while the process and Atlas connection wake.
+`render.yaml` defines one free Node web service. It runs `npm ci --include=dev
+&& npm run build`, starts `npm run start -w server`, uses
+`/api/health/ready` for health checks, and declares Node `22.12.0`. Render may
+cold-start the free service; the first request can take longer while the process
+and Atlas connection wake.
 
 Manual provisioning and verification are required. No Atlas cluster, Render
 service, credentials, or public deployment is claimed by this repository.
 
 1. Create an Atlas M0 cluster, a dedicated database user restricted to the
-   ApartCheck database, and a TLS URI. Configure network access for Render's
-   egress model; broad allowlisting is a documented security trade-off, so
-   rotate credentials and restrict the database user if egress controls change.
+   ApartCheck database, and a TLS URI. Add the service-specific CIDR ranges from
+   Render's **Connect > Outbound** view to Atlas Network Access.
 2. Create a Render service from `render.yaml`.
 3. Set `MONGODB_URI`, a cryptographically random `JWT_SECRET` of at least 32
    bytes, and the final Render origin as `APP_BASE_URL`.
@@ -157,8 +157,7 @@ Complete bootstrap, create one asset, scan its printed QR from a phone, and
 confirm resident read-only access at 360 px. Do not record a URL as verified
 until these checks pass.
 
-**Public URL:** unverified. Record the actual Render origin here only after
-manual provisioning and the curl/browser checks above succeed.
+**Public URL:** https://apartcheck-heykay-47.onrender.com
 
 ## Deferred Phase 2
 
