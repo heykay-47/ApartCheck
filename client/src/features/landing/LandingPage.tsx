@@ -67,7 +67,6 @@ export function LandingPage(): JSX.Element {
       <main id="landing-content" tabIndex={-1}>
         <section className="landing-hero" aria-labelledby="landing-title">
           <div>
-            <p className="eyebrow">ASSET ACCOUNTABILITY / PHASE 1</p>
             <h1 id="landing-title">Put a record where the work begins.</h1>
             <p>
               ApartCheck links a shared physical Asset to its protected Society
