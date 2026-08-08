@@ -1,7 +1,7 @@
 ---
 version: 1
-slug: "src-features-landing-landingpage-tsx"
-primary_target: "src/features/landing/LandingPage.tsx"
+slug: 'src-features-landing-landingpage-tsx'
+primary_target: 'src/features/landing/LandingPage.tsx'
 related_targets: []
 ---
 

@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-08T01:49:35.000Z",
+  "title": "Design System: ApartCheck",
+  "extensions": {
+    "colorMeta": {
+      "plaster": {
+        "role": "neutral",
+        "displayName": "Plaster Field",
+        "canonical": "#eef0ec",
+        "tonalRamp": [
+          "#202521",
+          "#3d443e",
+          "#5d665e",
+          "#7f897f",
+          "#a4ada4",
+          "#c9cec8",
+          "#eef0ec",
+          "#f8f9f6"
+        ]
+      },
+      "chalk": {
+        "role": "neutral",
+        "displayName": "Chalk Stock",
+        "canonical": "#fbfcf8",
+        "tonalRamp": [
+          "#222421",
+          "#41443f",
+          "#62665f",
+          "#858a82",
+          "#aaaea6",
+          "#d0d3cc",
+          "#eff1eb",
+          "#fbfcf8"
+        ]
+      },
+      "slate": {
+        "role": "neutral",
+        "displayName": "Monsoon Slate",
+        "canonical": "#20343b",
+        "tonalRamp": [
+          "#101a1e",
+          "#20343b",
+          "#3e535b",
+          "#5e747c",
+          "#81969d",
+          "#a6b8bd",
+          "#cedadd",
+          "#eef3f4"
+        ]
+      },
+      "pump": {
+        "role": "primary",
+        "displayName": "Pump Blue",
+        "canonical": "#315c66",
+        "tonalRamp": [
+          "#172d33",
+          "#315c66",
+          "#4e7b85",
+          "#6e9ca6",
+          "#91bec7",
+          "#b6dce2",
+          "#d8f0f3",
+          "#effafb"
+        ]
+      },
+      "marigold": {
+        "role": "secondary",
+        "displayName": "Marigold Trace",
+        "canonical": "#f2b134",
+        "tonalRamp": [
+          "#352407",
+          "#64460c",
+          "#956b16",
+          "#c79223",
+          "#f2b134",
+          "#f7c968",
+          "#fbe2a2",
+          "#fff5dc"
+        ]
+      },
+      "verified": {
+        "role": "secondary",
+        "displayName": "Verified Green",
+        "canonical": "#237a63",
+        "tonalRamp": [
+          "#0c281f",
+          "#164d3e",
+          "#237a63",
+          "#429b83",
+          "#69bba5",
+          "#98d6c5",
+          "#c7ece1",
+          "#ecfaf5"
+        ]
+      },
+      "error": {
+        "role": "secondary",
+        "displayName": "Record Error",
+        "canonical": "#a32626",
+        "tonalRamp": [
+          "#330909",
+          "#641313",
+          "#8a1e1e",
+          "#a32626",
+          "#c34a4a",
+          "#df7b7b",
+          "#efb3b3",
+          "#fbe8e8"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "QR White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#4a4a4a",
+          "#707070",
+          "#979797",
+          "#bdbdbd",
+          "#dedede",
+          "#f2f2f2",
+          "#ffffff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Oversized section statements in condensed industrial type."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The compact first-viewport statement."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Record and operational section titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Readable instructions, explanations, and evidence."
+      },
+      "label": {
+        "displayName": "Record Label",
+        "purpose": "Metadata, controls, stages, and system boundaries."
+      }
+    },
+    "shadows": [
+      {
+        "name": "confirmation-offset",
+        "value": "8px 8px 0 var(--color-slate)",
+        "purpose": "Fixed confirmation panels."
+      },
+      {
+        "name": "dialog-offset",
+        "value": "10px 10px 0 var(--color-slate)",
+        "purpose": "Credential dialogs."
+      },
+      {
+        "name": "trace-edge",
+        "value": "12px 0 0 var(--color-marigold)",
+        "purpose": "Landing trace identity plate edge."
+      }
+    ],
+    "motion": [
+      {
+        "name": "trace-stage-reveal",
+        "value": "480ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Ordered trace-stage entrance with 90ms increments."
+      },
+      {
+        "name": "scan-result",
+        "value": "250ms ease",
+        "purpose": "Protected scan-result opacity and vertical reveal."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0s transitions; 0.01ms animations; 1 iteration",
+        "purpose": "Global reduced-motion contract; trace stages render fully revealed."
+      }
+    ],
+    "breakpoints": [
+      { "name": "landing-stack", "value": "979px" },
+      { "name": "landing-mobile", "value": "759px" },
+      { "name": "shell-mobile", "value": "700px" },
+      { "name": "minimum-supported", "value": "360px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Pump-filled primary action with a hard slate hover state.",
+      "html": "<button class=\"ds-btn-primary\">SAVE RECORD</button>",
+      "css": ".ds-btn-primary { min-height: 46px; padding: 10px 18px; border: 2px solid var(--color-pump); border-radius: 0; background: var(--color-pump); color: var(--color-chalk); font: 600 0.78rem/1 var(--font-utility); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; } .ds-btn-primary:hover { border-color: var(--color-slate); background: var(--color-slate); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Transparent outcome control framed by slate block-axis rules.",
+      "html": "<button class=\"ds-btn-secondary\">OPEN THE WORK RECORD</button>",
+      "css": ".ds-btn-secondary { min-height: 44px; padding: 10px 18px; border: 0; border-block: 2px solid var(--color-slate); border-radius: 0; background: transparent; color: var(--color-slate); font: 600 0.78rem/1 var(--font-utility); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; } .ds-btn-secondary:hover { background: var(--color-marigold); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; } .ds-btn-secondary:active { background: var(--color-chalk); }"
+    },
+    {
+      "name": "Record Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Labeled chalk field with a persistent slate boundary.",
+      "html": "<label class=\"ds-field\"><span>ASSET CODE</span><input value=\"LFT-0007\" aria-label=\"Asset Code\"></label>",
+      "css": ".ds-field { display: grid; gap: 6px; color: var(--color-slate); font: 500 0.72rem/1.3 var(--font-utility); letter-spacing: 0.08em; } .ds-field input { min-height: 46px; padding: 10px 12px; border: 1px solid var(--color-slate); border-radius: 0; background: var(--color-chalk); color: var(--color-slate); font: 400 17px/1.4 var(--font-body); } .ds-field input:hover { background: var(--color-chalk); } .ds-field input:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Landing Navigation",
+      "kind": "nav",
+      "description": "Divided mono navigation cells inside a chalk ruled masthead.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Example navigation\"><a href=\"#mechanism\">MECHANISM</a><a href=\"#proof\">PROOF</a><a href=\"#architecture\">ARCHITECTURE</a></nav>",
+      "css": ".ds-nav { display: flex; border: 1px solid var(--color-slate); background: var(--color-chalk); } .ds-nav a { min-height: 44px; padding: 0 18px; display: grid; place-items: center; color: var(--color-slate); font: 500 0.72rem/1 var(--font-utility); letter-spacing: 0.07em; text-decoration: underline; text-underline-offset: 0.3em; } .ds-nav a + a { border-left: 1px solid var(--color-slate); } .ds-nav a:hover { background: var(--color-plaster); } .ds-nav a:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: -4px; }"
+    },
+    {
+      "name": "Ledger Row",
+      "kind": "custom",
+      "description": "Ruled record row with mono identity and readable record detail.",
+      "html": "<div class=\"ds-ledger\"><div class=\"ds-ledger-row\"><span>LFT-0007</span><strong>North tower passenger lift</strong><span>ACTIVE</span></div></div>",
+      "css": ".ds-ledger { border-top: 2px solid var(--color-slate); color: var(--color-slate); } .ds-ledger-row { padding: 16px 0; display: grid; grid-template-columns: 0.8fr 1.5fr 0.6fr; gap: 16px; align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); } .ds-ledger-row span { font: 500 0.72rem/1.3 var(--font-utility); letter-spacing: 0.06em; } .ds-ledger-row strong { font: 600 1rem/1.3 var(--font-body); } .ds-ledger-row:hover { background: color-mix(in srgb, var(--color-chalk) 45%, transparent); } .ds-ledger-row:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Asset Identity Plate",
+      "kind": "custom",
+      "refersTo": "identity-plate",
+      "description": "Hard-edged Asset record binding identity, location, state, and QR substrate.",
+      "html": "<article class=\"ds-plate\"><div><span>ASSET IDENTITY / LIFT</span><strong>LFT-0007</strong><h2>North tower passenger lift</h2><dl><dt>LOCATION</dt><dd>Ground-floor lobby</dd><dt>STATE</dt><dd>Active</dd></dl></div><div class=\"ds-plate-qr\" aria-label=\"QR code for LFT-0007\"><span></span><span></span><span></span></div></article>",
+      "css": ".ds-plate { padding: 28px; display: grid; grid-template-columns: 1fr 150px; gap: 30px; border: 2px solid var(--color-slate); border-left: 12px solid var(--color-marigold); border-radius: 0; background: var(--color-chalk); color: var(--color-slate); } .ds-plate > div > span, .ds-plate dt { font: 500 0.7rem/1.3 var(--font-utility); letter-spacing: 0.08em; } .ds-plate strong { display: block; margin-top: 8px; font: 600 3.5rem/0.9 var(--font-display); } .ds-plate h2 { margin: 18px 0; font: 600 2rem/1 var(--font-display); } .ds-plate dl { margin: 0; } .ds-plate dd { margin: 2px 0 10px; font: 400 1rem/1.3 var(--font-body); } .ds-plate-qr { min-height: 150px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; place-self: center; border: 2px solid var(--color-slate); background: var(--color-white, #fff); } .ds-plate-qr span { background: var(--color-slate); } .ds-plate:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; }"
+    },
+    {
+      "name": "Trace Stage Rail",
+      "kind": "custom",
+      "description": "Four ruled stages explain the physical Asset-to-record trace and are not a generic app stepper.",
+      "html": "<ol class=\"ds-trace\"><li><span>01</span><strong>Register</strong></li><li><span>02</span><strong>Label</strong></li><li><span>03</span><strong>Scan</strong></li><li><span>04</span><strong>Retrieve</strong></li></ol>",
+      "css": ".ds-trace { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); border-block: 2px solid var(--color-slate); color: var(--color-slate); list-style: none; } .ds-trace li { min-height: 54px; padding: 16px; display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; animation: ds-trace-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both; } .ds-trace li + li { border-left: 1px solid var(--color-slate); } .ds-trace span { font: 500 0.72rem/1.3 var(--font-utility); letter-spacing: 0.06em; } .ds-trace strong { font: 600 1rem/1.2 var(--font-body); } .ds-trace li:hover { background: var(--color-chalk); } .ds-trace li:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: -4px; } @keyframes ds-trace-in { from { opacity: 0.35; transform: translateY(12px); } to { opacity: 1; transform: none; } } @media (prefers-reduced-motion: reduce) { .ds-trace li { opacity: 1; transform: none; animation-duration: 0.01ms; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Maintenance Artifact",
+    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, and identity plates. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nCondensed display type supplies the force of stamped headings and Asset Codes. Humanist body type keeps instructions and evidence readable, while monospaced labels make metadata, controls, stages, and system boundaries feel recorded. Pump blue identifies primary action, marigold marks a trace or selected edge, and verified green is reserved for positive state.",
+    "keyCharacteristics": [
+      "Hard-edged, square-cornered surfaces with visible construction.",
+      "Oversized condensed headings paired with compact monospaced record labels.",
+      "Flat plaster and chalk fields separated by slate rules.",
+      "Identity plates and ledgers as the recurring information forms.",
+      "Sparse, functional color that distinguishes action, trace, and state."
+    ],
+    "rules": [
+      {
+        "name": "The Hard-Ink Rule",
+        "body": "Slate rules define hierarchy. Do not replace borders and ruled divisions with low-contrast card shadows or decorative gradients.",
+        "section": "colors"
+      },
+      {
+        "name": "The Trace-Accent Rule",
+        "body": "Marigold appears as a narrow edge, focus ring, or compact label, never as a broad page wash.",
+        "section": "colors"
+      },
+      {
+        "name": "The State-Is-Redundant Rule",
+        "body": "Error, archived, active, and verified meaning must remain available in text or semantics, never color alone.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three-Voice Rule",
+        "body": "Condensed type states, Hind explains, and mono labels. Do not interchange those jobs for novelty.",
+        "section": "typography"
+      },
+      {
+        "name": "The Direct-Heading Rule",
+        "body": "Major headings begin the section directly; generic eyebrow text above a headline is not part of this system.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ledger-First Rule",
+        "body": "Repeated records use ruled rows and explicit columns on wide screens, then labeled stacked records on narrow screens. Do not convert the same information into unrelated card tiles.",
+        "section": "layout"
+      },
+      {
+        "name": "The Boundary Rule",
+        "body": "The landing trace sequence is reusable when explaining physical Asset to protected record traceability. Its exact hero composition, synthetic LFT-0007 plate, four-stage first-viewport rail, and section order are landing-surface expressions, not a template for authenticated screens.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Resting surfaces use borders and tonal fields. Do not add blur shadows, glass effects, or floating-card depth.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No-Radius Rule",
+        "body": "Buttons, fields, ledgers, plates, dialogs, labels, and navigation stay at zero radius.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Identity-Plate Rule",
+        "body": "An identity plate must visibly bind an Asset Code, Asset name, location or state metadata, and a square QR region inside one bordered record. It is not a generic content card.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do build hierarchy with plaster/chalk fields, slate rules, square geometry, and the three established type voices.",
+      "Do preserve canonical terms including Society, Member, Administrator, Resident, Technician, Unit, Asset, Asset Code, QR Token, and Archive.",
+      "Do keep controls keyboard operable, expose a visible :focus-visible treatment, and maintain 44px minimum targets on narrow screens.",
+      "Do stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.",
+      "Do honor prefers-reduced-motion: remove transitions, reduce animation duration to 0.01ms globally, and reveal trace stages without transform.",
+      "Do keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record."
+    ],
+    "donts": [
+      "Don't use gradients, background images, glassmorphism, blurred ambient shadows, rounded cards, pills, or soft floating containers.",
+      "Don't use a generic centered SaaS hero, feature-card grid, ornamental eyebrow, or decorative illustration in place of an implemented record form.",
+      "Don't promote the landing page's synthetic record, exact trace rail, or section sequence into a system-wide layout requirement.",
+      "Don't use marigold as a broad fill or verified green as decoration.",
+      "Don't communicate error, archive, active, or verified state through color alone.",
+      "Don't claim or visualize tickets, assignments, vendors, evidence, SLAs, notifications, analytics, verification, or history as shipped behavior.",
+      "Don't remove semantic landmarks, labels, skip links, programmatic errors, expected dialog focus/Escape behavior, or the single-main-landmark contract for visual cleanliness."
+    ]
+  }
+}
