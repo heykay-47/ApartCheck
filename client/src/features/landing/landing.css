@@ -1,13 +1,26 @@
 .landing-page {
   --landing-gutter: clamp(1.125rem, 4vw, 4rem);
   --landing-space: clamp(4rem, 9vw, 9rem);
+  position: relative;
   min-width: 0;
   overflow-x: hidden;
   color: var(--color-slate);
   background-color: var(--color-plaster);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 0H48M0 0V48' fill='none' stroke='%2320343b' stroke-opacity='.28'/%3E%3C/svg%3E");
-  background-size: 3rem 3rem;
   isolation: isolate;
+}
+
+.landing-page::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0 calc(var(--landing-gutter) / 2);
+  content: '';
+  pointer-events: none;
+  border-inline: 1px solid
+    color-mix(in srgb, var(--color-slate) 28%, transparent);
+}
+
+.landing-page main > section + section {
+  border-top: 1px solid color-mix(in srgb, var(--color-slate) 28%, transparent);
 }
 
 .landing-page :is(h1, h2, h3, p, ol, ul, dl, dd) {
