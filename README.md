@@ -16,7 +16,7 @@ work-order system, notification service, or analytics platform yet.
 flowchart LR
   B[Browser] -->|HTTPS and session cookie| E[Express API + static client]
   E -->|Mongoose TLS connection| M[(MongoDB Atlas)]
-  E --> H[/api/health/live and /api/health/ready]
+  E --> H["/api/health/live and /api/health/ready"]
 ```
 
 The client and API ship from one Render web service. `APP_BASE_URL` is the
