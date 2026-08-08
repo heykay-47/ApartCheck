@@ -1,17 +1,12 @@
 .landing-page {
   --landing-gutter: clamp(1.125rem, 4vw, 4rem);
-  --landing-rule: color-mix(in srgb, var(--color-slate) 28%, transparent);
   --landing-space: clamp(4rem, 9vw, 9rem);
   min-width: 0;
   overflow-x: hidden;
   color: var(--color-slate);
   background-color: var(--color-plaster);
-  background-image:
-    linear-gradient(var(--landing-rule) 1px, transparent 1px),
-    linear-gradient(90deg, var(--landing-rule) 1px, transparent 1px);
-  background-size:
-    100% 3rem,
-    3rem 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 0H48M0 0V48' fill='none' stroke='%2320343b' stroke-opacity='.28'/%3E%3C/svg%3E");
+  background-size: 3rem 3rem;
   isolation: isolate;
 }
 
@@ -168,12 +163,7 @@
   gap: 1.5rem 2rem;
   border: 2px solid var(--color-slate);
   box-shadow: 12px 0 0 var(--color-marigold);
-  background:
-    linear-gradient(90deg, var(--color-slate) 1px, transparent 1px) 1rem 1rem /
-      calc(100% - 2rem) 1px no-repeat,
-    linear-gradient(var(--color-slate) 1px, transparent 1px) 1rem 1rem / 1px
-      calc(100% - 2rem) no-repeat,
-    var(--color-chalk);
+  background: var(--color-chalk);
 }
 
 .trace-plate::before,
@@ -186,8 +176,10 @@
 }
 
 .trace-plate::before {
-  top: 0.45rem;
-  left: 0.45rem;
+  top: 1rem;
+  left: 1rem;
+  width: calc(100% - 2rem);
+  height: calc(100% - 2rem);
   border-width: 2px 0 0 2px;
 }
 
