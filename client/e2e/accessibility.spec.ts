@@ -109,6 +109,49 @@ async function assertVisibleFocus(page: Page, selector: string) {
     .not.toBe('none')
 }
 
+test('public landing page passes responsive and keyboard quality gates', async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', {
+        name: 'Put a record where the work begins.',
+      }),
+    ).toBeVisible()
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      )
+      .toBe(true)
+    await assertA11y(page)
+
+    const skipLink = page.getByRole('link', {
+      name: 'Skip to landing content',
+    })
+    await page.keyboard.press('Tab')
+    await expect(skipLink).toBeFocused()
+    await expect(skipLink).toBeVisible()
+    await skipLink.press('Enter')
+    await expect(page.locator('#landing-content')).toBeFocused()
+
+    const source = page.getByRole('link', { name: 'Inspect source' }).first()
+    await source.focus()
+    await assertVisibleFocus(page, 'a:has-text("Inspect source")')
+  }
+
+  const animatedStage = page.locator('.trace-stage').first()
+  await expect(animatedStage).toHaveCSS('animation-name', 'trace-stage-in')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect(animatedStage).toHaveCSS('animation-duration', '0.01ms')
+})
+
 test('admin screens pass axe and keyboard quality gates at both viewports', async ({
   page,
 }) => {
