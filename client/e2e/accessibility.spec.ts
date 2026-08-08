@@ -143,13 +143,19 @@ test('public landing page passes responsive and keyboard quality gates', async (
 
     const source = page.getByRole('link', { name: 'Inspect source' }).first()
     await source.focus()
-    await assertVisibleFocus(page, 'a:has-text("Inspect source")')
+    await assertVisibleFocus(page, 'header a:has-text("Inspect source")')
   }
 
   const animatedStage = page.locator('.trace-stage').first()
   await expect(animatedStage).toHaveCSS('animation-name', 'trace-stage-in')
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await expect(animatedStage).toHaveCSS('animation-duration', '0.01ms')
+  const reducedDuration = await animatedStage.evaluate((element) => {
+    const duration = getComputedStyle(element).animationDuration
+    return duration.endsWith('ms')
+      ? Number.parseFloat(duration)
+      : Number.parseFloat(duration) * 1000
+  })
+  expect(reducedDuration).toBe(0.01)
 })
 
 test('admin screens pass axe and keyboard quality gates at both viewports', async ({
