@@ -533,17 +533,23 @@
 
   .landing-hero {
     min-height: auto;
-    padding-top: 4rem;
+    padding-top: 3rem;
     gap: 3.5rem;
   }
 
   .landing-hero h1 {
     max-width: 7ch;
-    font-size: clamp(4.5rem, 22vw, 6.2rem);
+    font-size: clamp(4rem, 18.5vw, 6.2rem);
+  }
+
+  .landing-hero h1 + p,
+  .landing-hero .landing-actions {
+    margin-top: 1.5rem;
   }
 
   .landing-actions {
     display: grid;
+    gap: 0.75rem;
   }
 
   .landing-actions > * {
