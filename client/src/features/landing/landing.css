@@ -42,7 +42,7 @@
   background: var(--color-chalk);
 }
 
-.brand-mark {
+.landing-page .brand-mark {
   display: inline-flex;
   align-items: center;
   width: max-content;

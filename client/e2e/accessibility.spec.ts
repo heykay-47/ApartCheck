@@ -163,6 +163,20 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
 }) => {
   await authenticateAdmin(page)
 
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/dashboard')
+  const utilityWordmarkColors = await page
+    .locator('.utility-spine .brand-mark')
+    .evaluate((element) => {
+      const wordmark = getComputedStyle(element)
+      const spine = getComputedStyle(element.closest('.utility-spine')!)
+      return { background: spine.backgroundColor, text: wordmark.color }
+    })
+  expect(utilityWordmarkColors).toEqual({
+    background: 'rgb(32, 52, 59)',
+    text: 'rgb(251, 252, 248)',
+  })
+
   await exerciseKeyboardInteractions(page, { width: 360, height: 800 }, '201')
   await exerciseKeyboardInteractions(page, { width: 1440, height: 900 }, '202')
 
