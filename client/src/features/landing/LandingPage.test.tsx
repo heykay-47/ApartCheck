@@ -54,8 +54,17 @@ describe('landing page', () => {
       expect.stringContaining('Retrieve'),
     ])
     expect(screen.getByText('SHIPPED NOW')).toBeVisible()
+    expect(screen.getByText('Tickets')).toBeVisible()
+    expect(screen.getByText('Technician assignment')).toBeVisible()
+    expect(screen.getByText('Textual completion proof')).toBeVisible()
+    expect(screen.getByText('Administrator verification')).toBeVisible()
+    expect(screen.getByText('Immutable history')).toBeVisible()
+    expect(
+      screen.queryByText('IMPLEMENTED LOCALLY — NOT LIVE'),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('DIRECTION, NOT CLAIM')).toBeVisible()
     expect(screen.getByText(/demo credentials are private/i)).toBeVisible()
+    expect(screen.getByText('Asset & Ticket accountability')).toBeVisible()
   })
 
   it('uses the exact action labels for every repeated call to action', () => {

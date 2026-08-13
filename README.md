@@ -1,14 +1,8 @@
 # ApartCheck
 
-ApartCheck is a Phase 1 accountability ledger for apartment fixtures. It gives
-one society a shared answer to three questions: what fixture exists, where it
-is, and who owns its next action. Without that ledger, residents, technicians,
-and owners rely on conflicting spreadsheets, memory, and untraceable labels.
+ApartCheck is a deployed Asset and Ticket accountability ledger for one residential Society. It records what shared infrastructure exists, where it is, who owns the next action, what textual completion proof was submitted, and whether an Administrator verified the work.
 
-Phase 1 covers one deployable society workflow: owner-admin setup and recovery,
-units, users, fixture assets, QR lookup, role boundaries, session invalidation,
-and a resident/technician read-only view. It is not a multi-property product,
-work-order system, notification service, or analytics platform yet.
+The shipped workflow covers Administrator setup and recovery, Units, Members, shared Assets, protected QR lookup, role boundaries, session invalidation, and the complete internal Ticket lifecycle. It is not a multi-property platform, vendor system, notification service, or analytics product.
 
 ## Architecture
 
@@ -133,8 +127,7 @@ account disable invalidate older sessions.
 cold-start the free service; the first request can take longer while the process
 and Atlas connection wake.
 
-Manual provisioning and verification are required. No Atlas cluster, Render
-service, credentials, or public deployment is claimed by this repository.
+The public Render service is provisioned and verified at the URL below. New deployments still require the same secret configuration, health checks, and browser acceptance before their URL or revision can be claimed as verified.
 
 1. Create an Atlas M0 cluster, a dedicated database user restricted to the
    ApartCheck database, and a TLS URI. Add the service-specific CIDR ranges from
@@ -159,14 +152,11 @@ until these checks pass.
 
 **Public URL:** https://apartcheck-heykay-47.onrender.com
 
-## Ticket workflow implemented locally
+## Deployed Ticket workflow
 
-The local Phase 2 client and API implement a complete Society-scoped maintenance
-Ticket path: a Resident or Administrator reports a Unit issue, an Administrator
-assigns one Technician, the Technician records work and submits a textual
-completion summary, and an Administrator verifies or returns the work. Each
-lifecycle mutation appends immutable Ticket history. This slice is implemented
-and testable locally, but is not claimed as a new live deployment.
+The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician, the Technician records work and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history.
+
+The Phase 2 bundle, health endpoints, and direct Ticket route are verified on the public Render service. Automated local coverage exercises the full Resident → Administrator → Technician → Administrator lifecycle; live role-by-role manual Ticket acceptance is not claimed yet.
 
 ## Later direction
 

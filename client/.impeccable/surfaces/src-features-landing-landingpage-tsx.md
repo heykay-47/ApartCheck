@@ -15,7 +15,7 @@ Portfolio reviewers evaluating product thinking, engineering, security, accessib
 
 ## Proof and Constraints
 
-Demonstrate the physical Asset → Asset Code and label → protected QR → Society-scoped record mechanism. Use only shipped Phase 1 evidence and explicitly separate future direction. Static, dependency-free, responsive from 360px, and accessible with reduced motion.
+Demonstrate the physical Asset → Asset Code and label → protected QR → Society-scoped record mechanism. Use only verified shipped evidence and explicitly separate future direction. Static, dependency-free, responsive from 360px, and accessible with reduced motion.
 
 ## Chosen Direction
 
