@@ -2,7 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { readFileSync } from 'node:fs'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   advanceSession,
@@ -11,9 +11,13 @@ import {
 } from '../../app/api'
 import { queryClient } from '../../app/query-client'
 import { TicketForm } from './TicketForm'
+import { TicketDetailPage } from './TicketDetailPage'
 import { TicketsPage } from './TicketsPage'
+import { formatTicketDate } from './ticket-format'
+import type { Ticket } from './ticket-api'
 
 const globalCss = readFileSync('src/styles/global.css', 'utf8')
+const tokensCss = readFileSync('src/styles/tokens.css', 'utf8')
 
 function renderWithClient(
   element: React.ReactNode,
@@ -43,6 +47,13 @@ const administrator = {
   name: 'Administrator One',
   email: 'admin@test',
   role: 'admin',
+  mustChangePassword: false,
+}
+const technician = {
+  id: 't1',
+  name: 'Technician One',
+  email: 'technician@test',
+  role: 'technician',
   mustChangePassword: false,
 }
 const unit = {
@@ -76,6 +87,72 @@ const ticket = {
   assignee: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
+}
+
+const detailTicket: Ticket = {
+  id: 't1',
+  title: 'Lift vibration',
+  description:
+    'The passenger lift vibrates during travel and needs a guide inspection.',
+  status: 'in_progress',
+  unit: {
+    id: 'u1',
+    building: 'Tower A',
+    floor: '4',
+    unitNumber: '401',
+    active: true,
+  },
+  asset: {
+    id: 'asset1',
+    assetCode: 'LFT-0007',
+    name: 'Passenger lift',
+    active: true,
+  },
+  reporter: { id: 'r1', name: 'Resident One' },
+  assignee: {
+    id: technician.id,
+    name: technician.name,
+    active: true,
+    role: 'technician',
+  },
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-02T12:30:00.000Z',
+  events: [
+    {
+      id: 'event1',
+      type: 'created',
+      fromStatus: null,
+      toStatus: 'open',
+      actor: { id: 'r1', name: 'Resident One' },
+      assignee: null,
+      note: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
+  ],
+}
+
+function renderTicketDetail(item: Ticket) {
+  renderWithClient(
+    <Routes>
+      <Route path="/tickets/:id" element={<TicketDetailPage />} />
+    </Routes>,
+    [`/tickets/${item.id}`],
+  )
+}
+
+function mockTicketDetail(
+  actor: typeof administrator | typeof technician,
+  item: Ticket,
+  action?: (url: string, init?: RequestInit) => Promise<Response> | undefined,
+) {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+    const url = String(input)
+    if (url.endsWith('/api/auth/me'))
+      return Promise.resolve(new Response(JSON.stringify({ user: actor })))
+    if (url === `/api/tickets/${item.id}`)
+      return Promise.resolve(new Response(JSON.stringify({ ticket: item })))
+    return action?.(url, init) ?? Promise.resolve(new Response('{}'))
+  })
 }
 
 function mockResidentTicketLedger() {
@@ -218,6 +295,134 @@ describe('Ticket client workflow', () => {
     await expect(request).rejects.toMatchObject({ name: 'AbortError' })
     expect(getSessionGeneration()).toBe(generation + 1)
     expect(queryClient.getQueryData(['ticket', 't1'])).toBeUndefined()
+  })
+
+  it('formats Ticket records consistently and lets Modal focus completion evidence', async () => {
+    mockTicketDetail(technician, detailTicket)
+    const actor = userEvent.setup()
+    renderTicketDetail(detailTicket)
+
+    expect(
+      await screen.findAllByText(formatTicketDate(detailTicket.createdAt)),
+    ).not.toHaveLength(0)
+    expect(
+      screen.getByRole('button', { name: 'Submit completion' }),
+    ).toBeVisible()
+
+    await actor.click(screen.getByRole('button', { name: 'Submit completion' }))
+    const summary = screen.getByLabelText('Completion summary')
+    expect(summary).toHaveFocus()
+    expect(summary).not.toHaveAttribute('autofocus')
+  })
+
+  it('announces a pending completion submission on its disabled action', async () => {
+    mockTicketDetail(technician, detailTicket, (url) => {
+      if (url === '/api/tickets/t1/submit') return new Promise(() => undefined)
+    })
+    const actor = userEvent.setup()
+    renderTicketDetail(detailTicket)
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Submit completion' }),
+    )
+    await actor.type(
+      screen.getByLabelText('Completion summary'),
+      'Replaced the worn lift guide.',
+    )
+    await actor.click(screen.getByRole('button', { name: 'Confirm' }))
+
+    const saving = await screen.findByRole('button', { name: 'Saving…' })
+    expect(saving).toBeDisabled()
+    expect(saving).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('exposes only Administrator verification actions as one named group', async () => {
+    const awaitingVerification: Ticket = {
+      ...detailTicket,
+      status: 'awaiting_verification',
+    }
+    mockTicketDetail(administrator, awaitingVerification, (url) => {
+      if (url === '/api/tickets/t1/verify') return new Promise(() => undefined)
+    })
+    const actor = userEvent.setup()
+    renderTicketDetail(awaitingVerification)
+
+    expect(
+      await screen.findByRole('group', { name: 'Ticket actions' }),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Verify work' })).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Return for rework' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: 'Submit completion' }),
+    ).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Start work' })).toBeNull()
+
+    await actor.click(screen.getByRole('button', { name: 'Verify work' }))
+    await actor.click(screen.getByRole('button', { name: 'Confirm' }))
+    const saving = await screen.findByRole('button', { name: 'Saving…' })
+    expect(saving).toBeDisabled()
+    expect(saving).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('identifies technician search and exposes assignment progress', async () => {
+    mockTicketDetail(administrator, detailTicket, (url) => {
+      if (url.startsWith('/api/tickets/eligible-technicians?'))
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              technicians: [
+                {
+                  id: 't2',
+                  name: 'R. Shah',
+                  email: 'technician@example.com',
+                },
+              ],
+              pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
+            }),
+          ),
+        )
+      if (url === '/api/tickets/t1/assignment')
+        return new Promise(() => undefined)
+    })
+    const actor = userEvent.setup()
+    renderTicketDetail(detailTicket)
+
+    await actor.click(
+      await screen.findByRole('button', { name: 'Reassign technician' }),
+    )
+    const search = screen.getByLabelText('Search active technicians')
+    expect(search).toHaveAttribute('name', 'technicianSearch')
+    expect(search).toHaveAttribute('autocomplete', 'off')
+    expect(search).toHaveAttribute(
+      'placeholder',
+      'Example: R. Shah or technician@example.com…',
+    )
+
+    await actor.selectOptions(await screen.findByLabelText('Technician'), 't2')
+    await actor.click(screen.getByRole('button', { name: 'Save assignment' }))
+    const saving = await screen.findByRole('button', {
+      name: 'Saving assignment…',
+    })
+    expect(saving).toBeDisabled()
+    expect(saving).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('hardens long Ticket records and narrow-screen action targets', () => {
+    expect(tokensCss).toMatch(/--color-error:\s*#a32626/)
+    expect(globalCss).toMatch(
+      /\.ticket-detail-page \.lede,[\s\S]*?\.ticket-detail-page \.eyebrow\s*\{[^}]*overflow-wrap:\s*anywhere[^}]*\}/,
+    )
+    expect(globalCss).toMatch(
+      /\.ticket-actions\s*\{[^}]*padding:\s*18px 0[^}]*border-top:\s*2px solid var\(--color-slate\)[^}]*border-bottom:\s*1px solid rgb\(32 52 59 \/ 0\.35\)[^}]*\}/,
+    )
+    expect(globalCss).toMatch(
+      /\.ticket-event time,\s*\.ticket-definition time\s*\{[^}]*font-variant-numeric:\s*tabular-nums[^}]*\}/,
+    )
+    expect(globalCss).toMatch(
+      /@media\s*\(max-width:\s*700px\)[\s\S]*?\.ticket-actions\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*1fr[^}]*\}[\s\S]*?\.ticket-actions > \*\s*\{[^}]*width:\s*100%[^}]*min-height:\s*44px[^}]*\}[\s\S]*?\.ticket-detail-page \.dialog-actions > \*\s*\{[^}]*min-height:\s*44px[^}]*\}/,
+    )
   })
 
   it('keeps the Resident Unit fixed to the authenticated /units/me response', async () => {
