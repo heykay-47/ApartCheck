@@ -1,4 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
+import { readFileSync } from 'node:fs'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
@@ -11,6 +12,8 @@ import {
 import { queryClient } from '../../app/query-client'
 import { TicketForm } from './TicketForm'
 import { TicketsPage } from './TicketsPage'
+
+const globalCss = readFileSync('src/styles/global.css', 'utf8')
 
 function renderWithClient(
   element: React.ReactNode,
@@ -139,6 +142,35 @@ describe('Ticket client workflow', () => {
       expect(screen.getByLabelText('Current location')).toHaveTextContent(
         '?search=pump&status=assigned',
       ),
+    )
+  })
+
+  it.each([
+    ['/tickets?search=lift&page=1&status=bogus', '?search=lift'],
+    ['/tickets?search=lift&page=abc', '?search=lift'],
+    ['/tickets?search=lift&page=0', '?search=lift'],
+  ])('normalizes invalid ledger URL state from %s', async (entry, expected) => {
+    mockResidentTicketLedger()
+    renderWithClient(
+      <>
+        <TicketsPage />
+        <LocationProbe />
+      </>,
+      [entry],
+    )
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Current location').textContent).toBe(
+        expected,
+      ),
+    )
+    expect(screen.getByLabelText('Search tickets')).toHaveValue('lift')
+    expect(screen.getByLabelText('Ticket status filter')).toHaveValue('')
+  })
+
+  it('keeps narrow-screen pagination targets at least 44px high', () => {
+    expect(globalCss).toMatch(
+      /@media\s*\(max-width:\s*700px\)[\s\S]*?\.tickets-page\s+\.pagination\s+\.text-button\s*\{[^}]*min-height:\s*44px/,
     )
   })
 

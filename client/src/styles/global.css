@@ -635,6 +635,9 @@ body {
     align-items: center;
     justify-content: center;
   }
+  .tickets-page .pagination .text-button {
+    min-height: 44px;
+  }
   .ticket-row {
     grid-template-columns: 1fr;
     gap: 6px;

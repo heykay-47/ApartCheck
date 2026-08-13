@@ -1,4 +1,4 @@
-import { useDeferredValue } from 'react'
+import { useDeferredValue, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCurrentUser } from '../auth/auth-api'
 import { useTickets, ticketStatuses, type TicketStatus } from './ticket-api'
@@ -16,6 +16,11 @@ export function TicketsPage() {
     : ''
   const rawPage = Number(searchParams.get('page') ?? '1')
   const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1
+  const canonicalParams = new URLSearchParams()
+  if (search) canonicalParams.set('search', search)
+  if (status) canonicalParams.set('status', status)
+  if (page > 1) canonicalParams.set('page', String(page))
+  const canonicalSearchParams = canonicalParams.toString()
   const deferredSearch = useDeferredValue(search)
   const filters = {
     page,
@@ -26,6 +31,12 @@ export function TicketsPage() {
   const tickets = useTickets(filters)
   const pagination = tickets.data?.pagination
   const reportable = user?.role === 'admin' || user?.role === 'resident'
+
+  useEffect(() => {
+    if (searchParams.toString() !== canonicalSearchParams) {
+      setSearchParams(canonicalSearchParams, { replace: true })
+    }
+  }, [canonicalSearchParams, searchParams, setSearchParams])
 
   function setFilters(next: {
     search?: string
