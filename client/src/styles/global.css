@@ -636,6 +636,7 @@ body {
     justify-content: center;
   }
   .tickets-page .pagination .text-button {
+    min-width: 44px;
     min-height: 44px;
   }
   .ticket-row {

@@ -168,10 +168,13 @@ describe('Ticket client workflow', () => {
     expect(screen.getByLabelText('Ticket status filter')).toHaveValue('')
   })
 
-  it('keeps narrow-screen pagination targets at least 44px high', () => {
-    expect(globalCss).toMatch(
-      /@media\s*\(max-width:\s*700px\)[\s\S]*?\.tickets-page\s+\.pagination\s+\.text-button\s*\{[^}]*min-height:\s*44px/,
-    )
+  it('keeps narrow-screen pagination targets at least 44px square', () => {
+    const rule = globalCss.match(
+      /@media\s*\(max-width:\s*700px\)[\s\S]*?\.tickets-page\s+\.pagination\s+\.text-button\s*\{([^}]*)\}/,
+    )?.[1]
+
+    expect(rule).toMatch(/min-width:\s*44px/)
+    expect(rule).toMatch(/min-height:\s*44px/)
   })
 
   it('rejects a stale protected response after the session boundary advances', async () => {
