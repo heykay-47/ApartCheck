@@ -320,6 +320,7 @@ export function TicketDetailPage() {
           title="Start work?"
           message="This records that the assigned Technician has started work."
           pending={start.isPending}
+          error={start.error}
           onConfirm={() =>
             start.mutate(undefined, {
               onSuccess: () => {
@@ -337,6 +338,7 @@ export function TicketDetailPage() {
           title="Verify completed work?"
           message="This closes the ticket as completed."
           pending={verify.isPending}
+          error={verify.error}
           onConfirm={() =>
             verify.mutate(undefined, {
               onSuccess: () => {
@@ -354,6 +356,7 @@ export function TicketDetailPage() {
           title="Archive this ticket?"
           message="Archived tickets leave active ledgers but retain their immutable history."
           pending={archive.isPending}
+          error={archive.error}
           onConfirm={() =>
             archive.mutate(item.id, { onSuccess: () => setConfirming(null) })
           }
@@ -543,6 +546,7 @@ function ConfirmDialog({
   title,
   message,
   pending,
+  error,
   onConfirm,
   onClose,
   fallbackFocusRef,
@@ -550,10 +554,12 @@ function ConfirmDialog({
   title: string
   message: string
   pending: boolean
+  error: unknown
   onConfirm: () => void
   onClose: () => void
   fallbackFocusRef: RefObject<HTMLElement | null>
 }) {
+  const apiError = error instanceof ApiError ? error : undefined
   return (
     <Modal
       labelledBy="confirm-title"
@@ -563,6 +569,7 @@ function ConfirmDialog({
     >
       <h2 id="confirm-title">{title}</h2>
       <p>{message}</p>
+      <Feedback message={apiError?.message} />
       <div className="dialog-actions">
         <button
           className="primary-button"

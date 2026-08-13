@@ -267,6 +267,33 @@ describe('Ticket client workflow', () => {
     expect(screen.getByLabelText('Ticket status filter')).toHaveValue('')
   })
 
+  it('announces that the Ticket ledger is unavailable when its query fails', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me'))
+        return new Response(JSON.stringify({ user }))
+      if (url.startsWith('/api/tickets?'))
+        return new Response(
+          JSON.stringify({
+            error: {
+              code: 'TICKETS_UNAVAILABLE',
+              message: 'Tickets are unavailable.',
+            },
+          }),
+          { status: 503 },
+        )
+      return new Response('{}')
+    })
+
+    renderWithClient(<TicketsPage />)
+
+    expect(
+      await screen.findByText('Tickets are unavailable. Try again.'),
+    ).toBeVisible()
+    const resultStatus = screen.getByText('Ticket ledger unavailable.')
+    expect(resultStatus).toHaveAttribute('aria-live', 'polite')
+  })
+
   it('keeps narrow-screen pagination targets at least 44px square', () => {
     const rule = globalCss.match(
       /@media\s*\(max-width:\s*700px\)[\s\S]*?\.tickets-page\s+\.pagination\s+\.text-button\s*\{([^}]*)\}/,
@@ -364,6 +391,38 @@ describe('Ticket client workflow', () => {
     const saving = await screen.findByRole('button', { name: 'Saving…' })
     expect(saving).toBeDisabled()
     expect(saving).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('keeps a failed confirmation open and announces the server message', async () => {
+    const assignedTicket: Ticket = {
+      ...detailTicket,
+      status: 'assigned',
+    }
+    mockTicketDetail(technician, assignedTicket, (url) => {
+      if (url === '/api/tickets/t1/start-work')
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: {
+                code: 'TICKET_STATE_CHANGED',
+                message: 'This Ticket has already moved to another status.',
+              },
+            }),
+            { status: 409 },
+          ),
+        )
+    })
+    const actor = userEvent.setup()
+    renderTicketDetail(assignedTicket)
+
+    await actor.click(await screen.findByRole('button', { name: 'Start work' }))
+    await actor.click(screen.getByRole('button', { name: 'Confirm' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(
+      'This Ticket has already moved to another status.',
+    )
+    expect(screen.getByRole('heading', { name: 'Start work?' })).toBeVisible()
   })
 
   it('identifies technician search and exposes assignment progress', async () => {
@@ -577,6 +636,56 @@ describe('Ticket client workflow', () => {
       'placeholder',
       'Describe what is happening, where it occurs, and what needs attention…',
     )
+  })
+
+  it('retains one option for an Asset selected before the search changes', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me'))
+        return new Response(JSON.stringify({ user: administrator }))
+      if (url.startsWith('/api/units?'))
+        return new Response(
+          JSON.stringify({
+            units: [unit],
+            pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
+          }),
+        )
+      if (url === '/api/assets/a1')
+        return new Response(JSON.stringify({ asset }))
+      if (url.startsWith('/api/assets?')) {
+        const search = new URL(url, 'http://localhost').searchParams.get(
+          'search',
+        )
+        return new Response(
+          JSON.stringify({
+            assets: search ? [] : [asset],
+            pagination: {
+              page: 1,
+              pageSize: 25,
+              total: search ? 0 : 1,
+              pages: search ? 0 : 1,
+            },
+          }),
+        )
+      }
+      return new Response('{}')
+    })
+    const actor = userEvent.setup()
+    renderWithClient(<TicketForm />, ['/tickets/new'])
+
+    const assetSelect = await screen.findByLabelText('Asset (optional)')
+    await waitFor(() =>
+      expect(assetSelect.querySelector('option[value="a1"]')).not.toBeNull(),
+    )
+    await actor.selectOptions(assetSelect, 'a1')
+    await actor.type(
+      screen.getByLabelText('Find an asset (optional)'),
+      'electrical',
+    )
+
+    await screen.findByText('No active Assets match this search.')
+    expect(assetSelect).toHaveValue('a1')
+    expect(assetSelect.querySelectorAll('option[value="a1"]')).toHaveLength(1)
   })
 
   it('exposes unavailable Unit and Asset lookup states', async () => {

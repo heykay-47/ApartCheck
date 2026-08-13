@@ -45,7 +45,7 @@ export function TicketForm() {
     search: assetSearch,
     category: '',
   })
-  const prefilledAsset = useAsset(assetId)
+  const selectedAsset = useAsset(values.assetId ?? '')
   const create = useCreateTicket()
   const error = create.error instanceof ApiError ? create.error : undefined
   const selectedUnit = useUnit(user?.role === 'admin' ? values.unitId : '')
@@ -56,11 +56,6 @@ export function TicketForm() {
       setValues((current) => ({ ...current, unitId: myUnit.data.unit.id }))
     }
   }, [myUnit.data])
-  useEffect(() => {
-    if (assetId && prefilledAsset.data) {
-      setValues((current) => ({ ...current, assetId }))
-    }
-  }, [assetId, prefilledAsset.data])
   useEffect(() => () => resetCreate(), [resetCreate])
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -78,9 +73,7 @@ export function TicketForm() {
     (asset) => asset.id === values.assetId,
   )
   const unitOption = chosenUnit ?? selectedUnit.data
-  const assetOption =
-    chosenAsset ??
-    (assetId && prefilledAsset.data ? prefilledAsset.data : undefined)
+  const assetOption = chosenAsset ?? selectedAsset.data
   const unitOptions = uniqueOptions([unitOption, ...(units.data?.units ?? [])])
   const assetOptions = uniqueOptions([
     assetOption,

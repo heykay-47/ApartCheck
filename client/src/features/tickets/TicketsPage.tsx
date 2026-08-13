@@ -105,9 +105,11 @@ export function TicketsPage() {
         ) : null}
       </div>
       <p className="ticket-result-count" aria-live="polite">
-        {tickets.data
-          ? `${tickets.data.pagination.total} ${tickets.data.pagination.total === 1 ? 'ticket' : 'tickets'} on record`
-          : 'Reading Ticket ledger…'}
+        {tickets.isError
+          ? 'Ticket ledger unavailable.'
+          : tickets.data
+            ? `${tickets.data.pagination.total} ${tickets.data.pagination.total === 1 ? 'ticket' : 'tickets'} on record`
+            : 'Reading Ticket ledger…'}
       </p>
       <div className="ticket-ledger">
         <div className="ticket-row ticket-header">
