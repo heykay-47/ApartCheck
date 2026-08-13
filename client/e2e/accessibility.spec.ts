@@ -219,6 +219,50 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
     })
   expect(transition).toEqual({ duration: '0s', testId: 'identity-plate' })
 
+  await page.goto(`/tickets/new?assetId=${createdAsset.asset.id}`)
+  await page
+    .getByLabel('Unit', { exact: true })
+    .selectOption({ label: 'A11y Tower 201 / 1 / A-201' })
+  await page.getByLabel('Title').fill('A11y ticket')
+  await page
+    .getByLabel('Description')
+    .fill('A ticket description long enough for the workflow.')
+  await page.getByRole('button', { name: 'Report ticket' }).click()
+  await expect(page).toHaveURL(/\/tickets\/.+/)
+  await expect(page.getByRole('heading', { name: 'A11y ticket' })).toBeVisible()
+  await assertA11y(page)
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    )
+    .toBe(true)
+  await page.keyboard.press('Tab')
+  await page.getByRole('button', { name: 'Assign technician' }).focus()
+  await assertVisibleFocus(page, 'button:has-text("Assign technician")')
+  await page.getByRole('button', { name: 'Assign technician' }).press('Enter')
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await assertA11y(page)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(
+    page.getByRole('button', { name: 'Assign technician' }),
+  ).toBeFocused()
+
+  await page.setViewportSize({ width: 360, height: 800 })
+  await page.goto('/tickets')
+  await assertA11y(page)
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    )
+    .toBe(true)
+
+  await page.goto(`/assets/${createdAsset.asset.id}`)
+  await expect(page.getByTestId('identity-plate')).toBeVisible()
   for (const selector of [
     'a:has-text("Back to ledger")',
     'button:has-text("Edit asset")',

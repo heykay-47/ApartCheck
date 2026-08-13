@@ -3,7 +3,8 @@ import { SocietyModel } from '../src/features/societies/society.model.js'
 import { UnitModel } from '../src/features/units/unit.model.js'
 import { UserModel } from '../src/features/users/user.model.js'
 import { AssetModel } from '../src/features/assets/asset.model.js'
-
+import { TicketModel } from '../src/features/tickets/ticket.model.js'
+import { TicketEventModel } from '../src/features/tickets/ticket-event.model.js'
 process.env.NODE_ENV = 'test'
 const port = Number(process.env.PORT ?? process.env.E2E_SERVER_PORT ?? 3000)
 process.env.PORT = String(port)
@@ -25,6 +26,8 @@ await Promise.all([
   UnitModel.init(),
   UserModel.init(),
   AssetModel.init(),
+  TicketModel.init(),
+  TicketEventModel.init(),
 ])
 
 const server = createApp().listen(port, '127.0.0.1', () => {

@@ -18,17 +18,17 @@ Within the product, a Society has three Member roles:
 
 ## Product Purpose
 
-ApartCheck demonstrates a complete, deployable Phase 1 foundation for accountable maintenance operations in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and proves role and Society boundaries end to end.
+ApartCheck demonstrates a complete, deployable Phase 1 foundation and a locally implemented Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, notes-only completion proof, Administrator verification, and immutable history.
 
-Success means the shipped workflow is understandable, secure, accessible at desktop and phone widths, verifiable through automated tests, and usable in a live synthetic demonstration without implying capabilities that are not implemented.
+Success means the shipped workflow is understandable, secure, accessible at desktop and phone widths, verifiable through automated tests, and usable in a live synthetic demonstration without implying capabilities that are not implemented or publicly verified.
 
-The longer-term direction is an evidence-backed accountability workflow connecting issues, physical Assets, assignments, vendor work, costs, proof, verification, and history. Those capabilities are future direction, not current product behavior.
+The longer-term direction is an evidence-backed accountability workflow connecting Tickets, physical Assets, assignments, vendor work, costs, proof, verification, and history. Vendor identity, costs, uploads/media, SLA/due-date policy, notifications, analytics/exports, integrations, and multiple-Society administration remain future direction.
 
 ## Positioning
 
 ApartCheck is an Asset identity and accountability foundation rather than a generic property-management dashboard or helpdesk. Its distinguishing mechanism is the durable bridge between a shared physical Asset, its human-readable Asset Code, its printable QR label, and a Society-scoped authenticated record.
 
-Phase 1 answers what the Asset is and where it is. It creates the trustworthy identity and access layer needed for future action ownership and evidence-backed closure; it does not currently claim to assign, track, or verify maintenance work.
+Phase 1 answers what the Asset is and where it is. The local Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual completion proof was submitted, and whether an Administrator verified it. Public deployment verification for this Ticket behavior remains outstanding.
 
 ## Operating Context
 
@@ -42,7 +42,8 @@ The production demonstration runs as one same-origin web service backed by Mongo
 - Administrators can manage Units, Members, and Assets; Asset records support search, category filtering, editing, archiving, printable identity plates, QR download, and protected QR lookup.
 - Roles are exactly Administrator, Resident, and Technician. Asset categories are exactly Lift, Plumbing, and Electrical. Every resource operation is scoped by the authenticated Society.
 - Unknown, archived, malformed, and cross-Society QR lookups must remain indistinguishable. Browser code never reads session tokens, and temporary passwords must never be persisted, cached, stored, or logged.
-- Phase 1 supports one Society and a minimum viewport width of 360 pixels. Tickets, assignments, vendors, evidence, SLAs, notifications, analytics, multiple-Society administration, offline scanning, and native clients are deferred.
+- Phase 2 is implemented locally: Residents and Administrators report Tickets; Administrators assign active Technicians, verify or return work, cancel/archive terminal records; Technicians submit notes-only completion proof; immutable Ticket history is visible to authorized roles. Public verification remains outstanding.
+- Vendors, costs, uploads/media, SLAs, notifications, analytics/exports, multiple-Society administration, offline scanning, and native clients remain future direction.
 
 ## Brand Commitments
 

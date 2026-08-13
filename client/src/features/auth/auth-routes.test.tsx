@@ -8,7 +8,7 @@ import {
   MemoryRouter,
   RouterProvider,
 } from 'react-router-dom'
-import { api, ApiError } from '../../app/api'
+import { api, ApiError, getSessionGeneration } from '../../app/api'
 import { routes } from '../../app/router'
 import { safeReturnTo } from '../../app/return-to'
 import { LoginPage } from './LoginPage'
@@ -65,6 +65,46 @@ describe('api wrapper', () => {
     expect(queryClient.getQueryData(['current-user'])).toEqual({
       user: undefined,
     })
+  })
+
+  it('does not abort login when an anonymous session check returns 401', async () => {
+    let resolveSessionCheck: (response: Response) => void = () => undefined
+    let resolveLogin: (response: Response) => void = () => undefined
+    const sessionCheck = new Promise<Response>((resolve) => {
+      resolveSessionCheck = resolve
+    })
+    const loginResponse = new Promise<Response>((resolve) => {
+      resolveLogin = resolve
+    })
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation((input) =>
+        String(input).endsWith('/api/auth/me') ? sessionCheck : loginResponse,
+      )
+    const generation = getSessionGeneration()
+    const check = api('/api/auth/me')
+    const checkFailure = expect(check).rejects.toBeInstanceOf(ApiError)
+    const login = api<{ user: { id: string } }>(
+      '/api/auth/login',
+      { method: 'POST', body: '{}' },
+      { ignoreSessionBoundary: true },
+    )
+
+    resolveSessionCheck(new Response('', { status: 401 }))
+    await waitFor(() => expect(getSessionGeneration()).toBe(generation + 1))
+    resolveLogin(
+      new Response(JSON.stringify({ user: { id: 'admin-1' } }), {
+        status: 200,
+      }),
+    )
+
+    await checkFailure
+    await expect(login).resolves.toEqual({ user: { id: 'admin-1' } })
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).endsWith('/api/auth/login'),
+      ),
+    ).toBe(true)
   })
 })
 
@@ -265,6 +305,52 @@ describe('auth routes', () => {
       await screen.findByText('Unable to check setup status.'),
     ).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Create society' })).toBeNull()
+  })
+
+  it('stores the bootstrap identity before entering protected routes', async () => {
+    const actor = {
+      id: 'admin-1',
+      name: 'Administrator',
+      email: 'admin@example.com',
+      phone: '+14155550100',
+      role: 'admin',
+      mustChangePassword: false,
+    }
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      if (String(input).endsWith('/api/bootstrap/status'))
+        return new Response(JSON.stringify({ initialized: false }))
+      return new Response(
+        JSON.stringify({ society: { id: 'society-1' }, user: actor }),
+        { status: 201 },
+      )
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <SetupPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await screen.findByLabelText('Society name')
+    await user.type(screen.getByLabelText('Society name'), 'Society')
+    await user.type(screen.getByLabelText('Address'), 'Address')
+    await user.type(
+      screen.getByLabelText('Administrator name'),
+      'Administrator',
+    )
+    await user.type(screen.getByLabelText('Email'), actor.email)
+    await user.type(screen.getByLabelText('Phone'), actor.phone)
+    await user.type(screen.getByLabelText('Password'), 'administrator-password')
+    await user.click(screen.getByRole('button', { name: 'Create society' }))
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(['current-user'])).toEqual({
+        society: { id: 'society-1' },
+        user: actor,
+      }),
+    )
   })
 
   it.each([

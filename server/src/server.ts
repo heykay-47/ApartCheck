@@ -5,7 +5,8 @@ import { SocietyModel } from './features/societies/society.model.js'
 import { UnitModel } from './features/units/unit.model.js'
 import { UserModel } from './features/users/user.model.js'
 import { AssetModel } from './features/assets/asset.model.js'
-
+import { TicketModel } from './features/tickets/ticket.model.js'
+import { TicketEventModel } from './features/tickets/ticket-event.model.js'
 export async function startServer(): Promise<void> {
   const app = createApp()
 
@@ -15,6 +16,8 @@ export async function startServer(): Promise<void> {
     UnitModel.init(),
     UserModel.init(),
     AssetModel.init(),
+    TicketModel.init(),
+    TicketEventModel.init(),
   ])
   const server = app.listen(env.PORT, () => {
     process.stdout.write(`ApartCheck listening on ${env.PORT}\n`)

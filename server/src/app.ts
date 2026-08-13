@@ -17,7 +17,7 @@ import { societyRoutes } from './features/societies/society.routes.js'
 import { unitRoutes } from './features/units/unit.routes.js'
 import { userRoutes } from './features/users/user.routes.js'
 import { assetRoutes, scanRoutes } from './features/assets/asset.routes.js'
-
+import { ticketRoutes } from './features/tickets/ticket.routes.js'
 type AppOptions = {
   clientDistPath?: string
 }
@@ -71,6 +71,9 @@ export function createApp(options: AppOptions = {}): Express {
   const protectedScanRoutes = createProtectedApiRouter()
   protectedScanRoutes.use(scanRoutes)
   app.use('/api/scan', protectedScanRoutes)
+  const protectedTicketRoutes = createProtectedApiRouter()
+  protectedTicketRoutes.use(ticketRoutes)
+  app.use('/api/tickets', protectedTicketRoutes)
   if (env.NODE_ENV === 'test') {
     const testProtectedApiRoutes = createProtectedApiRouter()
     const testResourceRoutes = Router()

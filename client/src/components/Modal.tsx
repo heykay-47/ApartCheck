@@ -1,14 +1,16 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 
 export function Modal({
   labelledBy,
   className,
   onClose,
+  fallbackFocusRef,
   children,
 }: {
   labelledBy: string
   className: string
   onClose: () => void
+  fallbackFocusRef?: RefObject<HTMLElement | null>
   children: ReactNode
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -27,9 +29,12 @@ export function Modal({
 
     return () => {
       if (dialog.open && typeof dialog.close === 'function') dialog.close()
-      previousFocus?.focus()
+      const focusTarget = previousFocus?.isConnected
+        ? previousFocus
+        : fallbackFocusRef?.current
+      focusTarget?.focus()
     }
-  }, [])
+  }, [fallbackFocusRef])
 
   return (
     <dialog

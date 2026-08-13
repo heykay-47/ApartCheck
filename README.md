@@ -159,10 +159,19 @@ until these checks pass.
 
 **Public URL:** https://apartcheck-heykay-47.onrender.com
 
-## Deferred Phase 2
+## Ticket workflow implemented locally
 
+The local Phase 2 client and API implement a complete Society-scoped maintenance
+Ticket path: a Resident or Administrator reports a Unit issue, an Administrator
+assigns one Technician, the Technician records work and submits a textual
+completion summary, and an Administrator verifies or returns the work. Each
+lifecycle mutation appends immutable Ticket history. This slice is implemented
+and testable locally, but is not claimed as a new live deployment.
+
+## Later direction
+
+- Vendors, costs, uploads and richer media evidence
+- SLA and due-date policy, notifications, analytics, exports, and integrations
 - Multiple societies per owner and cross-property administration
-- Work orders, assignment queues, due dates, and audit history
-- Notifications, exports, integrations, and scheduled reporting
-- Offline scanning, native mobile clients, and richer asset media
-- Production observability, backups, retention policy, and paid scaling
+- Offline scanning, native mobile clients, and production observability
+- Backups, retention policy, and paid scaling

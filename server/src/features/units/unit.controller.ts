@@ -24,6 +24,14 @@ export const listUnits: RequestHandler = async (request, response, next) => {
   }
 }
 
+export const getMyUnit: RequestHandler = async (request, response, next) => {
+  try {
+    response.json({ unit: await UnitService.getMyUnit(request.actor) })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const createUnit: RequestHandler = async (request, response, next) => {
   try {
     const unit = await UnitService.create(

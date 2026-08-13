@@ -15,7 +15,14 @@ import {
   type User,
   type UserRole,
 } from '../../src/features/users/user.model.js'
-
+import {
+  TicketModel,
+  type Ticket,
+} from '../../src/features/tickets/ticket.model.js'
+import {
+  TicketEventModel,
+  type TicketEvent,
+} from '../../src/features/tickets/ticket-event.model.js'
 const testPassword = 'apartcheck-test-password'
 
 export async function createSocietyFixture(
@@ -100,6 +107,7 @@ export async function createAssetFixture(
   return AssetModel.create({
     societyId,
     assetCode: `LFT-${randomUUID().slice(0, 6).toUpperCase()}`,
+
     name: 'Fixture Lift',
     category: 'lift',
     locationDescription: 'Tower A lobby',
@@ -107,5 +115,52 @@ export async function createAssetFixture(
     qrToken: Buffer.from(new Types.ObjectId().toString()).toString('base64url'),
     archivedAt: null,
     ...overrides,
+  })
+}
+export async function createTicketFixture(
+  overrides: Pick<Ticket, 'societyId' | 'unitId' | 'reporterId'> &
+    Partial<
+      Pick<
+        Ticket,
+        | 'assetId'
+        | 'title'
+        | 'description'
+        | 'status'
+        | 'assigneeId'
+        | 'archivedAt'
+      >
+    >,
+) {
+  return TicketModel.create({
+    societyId: overrides.societyId,
+    unitId: overrides.unitId,
+    assetId: overrides.assetId ?? null,
+    reporterId: overrides.reporterId,
+    title: overrides.title ?? 'Fixture ticket',
+    description: overrides.description ?? 'Fixture ticket description',
+    status: overrides.status ?? 'open',
+    assigneeId: overrides.assigneeId ?? null,
+    archivedAt: overrides.archivedAt ?? null,
+  })
+}
+
+export async function createTicketEventFixture(
+  overrides: Pick<TicketEvent, 'societyId' | 'ticketId' | 'actorId'> &
+    Partial<
+      Pick<
+        TicketEvent,
+        'type' | 'fromStatus' | 'toStatus' | 'assigneeId' | 'note'
+      >
+    >,
+) {
+  return TicketEventModel.create({
+    societyId: overrides.societyId,
+    ticketId: overrides.ticketId,
+    actorId: overrides.actorId,
+    type: overrides.type ?? 'created',
+    fromStatus: overrides.fromStatus ?? null,
+    toStatus: overrides.toStatus ?? 'open',
+    assigneeId: overrides.assigneeId ?? null,
+    note: overrides.note ?? null,
   })
 }

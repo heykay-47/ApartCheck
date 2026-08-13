@@ -1,4 +1,17 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+async function signOut(page: Page) {
+  const logout = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/auth/logout') &&
+      response.request().method() === 'POST',
+  )
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await logout
+  await expect(page.getByRole('button', { name: 'Sign out' })).toHaveCount(0)
+  await page.goto('/login')
+  await expect(page.getByLabel('Email')).toBeVisible()
+}
 
 test('admin bootstrap to resident QR scan flow', async ({ page }) => {
   const adminEmail = 'phase-one-admin@example.com'
@@ -64,6 +77,10 @@ test('admin bootstrap to resident QR scan flow', async ({ page }) => {
   await expect(page.getByRole('dialog')).toContainText(
     'Share temporary password',
   )
+  const technicianTemporaryPassword = await page
+    .locator('input[aria-label="Temporary password"]')
+    .inputValue()
+  expect(technicianTemporaryPassword).toMatch(/^[A-Za-z0-9]{16}$/)
   await page.getByRole('button', { name: 'I have shared it' }).click()
   await expect(page.getByText(technicianEmail)).toBeVisible()
 
@@ -87,17 +104,118 @@ test('admin bootstrap to resident QR scan flow', async ({ page }) => {
     page.getByRole('img', { name: new RegExp(assetCode ?? '') }),
   ).toBeVisible()
 
-  await page.getByRole('button', { name: 'Sign out' }).click()
-  await page.goto('/login')
+  await signOut(page)
   await page.getByLabel('Email').fill(residentEmail)
   await page.getByLabel('Password').fill(temporaryPassword)
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(/change-password/)
+
   await page.getByLabel('Current password').fill(temporaryPassword)
   await page.getByLabel('New password').fill('Phase-one-resident-password')
   await page.getByRole('button', { name: 'Save password' }).click()
   await expect(page).toHaveURL(/dashboard/)
+  await page.goto(`/tickets/new?assetId=${createdAsset.asset.id}`)
+  await page.getByLabel('Title').fill('Lift guide is worn')
+  await page
+    .getByLabel('Description')
+    .fill('The lift guide is worn and needs replacement before further use.')
+  await page.getByRole('button', { name: 'Report ticket' }).click()
+  await expect(page).toHaveURL(/\/tickets\/[a-f0-9]{24}$/)
+  const ticketUrl = page.url()
+  await expect(
+    page.getByRole('heading', { name: 'Lift guide is worn' }),
+  ).toBeVisible()
 
+  await signOut(page)
+  await page.getByLabel('Email').fill(adminEmail)
+  await page.getByLabel('Password').fill(adminPassword)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  await page.goto(ticketUrl)
+  await page.getByRole('button', { name: 'Assign technician' }).click()
+  await page
+    .getByRole('dialog', { name: 'Choose technician' })
+    .getByLabel('Technician', { exact: true })
+    .selectOption({ label: `Phase One Technician — ${technicianEmail}` })
+  await page.getByRole('button', { name: 'Save assignment' }).click()
+  await expect(page.getByText('assigned', { exact: true })).toBeVisible()
+
+  await signOut(page)
+  await page.getByLabel('Email').fill(technicianEmail)
+  await page.getByLabel('Password').fill(technicianTemporaryPassword)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/change-password/)
+  await page.getByLabel('Current password').fill(technicianTemporaryPassword)
+  await page.getByLabel('New password').fill('Phase-two-technician-password')
+  await page.getByRole('button', { name: 'Save password' }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  await page.goto(ticketUrl)
+  await page.getByRole('button', { name: 'Start work' }).click()
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await expect(page.getByText('in progress', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Submit completion' }).click()
+  await page
+    .getByLabel('Completion summary')
+    .fill('Replaced worn lift-door guide and tested two full cycles.')
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await expect(
+    page.getByText('awaiting verification', { exact: true }),
+  ).toBeVisible()
+
+  await signOut(page)
+  await page.getByLabel('Email').fill(residentEmail)
+  await page.getByLabel('Password').fill('Phase-one-resident-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  await page.goto(ticketUrl)
+  await expect(
+    page.getByText('awaiting verification', { exact: true }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Verify work' })).toHaveCount(0)
+
+  await signOut(page)
+  await page.getByLabel('Email').fill(adminEmail)
+  await page.getByLabel('Password').fill(adminPassword)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  await page.goto(ticketUrl)
+  await page.getByRole('button', { name: 'Return for rework' }).click()
+  await page
+    .getByLabel('Reason')
+    .fill('Please retest the guide after replacement.')
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await expect(page.getByText('in progress', { exact: true })).toBeVisible()
+
+  await signOut(page)
+  await page.getByLabel('Email').fill(technicianEmail)
+  await page.getByLabel('Password').fill('Phase-two-technician-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  await page.goto(ticketUrl)
+  await page.getByRole('button', { name: 'Submit completion' }).click()
+  await page
+    .getByLabel('Completion summary')
+    .fill('Replaced worn lift-door guide and tested two full cycles.')
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await expect(
+    page.getByText('awaiting verification', { exact: true }),
+  ).toBeVisible()
+
+  await signOut(page)
+  await page.getByLabel('Email').fill(adminEmail)
+  await page.getByLabel('Password').fill(adminPassword)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/dashboard/)
+  await page.goto(ticketUrl)
+  await page.getByRole('button', { name: 'Verify work' }).click()
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await expect(page.getByText('completed', { exact: true })).toBeVisible()
+
+  await signOut(page)
+  await page.getByLabel('Email').fill(residentEmail)
+  await page.getByLabel('Password').fill('Phase-one-resident-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/dashboard/)
   await page.goto('/scan/invalid-token')
   await expect(page.getByText(/asset is unavailable/i)).toBeVisible()
   await expect(page.getByRole('link', { name: 'Users' })).toHaveCount(0)

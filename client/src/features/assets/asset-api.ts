@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../app/api'
+import { ApiError, advanceSession, api, sessionRequest } from '../../app/api'
 
 export type AssetCategory = 'lift' | 'plumbing' | 'electrical'
 export type Asset = {
@@ -116,9 +116,15 @@ export function useArchiveAsset() {
   })
 }
 export async function fetchAssetQr(id: string) {
-  const response = await fetch(`/api/assets/${id}/qr.svg`, {
-    credentials: 'include',
+  return sessionRequest(`/api/assets/${id}/qr.svg`, {}, async (response) => {
+    if (!response.ok) {
+      if (response.status === 401) await advanceSession()
+      throw new ApiError(
+        response.status,
+        response.status === 401 ? 'UNAUTHENTICATED' : 'REQUEST_FAILED',
+        'QR image unavailable.',
+      )
+    }
+    return URL.createObjectURL(await response.blob())
   })
-  if (!response.ok) throw new Error('QR image unavailable.')
-  return URL.createObjectURL(await response.blob())
 }

@@ -5,8 +5,11 @@ import { AssetModel } from '../../src/features/assets/asset.model.js'
 import {
   createAssetFixture,
   createSocietyFixture,
+  createTicketFixture,
+  createUnitFixture,
   createUserFixture,
 } from '../helpers/factories.js'
+import { TicketModel } from '../../src/features/tickets/ticket.model.js'
 
 const password = 'apartcheck-test-password'
 
@@ -199,6 +202,43 @@ describe('protected assets and QR APIs', () => {
       code: 'ASSET_UNAVAILABLE',
       message: 'Asset is unavailable.',
     })
+  })
+
+  it('blocks archive while an active Ticket references the Asset', async () => {
+    const society = await createSocietyFixture()
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const asset = await createAssetFixture({ societyId: society._id })
+    const ticket = await createTicketFixture({
+      societyId: society._id,
+      unitId: (await createUnitFixture({ societyId: society._id }))._id,
+      assetId: asset._id,
+      reporterId: admin._id,
+      status: 'open',
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    const blocked = await request(app)
+      .delete(`/api/assets/${asset.id}`)
+      .set('Cookie', session)
+    expect(blocked.status).toBe(409)
+    expect(blocked.body.error).toMatchObject({
+      code: 'ASSET_HAS_ACTIVE_TICKETS',
+      message: 'Asset has active tickets and cannot be archived.',
+    })
+
+    await TicketModel.updateOne(
+      { _id: ticket._id },
+      { $set: { status: 'cancelled' } },
+    )
+    const archived = await request(app)
+      .delete(`/api/assets/${asset.id}`)
+      .set('Cookie', session)
+    expect(archived.status).toBe(204)
   })
 
   it('paginates and filters assets, and rejects cross-society access', async () => {

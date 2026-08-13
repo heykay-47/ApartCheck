@@ -13,7 +13,7 @@ export type UnitList = UnitFilters & {
   pagination: { page: number; pageSize: number; total: number; pages: number }
 }
 
-export function useUnits(filters: UnitFilters) {
+export function useUnits(filters: UnitFilters, enabled = true) {
   const params = new URLSearchParams({
     page: String(filters.page),
     pageSize: String(filters.pageSize),
@@ -22,9 +22,18 @@ export function useUnits(filters: UnitFilters) {
   return useQuery({
     queryKey: ['units', filters],
     queryFn: () => api<UnitList>(`/api/units?${params}`),
+    enabled,
   })
 }
 
+export function useUnit(id: string) {
+  return useQuery({
+    queryKey: ['unit', id],
+    queryFn: () => api<{ unit: Unit }>(`/api/units/${id}`),
+    enabled: Boolean(id),
+    select: (response) => response.unit,
+  })
+}
 export function useCreateUnit() {
   const client = useQueryClient()
   return useMutation({

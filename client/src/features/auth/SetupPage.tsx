@@ -5,8 +5,9 @@ import { api } from '../../app/api'
 import { FormField } from '../../components/FormField'
 import { Feedback } from '../../components/Feedback'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
+import type { User } from './auth-api'
 const schema = z.object({
   societyName: z.string().min(1),
   address: z.string().min(1),
@@ -19,6 +20,7 @@ const schema = z.object({
 })
 export function SetupPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const status = useQuery({
     queryKey: ['bootstrap-status'],
     queryFn: () => api<{ initialized: boolean }>('/api/bootstrap/status'),
@@ -30,7 +32,7 @@ export function SetupPage() {
     resolver: zodResolver(schema),
   })
   const submit = (data: z.infer<typeof schema>) =>
-    api('/api/bootstrap', {
+    api<{ user: User }>('/api/bootstrap', {
       method: 'POST',
       body: JSON.stringify({
         society: { name: data.societyName, address: data.address },
@@ -42,7 +44,10 @@ export function SetupPage() {
         },
       }),
     })
-      .then(() => navigate('/dashboard', { replace: true }))
+      .then((data) => {
+        queryClient.setQueryData(['current-user'], data)
+        navigate('/dashboard', { replace: true })
+      })
       .catch((error: Error) =>
         form.setError('root', { message: error.message }),
       )

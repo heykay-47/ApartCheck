@@ -5,7 +5,8 @@ import { AssetModel } from '../src/features/assets/asset.model.js'
 import { SocietyModel } from '../src/features/societies/society.model.js'
 import { UnitModel } from '../src/features/units/unit.model.js'
 import { UserModel } from '../src/features/users/user.model.js'
-
+import { TicketModel } from '../src/features/tickets/ticket.model.js'
+import { TicketEventModel } from '../src/features/tickets/ticket-event.model.js'
 let replicaSet: MongoMemoryReplSet
 
 beforeAll(async () => {
@@ -16,6 +17,8 @@ beforeAll(async () => {
     UnitModel.init(),
     UserModel.init(),
     AssetModel.init(),
+    TicketModel.init(),
+    TicketEventModel.init(),
   ])
 })
 
@@ -31,8 +34,10 @@ afterEach(async () => {
   await Promise.all([
     SocietyModel.deleteMany({}),
     UnitModel.deleteMany({}),
-    UserModel.deleteMany({}),
     AssetModel.deleteMany({}),
+    UserModel.deleteMany({}),
+    TicketModel.deleteMany({}),
+    TicketEventModel.deleteMany({}),
   ])
 })
 

@@ -253,5 +253,5 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Don't** promote the landing page's synthetic record, exact trace rail, or section sequence into a system-wide layout requirement.
 - **Don't** use marigold as a broad fill or verified green as decoration.
 - **Don't** communicate error, archive, active, or verified state through color alone.
-- **Don't** claim or visualize tickets, assignments, vendors, evidence, SLAs, notifications, analytics, verification, or history as shipped behavior.
+- **Don't** claim locally implemented Ticket behavior as publicly verified or live. Vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, and multi-Society administration remain future direction.
 - **Don't** remove semantic landmarks, labels, skip links, programmatic errors, expected dialog focus/Escape behavior, or the single-main-landmark contract for visual cleanliness.

@@ -3,6 +3,7 @@ import { AppError } from '../../http/app-error.js'
 import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { UserModel } from '../users/user.model.js'
 import { UnitModel } from './unit.model.js'
+import { TicketModel, activeTicketStatuses } from '../tickets/ticket.model.js'
 import type { UnitInput, UnitList } from './unit.schema.js'
 
 function escapeRegex(value: string): string {
@@ -101,6 +102,14 @@ export const UnitService = {
     return unit
   },
 
+  async getMyUnit(actor: Express.Actor) {
+    if (actor.role !== 'resident') {
+      throw new AppError(403, 'FORBIDDEN', 'Forbidden.')
+    }
+    if (!actor.unitId) throw unitNotFound()
+    return this.get(actor.societyId, actor.unitId)
+  },
+
   async archive(societyId: string, unitId: string) {
     assertUnitId(unitId)
     await mongoose.connection.transaction(async (session) => {
@@ -122,6 +131,19 @@ export const UnitService = {
           409,
           'UNIT_HAS_ACTIVE_RESIDENTS',
           'Unit has active residents and cannot be archived.',
+        )
+      }
+      const activeTickets = await TicketModel.countDocuments({
+        societyId,
+        unitId: unit._id,
+        archivedAt: null,
+        status: { $in: activeTicketStatuses },
+      }).session(session)
+      if (activeTickets > 0) {
+        throw new AppError(
+          409,
+          'UNIT_HAS_ACTIVE_TICKETS',
+          'Unit has active tickets and cannot be archived.',
         )
       }
       const archived = await UnitModel.findOneAndUpdate(

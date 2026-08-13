@@ -14,6 +14,9 @@ import { AssetDetailPage } from '../features/assets/AssetDetailPage'
 import { ScanAssetPage } from '../features/assets/ScanAssetPage'
 import { AssetForm } from '../features/assets/AssetForm'
 import { LandingPage } from '../features/landing/LandingPage'
+import { TicketsPage } from '../features/tickets/TicketsPage'
+import { TicketDetailPage } from '../features/tickets/TicketDetailPage'
+import { TicketForm } from '../features/tickets/TicketForm'
 
 export const routes = [
   { path: '/', element: <LandingPage /> },
@@ -41,6 +44,13 @@ export const routes = [
             path: '/assets/:id',
             element: <AssetDetailPage />,
           },
+          { path: '/tickets', element: <TicketsPage /> },
+          {
+            path: '/tickets/new',
+            element: <RouteGuard roles={['admin', 'resident']} />,
+            children: [{ index: true, element: <TicketForm /> }],
+          },
+          { path: '/tickets/:id', element: <TicketDetailPage /> },
           {
             path: '/scan/:qrToken',
             element: <ScanAssetPage />,

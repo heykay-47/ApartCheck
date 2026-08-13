@@ -188,15 +188,23 @@ export function LandingPage(): JSX.Element {
             </ul>
           </div>
           <div>
+            <h3>IMPLEMENTED LOCALLY — NOT LIVE</h3>
+            <ul>
+              <li>Tickets</li>
+              <li>Technician assignment</li>
+              <li>Verification</li>
+              <li>Immutable history</li>
+            </ul>
+          </div>
+          <div>
             <h3>DIRECTION, NOT CLAIM</h3>
             <ul>
-              <li>Issues</li>
-              <li>Assignments</li>
               <li>Vendors</li>
-              <li>Evidence</li>
+              <li>Media evidence</li>
               <li>SLAs</li>
-              <li>Verification</li>
-              <li>History</li>
+              <li>Notifications</li>
+              <li>Analytics and exports</li>
+              <li>Multi-Society administration</li>
             </ul>
           </div>
         </section>

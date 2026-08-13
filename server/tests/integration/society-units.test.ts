@@ -1,14 +1,15 @@
 import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 import { createApp } from '../../src/app.js'
+import { TicketModel } from '../../src/features/tickets/ticket.model.js'
 import { UnitModel } from '../../src/features/units/unit.model.js'
 import { UserModel } from '../../src/features/users/user.model.js'
 import {
   createSocietyFixture,
+  createTicketFixture,
   createUnitFixture,
   createUserFixture,
 } from '../helpers/factories.js'
-
 const password = 'apartcheck-test-password'
 
 function cookie(response: { headers: { 'set-cookie'?: string[] } }): string {
@@ -231,6 +232,46 @@ describe('society and unit administration', () => {
     expect((await UnitModel.findById(unit.id))?.archivedAt).not.toBeNull()
   })
 
+  it('blocks archive while an active Ticket references the Unit', async () => {
+    const society = await createSocietyFixture()
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const unit = await createUnitFixture({ societyId: society._id })
+    const reporter = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const ticket = await createTicketFixture({
+      societyId: society._id,
+      unitId: unit._id,
+      reporterId: reporter._id,
+      status: 'open',
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    const blocked = await request(app)
+      .delete(`/api/units/${unit.id}`)
+      .set('Cookie', session)
+    expect(blocked.status).toBe(409)
+    expect(blocked.body.error).toMatchObject({
+      code: 'UNIT_HAS_ACTIVE_TICKETS',
+      message: 'Unit has active tickets and cannot be archived.',
+    })
+
+    await TicketModel.updateOne(
+      { _id: ticket._id },
+      { $set: { status: 'completed' } },
+    )
+    const archived = await request(app)
+      .delete(`/api/units/${unit.id}`)
+      .set('Cookie', session)
+    expect(archived.status).toBe(204)
+  })
   it('rejects update when changed identity conflicts with existing unit', async () => {
     const society = await createSocietyFixture()
     const admin = await createUserFixture({

@@ -180,9 +180,13 @@ describe('asset identity experience', () => {
 
     await fetchAssetQr('a1')
 
-    expect(globalThis.fetch).toHaveBeenCalledWith('/api/assets/a1/qr.svg', {
-      credentials: 'include',
-    })
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/assets/a1/qr.svg',
+      expect.objectContaining({
+        credentials: 'include',
+        signal: expect.any(AbortSignal),
+      }),
+    )
     expect(createObjectUrl).toHaveBeenCalled()
   })
 

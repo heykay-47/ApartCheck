@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../app/api'
-
+import { advanceSession, api } from '../../app/api'
 export type Role = 'admin' | 'resident' | 'technician'
 export type User = {
   id: string
@@ -25,18 +24,29 @@ export function useLogin() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: (input: { email: string; password: string }) =>
-      api<UserResponse>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(input),
-      }),
-    onSuccess: (data) => client.setQueryData(['current-user'], data),
+      api<UserResponse>(
+        '/api/auth/login',
+        {
+          method: 'POST',
+          body: JSON.stringify(input),
+        },
+        { ignoreSessionBoundary: true },
+      ),
+    onSuccess: async (data) => {
+      await advanceSession()
+      client.setQueryData(['current-user'], data)
+    },
   })
 }
 export function useLogout() {
   const client = useQueryClient()
   return useMutation({
     mutationFn: () => api<void>('/api/auth/logout', { method: 'POST' }),
-    onSuccess: () => client.setQueryData(['current-user'], undefined),
+    onSuccess: async () => {
+      client.setQueryData(['current-user'], { user: undefined })
+      await advanceSession()
+      client.setQueryData(['current-user'], { user: undefined })
+    },
   })
 }
 export function useChangePassword() {

@@ -9,6 +9,7 @@ export function AppShell() {
       ? [
           ['/dashboard', 'Dashboard'],
           ['/assets', 'Asset ledger'],
+          ['/tickets', 'Tickets'],
           ['/admin/users', 'Users'],
           ['/admin/units', 'Units'],
           ['/admin/society', 'Society settings'],
@@ -17,6 +18,7 @@ export function AppShell() {
       : [
           ['/dashboard', 'Dashboard'],
           ['/assets', 'Asset ledger'],
+          ['/tickets', 'Tickets'],
         ]
   return (
     <div className="app-frame">

@@ -1,10 +1,12 @@
+import mongoose from 'mongoose'
+import { AssetModel } from './asset.model.js'
 import { AppError } from '../../http/app-error.js'
 import { env } from '../../config/env.js'
-import { AssetModel } from './asset.model.js'
+import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { generateAssetCode, generateQrToken } from './asset-code.js'
 import type { AssetInput, AssetList } from './asset.schema.js'
 import QRCode from 'qrcode'
-import mongoose from 'mongoose'
+import { TicketModel, activeTicketStatuses } from '../tickets/ticket.model.js'
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -104,11 +106,34 @@ export const AssetService = {
 
   async archive(societyId: string, assetId: string) {
     assertAssetId(assetId)
-    const asset = await AssetModel.findOneAndUpdate(
-      { _id: assetId, societyId, archivedAt: null },
-      { $set: { archivedAt: new Date() } },
-    )
-    if (!asset) throw notFound()
+    await mongoose.connection.transaction(async (session) => {
+      await guardSocietyMutation(societyId, session)
+      const asset = await AssetModel.findOne({
+        _id: assetId,
+        societyId,
+        archivedAt: null,
+      }).session(session)
+      if (!asset) throw notFound()
+      const activeTickets = await TicketModel.countDocuments({
+        societyId,
+        assetId: asset._id,
+        archivedAt: null,
+        status: { $in: activeTicketStatuses },
+      }).session(session)
+      if (activeTickets > 0) {
+        throw new AppError(
+          409,
+          'ASSET_HAS_ACTIVE_TICKETS',
+          'Asset has active tickets and cannot be archived.',
+        )
+      }
+      const archived = await AssetModel.findOneAndUpdate(
+        { _id: assetId, societyId, archivedAt: null },
+        { $set: { archivedAt: new Date() } },
+        { returnDocument: 'after', session },
+      )
+      if (!archived) throw notFound()
+    })
   },
 
   async qr(societyId: string, assetId: string) {
