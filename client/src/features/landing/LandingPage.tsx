@@ -180,19 +180,13 @@ export function LandingPage(): JSX.Element {
             <h3>SHIPPED NOW</h3>
             <ul>
               <li>Society setup</li>
-              <li>Units</li>
-              <li>Members</li>
-              <li>Assets</li>
+              <li>Units, Members, and Assets</li>
               <li>Role boundaries</li>
               <li>Protected QR lookup</li>
-            </ul>
-          </div>
-          <div>
-            <h3>IMPLEMENTED LOCALLY — NOT LIVE</h3>
-            <ul>
               <li>Tickets</li>
               <li>Technician assignment</li>
-              <li>Verification</li>
+              <li>Textual completion proof</li>
+              <li>Administrator verification</li>
               <li>Immutable history</li>
             </ul>
           </div>
@@ -232,7 +226,7 @@ export function LandingPage(): JSX.Element {
         <span className="brand-mark">
           APART<span>CHECK</span>
         </span>
-        <p>Phase 1 accountability foundation</p>
+        <p>Asset &amp; Ticket accountability</p>
         <a href={sourceUrl} target="_blank" rel="noreferrer">
           Source
         </a>

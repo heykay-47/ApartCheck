@@ -18,7 +18,7 @@ Within the product, a Society has three Member roles:
 
 ## Product Purpose
 
-ApartCheck demonstrates a complete, deployable Phase 1 foundation and a locally implemented Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, notes-only completion proof, Administrator verification, and immutable history.
+ApartCheck demonstrates a deployed Asset identity foundation and Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, notes-only completion proof, Administrator verification, and immutable history.
 
 Success means the shipped workflow is understandable, secure, accessible at desktop and phone widths, verifiable through automated tests, and usable in a live synthetic demonstration without implying capabilities that are not implemented or publicly verified.
 
@@ -28,7 +28,7 @@ The longer-term direction is an evidence-backed accountability workflow connecti
 
 ApartCheck is an Asset identity and accountability foundation rather than a generic property-management dashboard or helpdesk. Its distinguishing mechanism is the durable bridge between a shared physical Asset, its human-readable Asset Code, its printable QR label, and a Society-scoped authenticated record.
 
-Phase 1 answers what the Asset is and where it is. The local Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual completion proof was submitted, and whether an Administrator verified it. Public deployment verification for this Ticket behavior remains outstanding.
+The deployed Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual completion proof was submitted, and whether an Administrator verified it. Render bundle, health, and direct-route verification are recorded; live role-by-role manual Ticket acceptance is not claimed yet.
 
 ## Operating Context
 
@@ -42,7 +42,7 @@ The production demonstration runs as one same-origin web service backed by Mongo
 - Administrators can manage Units, Members, and Assets; Asset records support search, category filtering, editing, archiving, printable identity plates, QR download, and protected QR lookup.
 - Roles are exactly Administrator, Resident, and Technician. Asset categories are exactly Lift, Plumbing, and Electrical. Every resource operation is scoped by the authenticated Society.
 - Unknown, archived, malformed, and cross-Society QR lookups must remain indistinguishable. Browser code never reads session tokens, and temporary passwords must never be persisted, cached, stored, or logged.
-- Phase 2 is implemented locally: Residents and Administrators report Tickets; Administrators assign active Technicians, verify or return work, cancel/archive terminal records; Technicians submit notes-only completion proof; immutable Ticket history is visible to authorized roles. Public verification remains outstanding.
+- Phase 2 is deployed: Residents and Administrators report Tickets; Administrators assign active Technicians, verify or return work, cancel/archive terminal records; Technicians submit notes-only completion proof; immutable Ticket history is visible to authorized roles.
 - Vendors, costs, uploads/media, SLAs, notifications, analytics/exports, multiple-Society administration, offline scanning, and native clients remain future direction.
 
 ## Brand Commitments
@@ -53,11 +53,12 @@ Copy should be direct and operational. Controls name outcomes, and empty, loadin
 
 ## Evidence on Hand
 
-- The verified public deployment is `https://apartcheck-heykay-47.onrender.com` and contains synthetic data; no public demo credentials are provided.
+- The verified public deployment serves the Phase 2 bundle and direct Ticket route with healthy live/readiness endpoints; data is synthetic and no public demo credentials are provided.
+- Automated browser coverage exercises the complete Ticket lifecycle locally. This is not evidence of live role-by-role manual Ticket acceptance.
 - The repository includes an end-to-end browser flow covering bootstrap, Unit and Member creation, Asset and QR creation, forced password change, and role denial.
 - Automated accessibility checks cover representative Administrator screens at 360 by 800 and 1440 by 900, including keyboard behavior and serious or critical axe violations.
 - Integration tests prove Society isolation for Units, Members, Assets, and QR Tokens. CI runs formatting, linting, type checking, unit and integration tests, builds, browser tests, and accessibility checks.
-- There are no customer testimonials, production usage metrics, public case studies, formal WCAG conformance claims, or evidence for assignment, SLA, inspection, verification, or analytics metrics. Future work must not fabricate them.
+- There are no customer testimonials, production usage metrics, public case studies, public demo credentials, or formal WCAG conformance claims. Future work must not fabricate them.
 
 ## Product Principles
 

@@ -1,6 +1,6 @@
 ---
 name: ApartCheck
-description: A hard-edged maintenance-artifact system for physical Asset identity and accountable records.
+description: A hard-edged maintenance-artifact system for physical Asset identity, Tickets, and accountable records.
 colors:
   plaster: '#eef0ec'
   chalk: '#fbfcf8'
@@ -86,7 +86,7 @@ components:
 
 **Creative North Star: "The Maintenance Artifact"**
 
-ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, and identity plates. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.
+ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.
 
 Condensed display type supplies the force of stamped headings and Asset Codes. Humanist body type keeps instructions and evidence readable, while monospaced labels make metadata, controls, stages, and system boundaries feel recorded. Pump blue identifies primary action, marigold marks a trace or selected edge, and verified green is reserved for positive state.
 
@@ -95,7 +95,7 @@ Condensed display type supplies the force of stamped headings and Asset Codes. H
 - Hard-edged, square-cornered surfaces with visible construction.
 - Oversized condensed headings paired with compact monospaced record labels.
 - Flat plaster and chalk fields separated by slate rules.
-- Identity plates and ledgers as the recurring information forms.
+- Identity plates, ledgers, and lifecycle histories as the recurring information forms.
 - Sparse, functional color that distinguishes action, trace, and state.
 
 ## Colors
@@ -151,7 +151,7 @@ The palette reproduces painted plaster, paper stock, technical ink, pump hardwar
 
 ## Layout
 
-The authenticated shell uses a fixed 248px slate utility spine and a flexible work surface. Operational pages are centered to 1080px with 48px horizontal padding and 64px vertical padding. Ledgers use strong top rules, lighter row separators, explicit columns, and content-aligned density rather than floating cards.
+The authenticated shell uses a fixed 248px slate utility spine and a flexible work surface. Operational pages are centered to 1080px with 48px horizontal padding and 64px vertical padding. Asset and Ticket ledgers use strong top rules, lighter row separators, explicit columns, and content-aligned density rather than floating cards. Ticket detail pages keep the current status, linked record definition, role-valid actions, and immutable history in that reading order.
 
 The public landing boundary uses a fluid gutter and section rhythm from the frontmatter. A pair of full-height inset guide rules and section borders maintain the record-sheet construction without images or gradients. Desktop hero content uses an asymmetric copy/plate split and a four-column trace rail. The trace plate, not a generic illustration, is the visual anchor.
 
@@ -213,7 +213,14 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Structure:** A 2px slate top rule and one-pixel separators; column widths follow the record's information hierarchy.
 - **Labels:** Asset Codes, headers, counts, metadata, and responsive generated labels use mono type.
 - **State:** Hover may add a restrained chalk tint, but row boundaries and text remain readable without hover.
-- **Responsive:** At 700px and below, multi-column Asset rows become stacked records and expose `data-label` text; headers may hide only when each value retains a visible label.
+- **Responsive:** At 700px and below, multi-column Asset and Ticket rows become stacked records and expose `data-label` text; headers may hide only when each value retains a visible label.
+
+### Ticket Lifecycle Record
+
+- **Ledger:** Ticket rows expose title, Unit, optional Asset, lifecycle status, assignee, and update time inside one ruled record. Status remains written in full and never becomes a decorative pill.
+- **Detail hierarchy:** Current status follows the Ticket title and description; linked Unit, Asset, Reporter, Assignee, and timestamps form a compact definition record before actions.
+- **Actions:** Controls appear only when valid for the current role and status. Primary lifecycle actions use Pump Blue; return, cancel, and archive remain explicit text actions with destructive meaning in words as well as color.
+- **History:** Every lifecycle event is a ruled row naming the actor, action, status transition, optional assignee or note, and timestamp. Notes use a narrow marigold left rule to mark evidence without turning the history into cards.
 
 ### Asset Identity Plate
 
@@ -245,6 +252,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Do** stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.
 - **Do** honor `prefers-reduced-motion`: remove transitions, reduce animation duration to 0.01ms globally, and reveal trace stages without transform.
 - **Do** keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record.
+- **Do** present Ticket status, assignment, actions, and immutable history as one accountable record with a stable reading order.
 
 ### Don't:
 
@@ -253,5 +261,6 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Don't** promote the landing page's synthetic record, exact trace rail, or section sequence into a system-wide layout requirement.
 - **Don't** use marigold as a broad fill or verified green as decoration.
 - **Don't** communicate error, archive, active, or verified state through color alone.
-- **Don't** claim locally implemented Ticket behavior as publicly verified or live. Vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, and multi-Society administration remain future direction.
+- **Don't** visualize vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.
+- **Don't** turn Ticket statuses into decorative pills, hide lifecycle meaning behind color, or detach history from its Ticket record.
 - **Don't** remove semantic landmarks, labels, skip links, programmatic errors, expected dialog focus/Escape behavior, or the single-main-landmark contract for visual cleanliness.

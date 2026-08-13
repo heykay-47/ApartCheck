@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-08T01:49:35.000Z",
+  "generatedAt": "2026-08-13T01:16:38.000Z",
   "title": "Design System: ApartCheck",
   "extensions": {
     "colorMeta": {
@@ -228,6 +228,20 @@
       "css": ".ds-ledger { border-top: 2px solid var(--color-slate); color: var(--color-slate); } .ds-ledger-row { padding: 16px 0; display: grid; grid-template-columns: 0.8fr 1.5fr 0.6fr; gap: 16px; align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); } .ds-ledger-row span { font: 500 0.72rem/1.3 var(--font-utility); letter-spacing: 0.06em; } .ds-ledger-row strong { font: 600 1rem/1.3 var(--font-body); } .ds-ledger-row:hover { background: color-mix(in srgb, var(--color-chalk) 45%, transparent); }"
     },
     {
+      "name": "Ticket Ledger Row",
+      "kind": "custom",
+      "description": "Accountable maintenance record exposing linked location, ownership, state, and recency without status pills.",
+      "html": "<a class=\"ds-ticket-row\" href=\"#ticket\"><strong>Lift guide is worn</strong><span><b>UNIT</b>A / 4 / 401</span><span><b>ASSET</b>LFT-0007</span><span><b>STATUS</b>AWAITING VERIFICATION</span><span><b>ASSIGNEE</b>R. Shah</span><time><b>UPDATED</b>13 AUG, 01:16</time></a>",
+      "css": ".ds-ticket-row { padding: 16px 0; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.15fr 1fr 1fr; gap: 16px; align-items: center; border-top: 2px solid var(--color-slate); border-bottom: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); color: var(--color-slate); text-decoration: none; } .ds-ticket-row strong { min-width: 0; font: 600 1rem/1.3 var(--font-body); overflow-wrap: anywhere; } .ds-ticket-row span, .ds-ticket-row time { min-width: 0; font: 500 0.72rem/1.35 var(--font-utility); letter-spacing: 0.04em; overflow-wrap: anywhere; } .ds-ticket-row b { display: none; } .ds-ticket-row:hover { background: color-mix(in srgb, var(--color-chalk) 45%, transparent); } .ds-ticket-row:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; } @media (max-width: 700px) { .ds-ticket-row { grid-template-columns: 1fr; gap: 7px; } .ds-ticket-row b { display: inline; margin-right: 8px; font-weight: 500; } }"
+    },
+    {
+      "name": "Ticket Lifecycle History",
+      "kind": "custom",
+      "description": "Immutable ruled event history tying actor, transition, evidence note, and timestamp to one Ticket.",
+      "html": "<section class=\"ds-history\"><h2>Immutable history</h2><article><strong>R. Shah submitted work for verification</strong><p>IN PROGRESS → AWAITING VERIFICATION</p><blockquote>Replaced the worn guide and tested two full cycles.</blockquote><time>13 AUG 2026, 01:16</time></article></section>",
+      "css": ".ds-history { padding: 0 18px 20px; border-top: 2px solid var(--color-slate); border-bottom: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); color: var(--color-slate); } .ds-history h2 { margin: 12px 0; font: 600 2.4rem/1 var(--font-display); } .ds-history article { padding: 16px 0; border-top: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); overflow-wrap: anywhere; } .ds-history strong { font: 600 1rem/1.4 var(--font-body); } .ds-history p, .ds-history time { font: 500 0.72rem/1.4 var(--font-utility); letter-spacing: 0.04em; } .ds-history blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--color-marigold); font: 400 1rem/1.5 var(--font-body); }"
+    },
+    {
       "name": "Asset Identity Plate",
       "kind": "custom",
       "refersTo": "identity-plate",
@@ -245,12 +259,12 @@
   ],
   "narrative": {
     "northStar": "The Maintenance Artifact",
-    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, and identity plates. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nCondensed display type supplies the force of stamped headings and Asset Codes. Humanist body type keeps instructions and evidence readable, while monospaced labels make metadata, controls, stages, and system boundaries feel recorded. Pump blue identifies primary action, marigold marks a trace or selected edge, and verified green is reserved for positive state.",
+    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nCondensed display type supplies the force of stamped headings and Asset Codes. Humanist body type keeps instructions and evidence readable, while monospaced labels make metadata, controls, stages, and system boundaries feel recorded. Pump blue identifies primary action, marigold marks a trace or selected edge, and verified green is reserved for positive state.",
     "keyCharacteristics": [
       "Hard-edged, square-cornered surfaces with visible construction.",
       "Oversized condensed headings paired with compact monospaced record labels.",
       "Flat plaster and chalk fields separated by slate rules.",
-      "Identity plates and ledgers as the recurring information forms.",
+      "Identity plates, ledgers, and lifecycle histories as the recurring information forms.",
       "Sparse, functional color that distinguishes action, trace, and state."
     ],
     "rules": [
@@ -311,7 +325,8 @@
       "Do keep controls keyboard operable, expose a visible :focus-visible treatment, and maintain 44px minimum targets on narrow screens.",
       "Do stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.",
       "Do honor prefers-reduced-motion: remove transitions, reduce animation duration to 0.01ms globally, and reveal trace stages without transform.",
-      "Do keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record."
+      "Do keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record.",
+      "Do present Ticket status, assignment, actions, and immutable history as one accountable record with a stable reading order."
     ],
     "donts": [
       "Don't use gradients, background images, glassmorphism, blurred ambient shadows, rounded cards, pills, or soft floating containers.",
@@ -319,7 +334,8 @@
       "Don't promote the landing page's synthetic record, exact trace rail, or section sequence into a system-wide layout requirement.",
       "Don't use marigold as a broad fill or verified green as decoration.",
       "Don't communicate error, archive, active, or verified state through color alone.",
-      "Don't claim or visualize tickets, assignments, vendors, evidence, SLAs, notifications, analytics, verification, or history as shipped behavior.",
+      "Don't visualize vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.",
+      "Don't turn Ticket statuses into decorative pills, hide lifecycle meaning behind color, or detach history from its Ticket record.",
       "Don't remove semantic landmarks, labels, skip links, programmatic errors, expected dialog focus/Escape behavior, or the single-main-landmark contract for visual cleanliness."
     ]
   }

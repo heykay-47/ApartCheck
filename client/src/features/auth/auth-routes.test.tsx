@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -14,6 +15,37 @@ import { safeReturnTo } from '../../app/return-to'
 import { LoginPage } from './LoginPage'
 import { SetupPage } from './SetupPage'
 import { AppShell } from '../../components/AppShell'
+
+const tokenCss = readFileSync('src/styles/tokens.css', 'utf8')
+const colorTokens = new Map(
+  [...tokenCss.matchAll(/(--color-[\w-]+):\s*(#[\da-f]+);/gi)].map(
+    ([, name, value]) => [name, value],
+  ),
+)
+const appShellCss = readFileSync('src/styles/global.css', 'utf8')
+  .replace(/^@import .+;$/gm, '')
+  .replace(
+    /var\((--color-[\w-]+)\)/g,
+    (value, token: string) => colorTokens.get(token) ?? value,
+  )
+
+function installMobileAppShellStyles() {
+  const base = document.createElement('style')
+  base.dataset.testAppShellStyles = 'true'
+  base.textContent = appShellCss
+  document.head.append(base)
+
+  const mobile = document.createElement('style')
+  mobile.dataset.testAppShellStyles = 'true'
+  mobile.textContent = [...(base.sheet?.cssRules ?? [])]
+    .filter(
+      (rule): rule is CSSMediaRule =>
+        'conditionText' in rule && rule.conditionText === '(max-width: 700px)',
+    )
+    .flatMap((rule) => [...rule.cssRules].map((child) => child.cssText))
+    .join('\n')
+  document.head.append(mobile)
+}
 
 describe('api wrapper', () => {
   it('sends JSON credentials and parses success responses', async () => {
@@ -111,6 +143,9 @@ describe('api wrapper', () => {
 describe('auth routes', () => {
   beforeEach(() => {
     cleanup()
+    document
+      .querySelectorAll('[data-test-app-shell-styles]')
+      .forEach((style) => style.remove())
     queryClient.clear()
     vi.restoreAllMocks()
   })
@@ -406,6 +441,45 @@ describe('auth routes', () => {
       ).not.toHaveLength(0)
     },
   )
+
+  it('keeps the complete mobile wordmark legible on the slate bar', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: '1',
+            role: 'admin',
+            mustChangePassword: false,
+            name: 'Admin',
+          },
+        }),
+        { status: 200 },
+      ),
+    )
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 360,
+    })
+    installMobileAppShellStyles()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AppShell />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await screen.findAllByRole('link', { name: 'Asset ledger' })
+
+    const wordmark = document.querySelector<HTMLElement>(
+      '.mobile-bar .brand-mark',
+    )!
+    const accent = wordmark.querySelector<HTMLElement>('span')!
+    expect(getComputedStyle(wordmark.closest('.mobile-bar')!).display).toBe(
+      'flex',
+    )
+    expect(getComputedStyle(wordmark).color).toBe('rgb(251, 252, 248)')
+    expect(getComputedStyle(accent).color).toBe('rgb(242, 177, 52)')
+  })
 
   it('renders protected placeholders with route parameters', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(

@@ -8,6 +8,16 @@ import { useAssets, useAsset } from '../assets/asset-api'
 import { useUnits, useUnit } from '../units/unit-api'
 import { useCreateTicket, useMyUnit, type TicketInput } from './ticket-api'
 
+function uniqueOptions<T extends { id: string }>(
+  items: Array<T | undefined>,
+): T[] {
+  const options = new Map<string, T>()
+  for (const item of items) {
+    if (item) options.set(item.id, item)
+  }
+  return [...options.values()]
+}
+
 export function TicketForm() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -35,7 +45,7 @@ export function TicketForm() {
     search: assetSearch,
     category: '',
   })
-  const prefilledAsset = useAsset(assetId)
+  const selectedAsset = useAsset(values.assetId ?? '')
   const create = useCreateTicket()
   const error = create.error instanceof ApiError ? create.error : undefined
   const selectedUnit = useUnit(user?.role === 'admin' ? values.unitId : '')
@@ -46,11 +56,6 @@ export function TicketForm() {
       setValues((current) => ({ ...current, unitId: myUnit.data.unit.id }))
     }
   }, [myUnit.data])
-  useEffect(() => {
-    if (assetId && prefilledAsset.data) {
-      setValues((current) => ({ ...current, assetId }))
-    }
-  }, [assetId, prefilledAsset.data])
   useEffect(() => () => resetCreate(), [resetCreate])
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -68,9 +73,12 @@ export function TicketForm() {
     (asset) => asset.id === values.assetId,
   )
   const unitOption = chosenUnit ?? selectedUnit.data
-  const assetOption =
-    chosenAsset ??
-    (assetId && prefilledAsset.data ? prefilledAsset.data : undefined)
+  const assetOption = chosenAsset ?? selectedAsset.data
+  const unitOptions = uniqueOptions([unitOption, ...(units.data?.units ?? [])])
+  const assetOptions = uniqueOptions([
+    assetOption,
+    ...(assets.data?.assets ?? []),
+  ])
 
   return (
     <section className="page ticket-form-page">
@@ -87,8 +95,10 @@ export function TicketForm() {
               {myUnit.data?.unit
                 ? `${myUnit.data.unit.building} / ${myUnit.data.unit.floor} / ${myUnit.data.unit.unitNumber}`
                 : myUnit.isLoading
-                  ? 'Loading your unit...'
-                  : 'Your unit is unavailable.'}
+                  ? 'Loading your Unit…'
+                  : myUnit.isError
+                    ? 'Your Unit is unavailable. Ask the Society Administrator to confirm your current Unit.'
+                    : 'Your Unit is unavailable.'}
             </p>
           </div>
         ) : (
@@ -96,18 +106,31 @@ export function TicketForm() {
             <label className="search-field">
               Find a unit
               <input
+                name="unitSearch"
+                autoComplete="off"
                 value={unitSearch}
                 onChange={(event) => {
                   setUnitSearch(event.target.value)
                   setUnitPage(1)
                 }}
-                placeholder="Building, floor, or number"
+                placeholder="Example: Tower A or 401…"
               />
             </label>
+            {units.isLoading ? (
+              <p className="lookup-state" role="status">
+                Reading active Units…
+              </p>
+            ) : units.isError ? (
+              <Feedback message="Units are unavailable. Try again." />
+            ) : units.data?.units.length === 0 ? (
+              <p className="lookup-state">No active Units match this search.</p>
+            ) : null}
             <FormField label="Unit" error={error?.fieldErrors.unitId?.[0]}>
               {(id) => (
                 <select
                   id={id}
+                  name="unitId"
+                  autoComplete="off"
                   value={values.unitId}
                   onChange={(event) =>
                     setValues((current) => ({
@@ -117,13 +140,7 @@ export function TicketForm() {
                   }
                 >
                   <option value="">Choose a unit</option>
-                  {unitOption ? (
-                    <option value={unitOption.id}>
-                      {unitOption.building} / {unitOption.floor} /{' '}
-                      {unitOption.unitNumber}
-                    </option>
-                  ) : null}
-                  {units.data?.units.map((unit) => (
+                  {unitOptions.map((unit) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.building} / {unit.floor} / {unit.unitNumber}
                     </option>
@@ -141,14 +158,25 @@ export function TicketForm() {
         <label className="search-field">
           Find an asset (optional)
           <input
+            name="assetSearch"
+            autoComplete="off"
             value={assetSearch}
             onChange={(event) => {
               setAssetSearch(event.target.value)
               setAssetPage(1)
             }}
-            placeholder="Code or name"
+            placeholder="Example: LFT-0007 or passenger lift…"
           />
         </label>
+        {assets.isLoading ? (
+          <p className="lookup-state" role="status">
+            Reading active Assets…
+          </p>
+        ) : assets.isError ? (
+          <Feedback message="Assets are unavailable. Try again." />
+        ) : assets.data?.assets.length === 0 ? (
+          <p className="lookup-state">No active Assets match this search.</p>
+        ) : null}
         <FormField
           label="Asset (optional)"
           error={error?.fieldErrors.assetId?.[0]}
@@ -156,6 +184,8 @@ export function TicketForm() {
           {(id) => (
             <select
               id={id}
+              name="assetId"
+              autoComplete="off"
               value={values.assetId ?? ''}
               onChange={(event) =>
                 setValues((current) => ({
@@ -165,12 +195,7 @@ export function TicketForm() {
               }
             >
               <option value="">No linked asset</option>
-              {assetOption ? (
-                <option value={assetOption.id}>
-                  {assetOption.assetCode} — {assetOption.name}
-                </option>
-              ) : null}
-              {assets.data?.assets.map((asset) => (
+              {assetOptions.map((asset) => (
                 <option key={asset.id} value={asset.id}>
                   {asset.assetCode} — {asset.name}
                 </option>
@@ -187,6 +212,8 @@ export function TicketForm() {
           {(id) => (
             <input
               id={id}
+              name="title"
+              autoComplete="off"
               value={values.title}
               onChange={(event) =>
                 setValues((current) => ({
@@ -195,6 +222,7 @@ export function TicketForm() {
                 }))
               }
               maxLength={120}
+              placeholder="Example: Lift guide is worn…"
             />
           )}
         </FormField>
@@ -205,6 +233,8 @@ export function TicketForm() {
           {(id) => (
             <textarea
               id={id}
+              name="description"
+              autoComplete="off"
               value={values.description}
               onChange={(event) =>
                 setValues((current) => ({
@@ -214,6 +244,7 @@ export function TicketForm() {
               }
               rows={7}
               maxLength={2000}
+              placeholder="Describe what is happening, where it occurs, and what needs attention…"
             />
           )}
         </FormField>

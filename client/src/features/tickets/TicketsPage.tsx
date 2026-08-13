@@ -1,26 +1,60 @@
-import { useDeferredValue, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useDeferredValue, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCurrentUser } from '../auth/auth-api'
 import { useTickets, ticketStatuses, type TicketStatus } from './ticket-api'
-
-function statusLabel(status: TicketStatus) {
-  return status.replaceAll('_', ' ')
-}
+import { formatTicketDate, statusLabel } from './ticket-format'
 
 export function TicketsPage() {
   const { data: user } = useCurrentUser()
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<TicketStatus | ''>('')
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const search = searchParams.get('search') ?? ''
+  const rawStatus = searchParams.get('status') ?? ''
+  const status: TicketStatus | '' = ticketStatuses.includes(
+    rawStatus as TicketStatus,
+  )
+    ? (rawStatus as TicketStatus)
+    : ''
+  const rawPage = Number(searchParams.get('page') ?? '1')
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1
+  const canonicalParams = new URLSearchParams()
+  if (search) canonicalParams.set('search', search)
+  if (status) canonicalParams.set('status', status)
+  if (page > 1) canonicalParams.set('page', String(page))
+  const canonicalSearchParams = canonicalParams.toString()
+  const deferredSearch = useDeferredValue(search)
   const filters = {
     page,
     pageSize: 25,
-    search: useDeferredValue(search),
+    search: deferredSearch,
     status,
   }
   const tickets = useTickets(filters)
   const pagination = tickets.data?.pagination
   const reportable = user?.role === 'admin' || user?.role === 'resident'
+
+  useEffect(() => {
+    if (searchParams.toString() !== canonicalSearchParams) {
+      setSearchParams(canonicalSearchParams, { replace: true })
+    }
+  }, [canonicalSearchParams, searchParams, setSearchParams])
+
+  function setFilters(next: {
+    search?: string
+    status?: TicketStatus | ''
+    page?: number
+  }) {
+    const params = new URLSearchParams()
+    const nextSearch = next.search ?? search
+    const nextStatus = next.status ?? status
+    const nextPage = next.page ?? page
+    if (nextSearch) params.set('search', nextSearch)
+    else params.delete('search')
+    if (nextStatus) params.set('status', nextStatus)
+    else params.delete('status')
+    if (nextPage > 1) params.set('page', String(nextPage))
+    else params.delete('page')
+    setSearchParams(params, { replace: true })
+  }
 
   return (
     <section className="page tickets-page">
@@ -38,10 +72,9 @@ export function TicketsPage() {
           Search tickets
           <input
             value={search}
-            onChange={(event) => {
-              setSearch(event.target.value)
-              setPage(1)
-            }}
+            onChange={(event) =>
+              setFilters({ search: event.target.value, page: 1 })
+            }
             placeholder="Title or description"
           />
         </label>
@@ -50,10 +83,12 @@ export function TicketsPage() {
           <select
             aria-label="Ticket status filter"
             value={status}
-            onChange={(event) => {
-              setStatus(event.target.value as TicketStatus | '')
-              setPage(1)
-            }}
+            onChange={(event) =>
+              setFilters({
+                status: event.target.value as TicketStatus | '',
+                page: 1,
+              })
+            }
           >
             <option value="">All active and terminal</option>
             {ticketStatuses.map((item) => (
@@ -69,6 +104,13 @@ export function TicketsPage() {
           </Link>
         ) : null}
       </div>
+      <p className="ticket-result-count" aria-live="polite">
+        {tickets.isError
+          ? 'Ticket ledger unavailable.'
+          : tickets.data
+            ? `${tickets.data.pagination.total} ${tickets.data.pagination.total === 1 ? 'ticket' : 'tickets'} on record`
+            : 'Reading Ticket ledger…'}
+      </p>
       <div className="ticket-ledger">
         <div className="ticket-row ticket-header">
           <span>Title</span>
@@ -79,7 +121,7 @@ export function TicketsPage() {
           <span>Updated</span>
         </div>
         {tickets.isLoading ? (
-          <p>Loading tickets...</p>
+          <p className="ticket-loading">Loading tickets…</p>
         ) : tickets.isError ? (
           <p className="feedback-error">Tickets are unavailable. Try again.</p>
         ) : tickets.data?.tickets.length ? (
@@ -88,6 +130,7 @@ export function TicketsPage() {
               className="ticket-row"
               to={`/tickets/${ticket.id}`}
               key={ticket.id}
+              aria-label={`Open Ticket: ${ticket.title}`}
             >
               <strong data-label="Title">{ticket.title}</strong>
               <span data-label="Unit">
@@ -106,13 +149,14 @@ export function TicketsPage() {
                 {ticket.assignee?.name ?? 'Unassigned'}
               </span>
               <time data-label="Updated" dateTime={ticket.updatedAt}>
-                {new Date(ticket.updatedAt).toLocaleString()}
+                {formatTicketDate(ticket.updatedAt)}
               </time>
             </Link>
           ))
         ) : (
           <p className="empty-state">
-            No tickets match current ledger filters.
+            No Tickets match these filters. Clear the search or choose another
+            status.
           </p>
         )}
       </div>
@@ -121,7 +165,7 @@ export function TicketsPage() {
           <button
             className="text-button"
             disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
+            onClick={() => setFilters({ page: page - 1 })}
           >
             Previous
           </button>
@@ -131,7 +175,7 @@ export function TicketsPage() {
           <button
             className="text-button"
             disabled={page >= pagination.pages}
-            onClick={() => setPage(page + 1)}
+            onClick={() => setFilters({ page: page + 1 })}
           >
             Next
           </button>

@@ -19,10 +19,8 @@ import {
   type Ticket,
   type TicketEvent,
 } from './ticket-api'
+import { formatTicketDate, statusLabel } from './ticket-format'
 
-function statusLabel(status: string) {
-  return status.replaceAll('_', ' ')
-}
 function eventText(event: TicketEvent) {
   const labels: Record<string, string> = {
     created: 'reported this ticket',
@@ -60,7 +58,7 @@ export function TicketDetailPage() {
   if (ticket.isLoading)
     return (
       <section className="page">
-        <p>Loading ticket...</p>
+        <p>Loading Ticket…</p>
       </section>
     )
   if (ticket.isError || !ticket.data)
@@ -112,6 +110,7 @@ export function TicketDetailPage() {
         ref={statusHeadingRef}
         tabIndex={-1}
         className="ticket-status-heading"
+        aria-live="polite"
       >
         Status:{' '}
         <span className="ticket-status">{statusLabel(item.status)}</span>
@@ -156,7 +155,7 @@ export function TicketDetailPage() {
             <dt>Created</dt>
             <dd>
               <time dateTime={item.createdAt}>
-                {new Date(item.createdAt).toLocaleString()}
+                {formatTicketDate(item.createdAt)}
               </time>
             </dd>
           </div>
@@ -164,13 +163,13 @@ export function TicketDetailPage() {
             <dt>Updated</dt>
             <dd>
               <time dateTime={item.updatedAt}>
-                {new Date(item.updatedAt).toLocaleString()}
+                {formatTicketDate(item.updatedAt)}
               </time>
             </dd>
           </div>
         </dl>
       </div>
-      <div className="ticket-actions">
+      <div className="ticket-actions" role="group" aria-label="Ticket actions">
         {admin &&
         (['open', 'assigned', 'in_progress'].includes(item.status) ||
           repairRequired) ? (
@@ -263,7 +262,7 @@ export function TicketDetailPage() {
               </p>
               {event.note ? <blockquote>{event.note}</blockquote> : null}
               <time dateTime={event.createdAt}>
-                {new Date(event.createdAt).toLocaleString()}
+                {formatTicketDate(event.createdAt)}
               </time>
             </article>
           ))}
@@ -321,6 +320,7 @@ export function TicketDetailPage() {
           title="Start work?"
           message="This records that the assigned Technician has started work."
           pending={start.isPending}
+          error={start.error}
           onConfirm={() =>
             start.mutate(undefined, {
               onSuccess: () => {
@@ -338,6 +338,7 @@ export function TicketDetailPage() {
           title="Verify completed work?"
           message="This closes the ticket as completed."
           pending={verify.isPending}
+          error={verify.error}
           onConfirm={() =>
             verify.mutate(undefined, {
               onSuccess: () => {
@@ -355,6 +356,7 @@ export function TicketDetailPage() {
           title="Archive this ticket?"
           message="Archived tickets leave active ledgers but retain their immutable history."
           pending={archive.isPending}
+          error={archive.error}
           onConfirm={() =>
             archive.mutate(item.id, { onSuccess: () => setConfirming(null) })
           }
@@ -398,6 +400,9 @@ function AssignmentDialog({
       <label className="search-field">
         Search active technicians
         <input
+          name="technicianSearch"
+          autoComplete="off"
+          placeholder="Example: R. Shah or technician@example.com…"
           value={search}
           onChange={(event) => {
             setSearch(event.target.value)
@@ -441,11 +446,12 @@ function AssignmentDialog({
         <button
           className="primary-button"
           disabled={!selected || assign.isPending}
+          aria-busy={assign.isPending}
           onClick={() =>
             assign.mutate({ technicianId: selected }, { onSuccess: onClose })
           }
         >
-          Save assignment
+          {assign.isPending ? 'Saving assignment…' : 'Save assignment'}
         </button>
         <button className="text-button" onClick={onClose}>
           Cancel
@@ -514,7 +520,6 @@ function TextActionDialog<TInput extends TextActionInput>({
               value={value}
               onChange={(event) => setValue(event.target.value)}
               rows={7}
-              autoFocus
             />
           )}
         </FormField>
@@ -523,9 +528,10 @@ function TextActionDialog<TInput extends TextActionInput>({
           <button
             className="primary-button"
             disabled={action.isPending}
+            aria-busy={action.isPending}
             type="submit"
           >
-            Confirm
+            {action.isPending ? 'Saving…' : 'Confirm'}
           </button>
           <button className="text-button" type="button" onClick={dismiss}>
             Cancel
@@ -540,6 +546,7 @@ function ConfirmDialog({
   title,
   message,
   pending,
+  error,
   onConfirm,
   onClose,
   fallbackFocusRef,
@@ -547,10 +554,12 @@ function ConfirmDialog({
   title: string
   message: string
   pending: boolean
+  error: unknown
   onConfirm: () => void
   onClose: () => void
   fallbackFocusRef: RefObject<HTMLElement | null>
 }) {
+  const apiError = error instanceof ApiError ? error : undefined
   return (
     <Modal
       labelledBy="confirm-title"
@@ -560,13 +569,15 @@ function ConfirmDialog({
     >
       <h2 id="confirm-title">{title}</h2>
       <p>{message}</p>
+      <Feedback message={apiError?.message} />
       <div className="dialog-actions">
         <button
           className="primary-button"
           disabled={pending}
+          aria-busy={pending}
           onClick={onConfirm}
         >
-          Confirm
+          {pending ? 'Saving…' : 'Confirm'}
         </button>
         <button className="text-button" onClick={onClose}>
           Cancel

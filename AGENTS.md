@@ -31,5 +31,5 @@
 
 ## Scope And Operations
 
-- Phase 1 includes society setup, units, users, assets, QR lookup, and role-gated views. Tickets, vendors, evidence, SLAs, notifications, and analytics are deferred.
+- The deployed scope includes society setup, units, users, assets, QR lookup, role-gated views, and the Phase 2 Ticket lifecycle. Vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, and multi-Society administration remain deferred.
 - `render.yaml` deploys one web service. Atlas/Render provisioning and public URL verification remain manual; do not claim deployment until README curl and browser checks pass.
