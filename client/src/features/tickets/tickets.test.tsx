@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   advanceSession,
@@ -21,6 +21,11 @@ function renderWithClient(
       <MemoryRouter initialEntries={initialEntries}>{element}</MemoryRouter>
     </QueryClientProvider>,
   )
+}
+
+function LocationProbe() {
+  const location = useLocation()
+  return <output aria-label="Current location">{location.search}</output>
 }
 
 const user = {
@@ -48,6 +53,22 @@ const ticket = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 }
 
+function mockResidentTicketLedger() {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.endsWith('/api/auth/me'))
+      return new Response(JSON.stringify({ user }))
+    if (url.startsWith('/api/tickets?'))
+      return new Response(
+        JSON.stringify({
+          tickets: [ticket],
+          pagination: { page: 2, pageSize: 25, total: 1, pages: 2 },
+        }),
+      )
+    return new Response('{}')
+  })
+}
+
 describe('Ticket client workflow', () => {
   beforeEach(() => {
     queryClient.clear()
@@ -56,21 +77,7 @@ describe('Ticket client workflow', () => {
   afterEach(cleanup)
 
   it('sends search and status filters and exposes reporting to Residents', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockImplementation(async (input) => {
-        const url = String(input)
-        if (url.endsWith('/api/auth/me'))
-          return new Response(JSON.stringify({ user }))
-        if (url.startsWith('/api/tickets?'))
-          return new Response(
-            JSON.stringify({
-              tickets: [ticket],
-              pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
-            }),
-          )
-        return new Response('{}')
-      })
+    const fetchMock = mockResidentTicketLedger()
     const actor = userEvent.setup()
     renderWithClient(<TicketsPage />)
     expect(await screen.findByText('Lift vibration')).toBeVisible()
@@ -93,6 +100,46 @@ describe('Ticket client workflow', () => {
       '/tickets/new',
     )
     expect(screen.getAllByText('open').length).toBeGreaterThan(0)
+    expect(
+      screen.getByRole('link', { name: 'Open Ticket: Lift vibration' }),
+    ).toHaveAttribute('href', '/tickets/t1')
+    expect(await screen.findByText('1 ticket on record')).toBeVisible()
+    expect(
+      screen.getByText(
+        new Intl.DateTimeFormat('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date(ticket.updatedAt)),
+      ),
+    ).toBeVisible()
+  })
+
+  it('restores ledger filters from the URL and writes changes back', async () => {
+    mockResidentTicketLedger()
+    const actor = userEvent.setup()
+    renderWithClient(
+      <>
+        <TicketsPage />
+        <LocationProbe />
+      </>,
+      ['/tickets?search=lift&status=assigned&page=2'],
+    )
+
+    expect(await screen.findByLabelText('Search tickets')).toHaveValue('lift')
+    expect(screen.getByLabelText('Ticket status filter')).toHaveValue(
+      'assigned',
+    )
+    expect(screen.getByLabelText('Current location')).toHaveTextContent(
+      '?search=lift&status=assigned&page=2',
+    )
+
+    await actor.clear(screen.getByLabelText('Search tickets'))
+    await actor.type(screen.getByLabelText('Search tickets'), 'pump')
+    await waitFor(() =>
+      expect(screen.getByLabelText('Current location')).toHaveTextContent(
+        '?search=pump&status=assigned',
+      ),
+    )
   })
 
   it('rejects a stale protected response after the session boundary advances', async () => {
