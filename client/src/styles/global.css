@@ -620,6 +620,15 @@ body {
   max-width: 680px;
   margin-top: 36px;
 }
+.lookup-state {
+  margin: -12px 0 18px;
+  max-width: 70ch;
+}
+.ticket-form input,
+.ticket-form textarea,
+.ticket-form select {
+  overflow-wrap: anywhere;
+}
 .ticket-form .field select {
   width: 100%;
 }
@@ -637,6 +646,13 @@ body {
   }
   .tickets-page .pagination .text-button {
     min-width: 44px;
+    min-height: 44px;
+  }
+  .ticket-form .dialog-actions {
+    display: grid;
+  }
+  .ticket-form .dialog-actions > * {
+    width: 100%;
     min-height: 44px;
   }
   .ticket-row {

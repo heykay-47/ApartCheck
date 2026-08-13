@@ -38,6 +38,28 @@ const user = {
   role: 'resident',
   mustChangePassword: false,
 }
+const administrator = {
+  id: 'a1',
+  name: 'Administrator One',
+  email: 'admin@test',
+  role: 'admin',
+  mustChangePassword: false,
+}
+const unit = {
+  id: 'u1',
+  building: 'Tower A',
+  floor: '4',
+  unitNumber: '401',
+}
+const asset = {
+  id: 'a1',
+  assetCode: 'LFT-0007',
+  name: 'Passenger lift',
+  category: 'lift',
+  locationDescription: 'Tower A lobby',
+  installDate: null,
+  archivedAt: null,
+}
 const ticket = {
   id: 't1',
   title: 'Lift vibration',
@@ -261,5 +283,165 @@ describe('Ticket client workflow', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Report ticket' })).toBeEnabled()
+  })
+
+  it('deduplicates selected report options and exposes stable form metadata', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me'))
+        return new Response(JSON.stringify({ user: administrator }))
+      if (url === '/api/units/u1') return new Response(JSON.stringify({ unit }))
+      if (url.startsWith('/api/units?'))
+        return new Response(
+          JSON.stringify({
+            units: [unit],
+            pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
+          }),
+        )
+      if (url === '/api/assets/a1')
+        return new Response(JSON.stringify({ asset }))
+      if (url.startsWith('/api/assets?'))
+        return new Response(
+          JSON.stringify({
+            assets: [asset],
+            pagination: { page: 1, pageSize: 25, total: 1, pages: 1 },
+          }),
+        )
+      return new Response('{}')
+    })
+    const actor = userEvent.setup()
+    renderWithClient(<TicketForm />, ['/tickets/new?assetId=a1'])
+
+    const unitSelect = await screen.findByLabelText('Unit')
+    await waitFor(() =>
+      expect(unitSelect.querySelector('option[value="u1"]')).not.toBeNull(),
+    )
+    await actor.selectOptions(unitSelect, 'u1')
+    const assetSelect = screen.getByLabelText('Asset (optional)')
+    await waitFor(() =>
+      expect(unitSelect.querySelectorAll('option[value="u1"]')).toHaveLength(1),
+    )
+    expect(assetSelect.querySelectorAll('option[value="a1"]')).toHaveLength(1)
+
+    expect(screen.getByLabelText('Find a unit')).toHaveAttribute(
+      'name',
+      'unitSearch',
+    )
+    expect(screen.getByLabelText('Find a unit')).toHaveAttribute(
+      'autocomplete',
+      'off',
+    )
+    expect(screen.getByLabelText('Find a unit')).toHaveAttribute(
+      'placeholder',
+      'Example: Tower A or 401…',
+    )
+    expect(unitSelect).toHaveAttribute('name', 'unitId')
+    expect(unitSelect).toHaveAttribute('autocomplete', 'off')
+    expect(screen.getByLabelText('Find an asset (optional)')).toHaveAttribute(
+      'name',
+      'assetSearch',
+    )
+    expect(screen.getByLabelText('Find an asset (optional)')).toHaveAttribute(
+      'autocomplete',
+      'off',
+    )
+    expect(screen.getByLabelText('Find an asset (optional)')).toHaveAttribute(
+      'placeholder',
+      'Example: LFT-0007 or passenger lift…',
+    )
+    expect(assetSelect).toHaveAttribute('name', 'assetId')
+    expect(assetSelect).toHaveAttribute('autocomplete', 'off')
+    expect(screen.getByLabelText('Title')).toHaveAttribute('name', 'title')
+    expect(screen.getByLabelText('Title')).toHaveAttribute(
+      'autocomplete',
+      'off',
+    )
+    expect(screen.getByLabelText('Title')).toHaveAttribute(
+      'placeholder',
+      'Example: Lift guide is worn…',
+    )
+    expect(screen.getByLabelText('Description')).toHaveAttribute(
+      'name',
+      'description',
+    )
+    expect(screen.getByLabelText('Description')).toHaveAttribute(
+      'autocomplete',
+      'off',
+    )
+    expect(screen.getByLabelText('Description')).toHaveAttribute(
+      'placeholder',
+      'Describe what is happening, where it occurs, and what needs attention…',
+    )
+  })
+
+  it('exposes unavailable Unit and Asset lookup states', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me'))
+        return new Response(JSON.stringify({ user: administrator }))
+      if (url.startsWith('/api/units?') || url.startsWith('/api/assets?')) {
+        return new Response(
+          JSON.stringify({
+            error: { code: 'LOOKUP_UNAVAILABLE', message: 'Unavailable.' },
+          }),
+          { status: 503 },
+        )
+      }
+      return new Response('{}')
+    })
+
+    renderWithClient(<TicketForm />, ['/tickets/new'])
+
+    expect(
+      await screen.findByText('Units are unavailable. Try again.'),
+    ).toBeVisible()
+    expect(
+      await screen.findByText('Assets are unavailable. Try again.'),
+    ).toBeVisible()
+  })
+
+  it('explains an unavailable Resident Unit and keeps reporting disabled', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me'))
+        return new Response(JSON.stringify({ user }))
+      if (url.endsWith('/api/units/me')) {
+        return new Response(
+          JSON.stringify({
+            error: { code: 'UNIT_UNAVAILABLE', message: 'Unavailable.' },
+          }),
+          { status: 503 },
+        )
+      }
+      if (url.startsWith('/api/assets?'))
+        return new Response(
+          JSON.stringify({
+            assets: [],
+            pagination: { page: 1, pageSize: 25, total: 0, pages: 0 },
+          }),
+        )
+      return new Response('{}')
+    })
+
+    renderWithClient(<TicketForm />)
+
+    expect(
+      await screen.findByText(
+        'Your Unit is unavailable. Ask the Society Administrator to confirm your current Unit.',
+      ),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Report ticket' })).toBeDisabled()
+  })
+
+  it('styles resilient Ticket report states and narrow-screen actions', () => {
+    expect(globalCss).toMatch(
+      /\.lookup-state\s*\{[^}]*margin:\s*-12px 0 18px[^}]*max-width:\s*70ch[^}]*\}/,
+    )
+    expect(globalCss).toMatch(
+      /\.ticket-form input,\s*\.ticket-form textarea,\s*\.ticket-form select\s*\{[^}]*overflow-wrap:\s*anywhere[^}]*\}/,
+    )
+    expect(globalCss).toMatch(
+      /@media\s*\(max-width:\s*700px\)[\s\S]*?\.ticket-form \.dialog-actions\s*\{[^}]*display:\s*grid[^}]*\}[\s\S]*?\.ticket-form \.dialog-actions > \*\s*\{[^}]*width:\s*100%[^}]*min-height:\s*44px[^}]*\}/,
+    )
   })
 })
