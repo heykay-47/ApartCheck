@@ -558,6 +558,13 @@ body {
   font-size: clamp(3.5rem, 7vw, 7rem);
   line-height: 0.9;
 }
+.ticket-detail-heading > .text-button,
+.ticket-form .dialog-actions .text-button,
+.ticket-detail-page .credential-dialog .dialog-actions .text-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
 .ticket-detail-page .lede,
 .ticket-detail-page h1,
 .ticket-definition dd,
