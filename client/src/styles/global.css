@@ -729,6 +729,7 @@ body {
     background: var(--color-slate);
   }
   .mobile-bar .brand-mark {
+    color: var(--color-chalk);
     font-size: 1.65rem;
   }
   .mobile-nav {
