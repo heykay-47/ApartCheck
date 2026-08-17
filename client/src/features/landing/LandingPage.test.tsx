@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
 import {
   createMemoryRouter,
@@ -85,6 +86,44 @@ describe('landing page', () => {
     expect(inactiveRow).toHaveAttribute('data-state', 'pending')
     expect(inactiveRow).toHaveTextContent('Not yet reached')
     expect(inactiveRow).not.toHaveAttribute('style')
+  })
+
+  it('moves the product preview through the accessible workflow', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+
+    const workflow = screen.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    const verify = within(workflow).getByRole('tab', { name: /verify/i })
+
+    expect(
+      within(workflow).getByRole('tab', { name: /report/i }),
+    ).toHaveAttribute('aria-selected', 'true')
+    await user.click(verify)
+    expect(verify).toHaveAttribute('aria-selected', 'true')
+    expect(
+      within(workflow).getByText('Verified', {
+        selector: '.preview-title-block p',
+      }),
+    ).toBeVisible()
+    expect(
+      within(workflow).getByText('Aarav Mehta · Administrator', {
+        selector: 'dd',
+      }),
+    ).toBeVisible()
+
+    const report = within(workflow).getByRole('tab', { name: /report/i })
+    report.focus()
+    await user.keyboard('{ArrowRight}')
+    expect(within(workflow).getByRole('tab', { name: /assign/i })).toHaveFocus()
+    expect(
+      within(workflow).getByRole('tab', { name: /assign/i }),
+    ).toHaveAttribute('aria-selected', 'true')
   })
 
   it('serves the landing page at the public root', async () => {

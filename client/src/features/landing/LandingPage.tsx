@@ -1,6 +1,8 @@
+import { useEffect, useRef } from 'react'
 import type { JSX } from 'react'
 import { Link } from 'react-router-dom'
 import { ProductPreview } from './ProductPreview'
+import { WorkflowTour } from './WorkflowTour'
 import './landing.css'
 
 const sourceUrl = 'https://github.com/heykay-47/ApartCheck'
@@ -50,8 +52,51 @@ const evidence = [
 ] as const
 
 export function LandingPage(): JSX.Element {
+  const landingRootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const landingRoot = landingRootRef.current
+
+    if (
+      !landingRoot ||
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return
+    }
+
+    const revealTargets =
+      landingRoot.querySelectorAll<HTMLElement>('[data-reveal]')
+
+    if (!('IntersectionObserver' in window)) {
+      landingRoot.classList.add('is-reveal-ready')
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return
+          }
+
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.16, rootMargin: '0px 0px -8% 0px' },
+    )
+
+    revealTargets.forEach((target) => observer.observe(target))
+    landingRoot.classList.add('is-reveal-ready')
+
+    return () => {
+      observer.disconnect()
+      landingRoot.classList.remove('is-reveal-ready')
+    }
+  }, [])
+
   return (
-    <div className="landing-page">
+    <div className="landing-page" ref={landingRootRef}>
       <a className="skip-link" href="#landing-content">
         Skip to landing content
       </a>
@@ -60,7 +105,7 @@ export function LandingPage(): JSX.Element {
 
       <main id="landing-content" tabIndex={-1}>
         <section className="landing-hero" aria-labelledby="landing-title">
-          <div>
+          <div data-reveal>
             <h1 id="landing-title">Every repair. One accountable record.</h1>
             <p>
               ApartCheck gives a Society one place to see what happened to a
@@ -77,7 +122,9 @@ export function LandingPage(): JSX.Element {
             </div>
           </div>
 
-          <ProductPreview step="verify" />
+          <div data-reveal>
+            <ProductPreview step="verify" />
+          </div>
         </section>
 
         <section
@@ -86,7 +133,7 @@ export function LandingPage(): JSX.Element {
         >
           <dl>
             {evidence.map(([label, detail]) => (
-              <div className="proof-row" key={label}>
+              <div className="proof-row" data-reveal key={label}>
                 <dt>{label}</dt>
                 <dd>{detail}</dd>
               </div>
@@ -108,7 +155,7 @@ export function LandingPage(): JSX.Element {
           </p>
           <div className="benefit-sections">
             <section className="benefit-section" aria-labelledby="asset-title">
-              <div>
+              <div data-reveal>
                 <h3 id="asset-title">Know the Asset before work begins.</h3>
                 <p>
                   Start with the Unit and Asset identity, not a vague message
@@ -116,14 +163,16 @@ export function LandingPage(): JSX.Element {
                   equipment, and context before the first visit.
                 </p>
               </div>
-              <ProductPreview step="report" compact />
+              <div data-reveal>
+                <ProductPreview step="report" compact />
+              </div>
             </section>
 
             <section
               className="benefit-section"
               aria-labelledby="responsibility-title"
             >
-              <div>
+              <div data-reveal>
                 <h3 id="responsibility-title">Keep responsibility visible.</h3>
                 <p>
                   Assignment is a recorded step. Administrators can see who owns
@@ -131,21 +180,25 @@ export function LandingPage(): JSX.Element {
                   waiting for them.
                 </p>
               </div>
-              <ProductPreview step="assign" compact />
+              <div data-reveal>
+                <ProductPreview step="assign" compact />
+              </div>
             </section>
 
             <section
               className="benefit-section"
               aria-labelledby="history-title"
             >
-              <div>
+              <div data-reveal>
                 <h3 id="history-title">Preserve what happened.</h3>
                 <p>
                   Completion notes and verification stay attached to the Ticket.
                   The next person gets the sequence, not a reconstructed story.
                 </p>
               </div>
-              <ProductPreview step="complete" compact />
+              <div data-reveal>
+                <ProductPreview step="complete" compact />
+              </div>
             </section>
           </div>
         </section>
@@ -158,39 +211,9 @@ export function LandingPage(): JSX.Element {
           <h2 id="workflow-title">
             Follow the Ticket from report to verification.
           </h2>
-          <ol>
-            <li className="trace-stage">
-              <span>01</span>
-              <h3>Report</h3>
-              <p>
-                A Resident or Administrator records the problem against the
-                right Asset.
-              </p>
-            </li>
-            <li className="trace-stage">
-              <span>02</span>
-              <h3>Assign</h3>
-              <p>
-                An Administrator makes the next owner explicit for the Society.
-              </p>
-            </li>
-            <li className="trace-stage">
-              <span>03</span>
-              <h3>Complete</h3>
-              <p>
-                A Technician submits textual completion proof against the same
-                Ticket.
-              </p>
-            </li>
-            <li className="trace-stage">
-              <span>04</span>
-              <h3>Verify</h3>
-              <p>
-                An Administrator accepts or returns the work and preserves the
-                history.
-              </p>
-            </li>
-          </ol>
+          <div data-reveal>
+            <WorkflowTour />
+          </div>
         </section>
 
         <section
@@ -201,7 +224,7 @@ export function LandingPage(): JSX.Element {
           <h2 id="security-title">
             Accountability only works when the boundaries hold.
           </h2>
-          <div>
+          <div data-reveal>
             <h3>SERVER-ENFORCED</h3>
             <ul>
               <li>Three Member roles are checked on the server.</li>
@@ -209,7 +232,7 @@ export function LandingPage(): JSX.Element {
               <li>Sessions stay in HttpOnly cookies.</li>
             </ul>
           </div>
-          <div>
+          <div data-reveal>
             <h3>QUIET FAILURES</h3>
             <ul>
               <li>Unknown and archived records do not disclose their state.</li>
@@ -221,7 +244,11 @@ export function LandingPage(): JSX.Element {
           </div>
         </section>
 
-        <section className="landing-close" aria-labelledby="close-title">
+        <section
+          className="landing-close"
+          data-reveal
+          aria-labelledby="close-title"
+        >
           <h2 id="close-title">See the record before you sign in.</h2>
           <p>
             Records shown here are generated for demonstration. Sign in to
