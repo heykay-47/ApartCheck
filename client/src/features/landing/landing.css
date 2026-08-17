@@ -13,7 +13,6 @@
   --landing-reveal: 700ms;
   position: relative;
   min-width: 0;
-  overflow-x: clip;
   color: var(--landing-ink);
   background: var(--landing-paper);
   isolation: isolate;
@@ -77,7 +76,7 @@
 }
 
 .landing-page .brand-mark span {
-  color: var(--landing-accent);
+  color: var(--landing-ink);
 }
 
 .landing-page .landing-masthead > .brand-mark {
@@ -299,7 +298,7 @@
 
 .landing-page .preview-title-block > p:last-child {
   padding-top: 0.45rem;
-  border-top: 2px solid var(--landing-accent);
+  border-top: 2px solid var(--landing-ink);
   color: var(--landing-ink);
   font-weight: 600;
   text-align: right;
@@ -352,7 +351,7 @@
 
 .landing-page .preview-history-row[data-state='reached'] > span {
   color: var(--landing-ink);
-  border-top: 2px solid var(--landing-accent);
+  border-top: 2px solid var(--landing-ink);
   padding-top: 0.35rem;
 }
 
