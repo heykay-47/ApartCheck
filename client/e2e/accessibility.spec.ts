@@ -179,6 +179,24 @@ test('public landing page passes responsive and keyboard quality gates', async (
       : Number.parseFloat(duration) * 1000
   })
   expect(reducedDuration).toBe(0.01)
+
+  const revealCount = await page.locator('[data-reveal]').count()
+  expect(revealCount).toBeGreaterThan(0)
+  await expect
+    .poll(() =>
+      page.locator('[data-reveal]').evaluateAll((elements) =>
+        elements.map((element) => {
+          const style = getComputedStyle(element)
+          return { opacity: style.opacity, transform: style.transform }
+        }),
+      ),
+    )
+    .toEqual(
+      Array.from({ length: revealCount }, () => ({
+        opacity: '1',
+        transform: 'none',
+      })),
+    )
 })
 
 test('admin screens pass axe and keyboard quality gates at both viewports', async ({

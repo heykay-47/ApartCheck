@@ -53,6 +53,10 @@ export function WorkflowTour(): JSX.Element {
       nextStep = selectRelativeStep(current, 1)
     } else if (event.key === 'ArrowLeft') {
       nextStep = selectRelativeStep(current, -1)
+    } else if (event.key === 'ArrowDown') {
+      nextStep = selectRelativeStep(current, 1)
+    } else if (event.key === 'ArrowUp') {
+      nextStep = selectRelativeStep(current, -1)
     } else if (event.key === 'Home') {
       nextStep = steps[0]!
     } else if (event.key === 'End') {
@@ -73,6 +77,7 @@ export function WorkflowTour(): JSX.Element {
     >
       <div
         className="workflow-tabs"
+        aria-orientation="vertical"
         role="tablist"
         aria-label="Ticket lifecycle steps"
       >

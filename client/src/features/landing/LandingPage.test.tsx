@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
 import {
@@ -124,6 +130,64 @@ describe('landing page', () => {
     expect(
       within(workflow).getByRole('tab', { name: /assign/i }),
     ).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('moves vertically through workflow tabs with wrapping', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+
+    const workflow = screen.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    const tablist = within(workflow).getByRole('tablist')
+    const report = within(workflow).getByRole('tab', { name: /report/i })
+    const assign = within(workflow).getByRole('tab', { name: /assign/i })
+    const verify = within(workflow).getByRole('tab', { name: /verify/i })
+
+    expect(tablist).toHaveAttribute('aria-orientation', 'vertical')
+    report.focus()
+    await user.keyboard('{ArrowDown}')
+    expect(assign).toHaveFocus()
+    expect(assign).toHaveAttribute('aria-selected', 'true')
+
+    await user.keyboard('{ArrowUp}')
+    expect(report).toHaveFocus()
+    await user.keyboard('{ArrowUp}')
+    expect(verify).toHaveFocus()
+    expect(verify).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('reveals every target when IntersectionObserver is unavailable', async () => {
+    const originalIntersectionObserver = window.IntersectionObserver
+    Object.defineProperty(window, 'IntersectionObserver', {
+      configurable: true,
+      value: undefined,
+    })
+
+    try {
+      render(
+        <MemoryRouter>
+          <LandingPage />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        const revealTargets = document.querySelectorAll('[data-reveal]')
+        expect(revealTargets.length).toBeGreaterThan(0)
+        revealTargets.forEach((target) => {
+          expect(target).toHaveClass('is-visible')
+        })
+      })
+    } finally {
+      Object.defineProperty(window, 'IntersectionObserver', {
+        configurable: true,
+        value: originalIntersectionObserver,
+      })
+    }
   })
 
   it('serves the landing page at the public root', async () => {

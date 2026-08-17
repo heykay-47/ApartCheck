@@ -242,7 +242,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Shape:** Square, hard-bordered controls with a minimum 44px target; authenticated primary controls use 46px.
 - **Primary:** Pump fill, chalk text, bold label or body weight, and a 2px matching border.
 - **Hover / Focus:** Primary hover shifts to slate. Every keyboard-focusable control receives the global 2px marigold outline with a 3px offset.
-- **Secondary:** Transparent with slate text and strong block-axis rules; landing hover uses marigold fill without removing the text label.
+- **Secondary:** Transparent with slate text and strong block-axis rules; landing hover uses graphite fill without removing the text label.
 - **Disabled:** Preserve the control silhouette at 0.55 opacity and use a not-allowed cursor.
 
 ### Navigation

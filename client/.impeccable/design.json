@@ -283,9 +283,9 @@
     ],
     "motion": [
       {
-        "name": "trace-stage-reveal",
-        "value": "480ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Ordered trace-stage entrance with 90ms increments."
+        "name": "landing-reveal",
+        "value": "700ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Progressive [data-reveal] entrance using opacity and vertical translation."
       },
       {
         "name": "scan-result",
@@ -295,7 +295,7 @@
       {
         "name": "reduced-motion",
         "value": "0s transitions; 0.01ms animations; 1 iteration",
-        "purpose": "Global reduced-motion contract; trace stages render fully revealed."
+        "purpose": "Global reduced-motion contract; every [data-reveal] target renders fully revealed and untransformed."
       }
     ],
     "breakpoints": [

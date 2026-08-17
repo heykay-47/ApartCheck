@@ -67,8 +67,8 @@ export function LandingPage(): JSX.Element {
     const revealTargets =
       landingRoot.querySelectorAll<HTMLElement>('[data-reveal]')
 
-    if (!('IntersectionObserver' in window)) {
-      landingRoot.classList.add('is-reveal-ready')
+    if (typeof window.IntersectionObserver !== 'function') {
+      revealTargets.forEach((target) => target.classList.add('is-visible'))
       return
     }
 
