@@ -113,12 +113,13 @@ export function ProductPreview({
             <li
               className="preview-history-row"
               data-active={active || undefined}
+              data-state={active ? 'reached' : 'pending'}
               key={status}
-              style={{ opacity: active ? 1 : 0.48 }}
             >
               <span>{status}</span>
               <strong>{actor}</strong>
               <p>{detail}</p>
+              <small>{active ? 'Recorded' : 'Not yet reached'}</small>
             </li>
           )
         })}

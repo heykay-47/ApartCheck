@@ -23,7 +23,10 @@ function LandingHeader(): JSX.Element {
         <a href="#workflow">Workflow</a>
         <a href="#security">Security</a>
       </nav>
-      <Link className="landing-primary-action" to="/login">
+      <Link
+        className="landing-secondary-action landing-header-action"
+        to="/login"
+      >
         Sign in
       </Link>
     </header>
@@ -241,7 +244,12 @@ export function LandingPage(): JSX.Element {
         </span>
         <p>Asset &amp; Ticket accountability</p>
         <p className="landing-disclosure">Synthetic records only.</p>
-        <a href={sourceUrl} target="_blank" rel="noreferrer">
+        <a
+          className="landing-footer-link"
+          href={sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
           GitHub source
         </a>
       </footer>

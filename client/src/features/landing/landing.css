@@ -82,9 +82,15 @@
   border-left: 1px solid var(--color-slate);
 }
 
-.landing-masthead > .landing-primary-action {
+.landing-masthead > .landing-header-action {
   justify-self: end;
   align-self: center;
+}
+
+.landing-page > .skip-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .landing-primary-action,
@@ -477,6 +483,13 @@
   text-transform: uppercase;
 }
 
+.landing-page .landing-footer > a {
+  min-height: 44px;
+  padding-inline: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+
 @media (max-width: 979px) {
   .landing-hero {
     grid-template-columns: minmax(0, 1fr);
@@ -522,7 +535,7 @@
     font-size: 0.62rem;
   }
 
-  .landing-masthead > .landing-primary-action {
+  .landing-masthead > .landing-header-action {
     max-width: calc(100vw - 36px);
   }
 

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import {
   createMemoryRouter,
@@ -27,6 +27,9 @@ describe('landing page', () => {
         name: 'Every repair. One accountable record.',
       }),
     ).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: 'Skip to landing content' }),
+    ).toHaveAttribute('href', '#landing-content')
 
     expect(
       screen.getAllByRole('link', { name: 'Explore the product' })[0],
@@ -34,6 +37,15 @@ describe('landing page', () => {
     expect(screen.getAllByRole('link', { name: 'Sign in' })[0]).toHaveAttribute(
       'href',
       '/login',
+    )
+    expect(screen.getAllByRole('link', { name: 'Sign in' })[0]).toHaveClass(
+      'landing-secondary-action',
+    )
+    expect(screen.getAllByRole('link', { name: 'Sign in' })[0]).not.toHaveClass(
+      'landing-primary-action',
+    )
+    expect(screen.getByRole('link', { name: 'GitHub source' })).toHaveClass(
+      'landing-footer-link',
     )
     expect(screen.getByText('Three enforced Member roles')).toBeVisible()
     expect(screen.getByText('Society-scoped records')).toBeVisible()
@@ -53,6 +65,26 @@ describe('landing page', () => {
     ).toBeNull()
     expect(screen.queryByText(/customer testimonial|trusted by/i)).toBeNull()
     expect(screen.getByText(/synthetic product data/i)).toBeVisible()
+  })
+
+  it('labels inactive preview history without reducing its text contrast', () => {
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+
+    const reportPreview = screen
+      .getAllByRole('article', { name: 'Synthetic Ticket preview' })
+      .find((preview) => preview.getAttribute('data-step') === 'report')
+
+    expect(reportPreview).toBeDefined()
+    const inactiveRow = within(reportPreview!)
+      .getByText('Assigned')
+      .closest('li')
+    expect(inactiveRow).toHaveAttribute('data-state', 'pending')
+    expect(inactiveRow).toHaveTextContent('Not yet reached')
+    expect(inactiveRow).not.toHaveAttribute('style')
   })
 
   it('serves the landing page at the public root', async () => {
