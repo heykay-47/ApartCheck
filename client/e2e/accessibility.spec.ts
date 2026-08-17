@@ -120,7 +120,7 @@ test('public landing page passes responsive and keyboard quality gates', async (
     await page.goto('/')
     await expect(
       page.getByRole('heading', {
-        name: 'Put a record where the work begins.',
+        name: 'Every repair. One accountable record.',
       }),
     ).toBeVisible()
     await expect
@@ -141,16 +141,39 @@ test('public landing page passes responsive and keyboard quality gates', async (
     await skipLink.press('Enter')
     await expect(page.locator('#landing-content')).toBeFocused()
 
-    const source = page.getByRole('link', { name: 'Inspect source' }).first()
-    await source.focus()
-    await assertVisibleFocus(page, 'header a:has-text("Inspect source")')
+    const productLink = page.getByRole('link', { name: 'Product', exact: true })
+    await productLink.click()
+    await expect(page).toHaveURL(/#product-tour$/)
+    const anchorPosition = await page
+      .locator('#product-tour')
+      .evaluate((element) => {
+        const header = document.querySelector('.landing-masthead')
+        return {
+          targetTop: element.getBoundingClientRect().top,
+          headerBottom: header?.getBoundingClientRect().bottom ?? 0,
+        }
+      })
+    expect(anchorPosition.targetTop).toBeGreaterThanOrEqual(
+      anchorPosition.headerBottom - 1,
+    )
+
+    const source = page.getByRole('link', { name: 'GitHub source' }).first()
+    let reachedSource = false
+    for (let index = 0; index < 30 && !reachedSource; index += 1) {
+      await page.keyboard.press('Tab')
+      reachedSource = await source.evaluate(
+        (element) => element === document.activeElement,
+      )
+    }
+    expect(reachedSource).toBe(true)
+    await assertVisibleFocus(page, '.landing-footer-link')
   }
 
-  const animatedStage = page.locator('.trace-stage').first()
-  await expect(animatedStage).toHaveCSS('animation-name', 'trace-stage-in')
+  const revealTarget = page.locator('[data-reveal]').first()
+  await expect(revealTarget).toHaveClass(/is-visible/)
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  const reducedDuration = await animatedStage.evaluate((element) => {
-    const duration = getComputedStyle(element).animationDuration
+  const reducedDuration = await revealTarget.evaluate((element) => {
+    const duration = getComputedStyle(element).transitionDuration
     return duration.endsWith('ms')
       ? Number.parseFloat(duration)
       : Number.parseFloat(duration) * 1000

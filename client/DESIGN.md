@@ -10,6 +10,13 @@ colors:
   verified: '#237a63'
   error: '#a32626'
   white: '#ffffff'
+  landing-ink: '#171a18'
+  landing-muted: '#626761'
+  landing-line: '#d9ddd7'
+  landing-paper: '#f7f8f4'
+  landing-panel: '#ffffff'
+  landing-accent: '#f0a51a'
+  landing-deep: '#27332f'
 typography:
   display:
     fontFamily: 'Barlow Condensed, sans-serif'
@@ -39,6 +46,23 @@ typography:
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: '0.08em'
+  landing-headline:
+    fontFamily: 'Hind, sans-serif'
+    fontSize: 'clamp(3.8rem, 6.2vw, 5.75rem)'
+    fontWeight: 600
+    lineHeight: 0.91
+    letterSpacing: '-0.035em'
+  landing-body:
+    fontFamily: 'Hind, sans-serif'
+    fontSize: 'clamp(1rem, 1.3vw, 1.15rem)'
+    fontWeight: 400
+    lineHeight: 1.55
+  landing-label:
+    fontFamily: 'IBM Plex Mono, monospace'
+    fontSize: '0.68rem'
+    fontWeight: 500
+    lineHeight: 1.2
+    letterSpacing: '0.08em'
 rounded:
   none: '0'
 spacing:
@@ -48,6 +72,8 @@ spacing:
   mobile-gutter: '18px'
   page-gutter: 'clamp(1.125rem, 4vw, 4rem)'
   section: 'clamp(4rem, 9vw, 9rem)'
+  landing-gutter: 'clamp(1.25rem, 4vw, 4.75rem)'
+  landing-section: 'clamp(5rem, 10vw, 10rem)'
 components:
   button-primary:
     backgroundColor: '{colors.pump}'
@@ -78,6 +104,20 @@ components:
     textColor: '{colors.slate}'
     rounded: '{rounded.none}'
     padding: '28px'
+  landing-primary-action:
+    backgroundColor: '{colors.landing-ink}'
+    textColor: '{colors.landing-panel}'
+    typography: '{typography.landing-label}'
+    rounded: '{rounded.none}'
+    padding: '12px 18px'
+    height: '44px'
+  landing-secondary-action:
+    backgroundColor: 'transparent'
+    textColor: '{colors.landing-ink}'
+    typography: '{typography.landing-label}'
+    rounded: '{rounded.none}'
+    padding: '12px 18px'
+    height: '44px'
 ---
 
 # Design System: ApartCheck
@@ -86,14 +126,16 @@ components:
 
 **Creative North Star: "The Maintenance Artifact"**
 
-ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.
+ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The authenticated product remains operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.
+
+The public landing surface is a deliberately scoped Lifecycle Control Room expression of that system. It uses warm and cool white planes, graphite structure, a signal-amber trace, and precise square product geometry to explain one Ticket lifecycle before an existing Member signs in. These landing tokens and compositions do not replace the authenticated shell's Maintenance Artifact rules.
 
 Condensed display type supplies the force of stamped headings and Asset Codes. Humanist body type keeps instructions and evidence readable, while monospaced labels make metadata, controls, stages, and system boundaries feel recorded. Pump blue identifies primary action, marigold marks a trace or selected edge, and verified green is reserved for positive state.
 
 **Key Characteristics:**
 
 - Hard-edged, square-cornered surfaces with visible construction.
-- Oversized condensed headings paired with compact monospaced record labels.
+- Strong readable landing statements paired with compact monospaced record labels.
 - Flat plaster and chalk fields separated by slate rules.
 - Identity plates, ledgers, and lifecycle histories as the recurring information forms.
 - Sparse, functional color that distinguishes action, trace, and state.
@@ -101,6 +143,8 @@ Condensed display type supplies the force of stamped headings and Asset Codes. H
 ## Colors
 
 The palette reproduces painted plaster, paper stock, technical ink, pump hardware, and inspection markings; the frontmatter values are normative.
+
+The public landing adds a warmer paper/graphite subset so the product tour reads as a customer-facing control room without changing authenticated color semantics.
 
 ### Primary
 
@@ -118,6 +162,9 @@ The palette reproduces painted plaster, paper stock, technical ink, pump hardwar
 - **Chalk Stock:** Identity plates, fields, mastheads, and raised record surfaces.
 - **Monsoon Slate:** Primary text, borders, rules, navigation spines, and dark inverse sections.
 - **QR White:** The explicit white substrate behind generated QR marks where printer and scanner contrast requires it.
+- **Landing Graphite:** Public landing ink and structure; it is local to the Lifecycle Control Room surface.
+- **Landing Paper:** Public landing ground and panel fields; it is not an authenticated work-surface replacement.
+- **Landing Signal Amber:** Public landing CTA, selected workflow edge, and focus support only.
 
 ### Named Rules
 
@@ -137,11 +184,14 @@ The palette reproduces painted plaster, paper stock, technical ink, pump hardwar
 
 ### Hierarchy
 
-- **Display** (700, fluid 3.5rem to 6rem, line-height 0.9): Section statements, generally balanced and held near 12 characters per line.
-- **Headline** (700, fluid 4.5rem to 6rem on desktop, line-height 0.84): The landing statement; compact tracking and a narrow measure create the stamped first-viewport silhouette.
+- **Display** (700, fluid 3.5rem to 6rem, line-height 0.9): Section statements and Asset identity in authenticated surfaces.
+- **Headline** (700, fluid 4.5rem to 6rem on desktop, line-height 0.84): Authenticated shell statements; the public landing uses its scoped readable landing headline instead.
 - **Title** (600, 2.4rem, line-height 1): Record and section titles inside operational surfaces.
 - **Body** (400, 17px base, line-height up to 1.6): Explanations, instructions, and proof descriptions; long measures stop at 70ch.
 - **Label** (500, 0.72rem, line-height 1.3, tracking 0.08em): Uppercase metadata, Asset labels, stage numbers, architecture boundaries, and compact navigation.
+- **Landing headline** (600, fluid `clamp(3.8rem, 6.2vw, 5.75rem)`, line-height 0.91): The public first-viewport value statement in readable Hind rather than condensed display type.
+- **Landing body** (400, fluid `clamp(1rem, 1.3vw, 1.15rem)`, line-height 1.55): Public product explanation and benefit copy.
+- **Landing label** (500, 0.68rem, line-height 1.2, tracking 0.08em): Public masthead, preview metadata, evidence labels, and workflow controls.
 
 ### Named Rules
 
@@ -153,25 +203,25 @@ The palette reproduces painted plaster, paper stock, technical ink, pump hardwar
 
 The authenticated shell uses a fixed 248px slate utility spine and a flexible work surface. Operational pages are centered to 1080px with 48px horizontal padding and 64px vertical padding. Asset and Ticket ledgers use strong top rules, lighter row separators, explicit columns, and content-aligned density rather than floating cards. Ticket detail pages keep the current status, linked record definition, role-valid actions, and immutable history in that reading order.
 
-The public landing boundary uses a fluid gutter and section rhythm from the frontmatter. A pair of full-height inset guide rules and section borders maintain the record-sheet construction without images or gradients. Desktop hero content uses an asymmetric copy/plate split and a four-column trace rail. The trace plate, not a generic illustration, is the visual anchor.
+The public landing boundary uses a fluid `landing-gutter` and `landing-section` rhythm. Its sticky masthead is a solid paper surface with divided mono navigation and safe `8rem` anchor offsets. The desktop hero uses an asymmetric copy/preview split; the layered synthetic Ticket workspace is the visual anchor, not a generic illustration.
 
-At 979px and below, the landing hero becomes one column and scope content reduces to two columns. At 759px and below, the gutter is 18px, masthead navigation becomes a full second row, actions become full-width, the trace plate becomes one column, trace and proof ledgers stack, architecture connectors turn vertical, and scope/footer grids collapse. At 700px and below, the authenticated shell replaces its spine with the mobile bar; operational ledgers and identity plates stack.
+At 1099px and below, the landing hero becomes one column. At 760px and below, the landing masthead navigation becomes a full second row and the hero/benefit/workflow compositions stack; at 600px the gutter is 18px, preview definitions and history rows expose labels, workflow tabs become vertical, and offsets stay within the viewport. The authenticated shell still replaces its spine with the mobile bar at 700px.
 
-The minimum supported viewport is 360px. At 360px, no content may force horizontal scrolling: the landing headline narrows to 7ch, both hero actions remain visible before the plate, the plate is `100vw - 48px`, its QR mark is at most 150px, and stage rows stack with 44px minimum navigation/control targets.
+The minimum supported viewport is 360px. At 360px, no content may force horizontal scrolling, both hero actions remain visible before the preview, preview rows remain legible, and all navigation and control targets remain at least 44px.
 
 **The Ledger-First Rule.** Repeated records use ruled rows and explicit columns on wide screens, then labeled stacked records on narrow screens. Do not convert the same information into unrelated card tiles.
 
-**The Boundary Rule.** The landing trace sequence is reusable when explaining physical Asset to protected record traceability. Its exact hero composition, synthetic `LFT-0007` plate, four-stage first-viewport rail, and section order are landing-surface expressions, not a template for authenticated screens.
+**The Boundary Rule.** The public Lifecycle Control Room is a landing-only explanation of the shipped Ticket lifecycle. Its synthetic preview, section pacing, and workflow tour are not templates for authenticated screens.
 
 ## Elevation & Depth
 
-The system is flat by default. Plaster, chalk, and slate tonal contrast plus hard rules establish depth. Offset solid shadows are structural marks reserved for temporary overlays or plates; there are no ambient blur shadows. Landing plates use a one-sided marigold offset to suggest an attached tag rather than elevation.
+The authenticated system is flat by default. Plaster, chalk, and slate tonal contrast plus hard rules establish depth. Offset solid shadows are structural marks reserved for temporary overlays or plates; there are no ambient blur shadows. The public landing uses restrained solid graphite offsets on its Ticket preview to create layered control-room depth, never ambient glow.
 
 ### Shadow Vocabulary
 
 - **Confirmation Offset** (`8px 8px 0 var(--color-slate)`): Fixed confirmation panels.
 - **Dialog Offset** (`10px 10px 0 var(--color-slate)`): Credential dialogs above the slate backdrop.
-- **Trace Edge** (`12px 0 0 var(--color-marigold)`): Landing trace plate identity edge, including the 360px composition.
+- **Landing Preview Offset** (`9px 9px 0 #171a18`): Public Ticket preview depth, kept inside the mobile viewport.
 
 ### Named Rules
 
@@ -179,7 +229,7 @@ The system is flat by default. Plaster, chalk, and slate tonal contrast plus har
 
 ## Shapes
 
-All documented surfaces and controls use square corners. One- and two-pixel slate rules, heavier top rules, asymmetric accent edges, and registration corners provide shape. Identity plates use a 2px perimeter plus a marigold left edge in the product or a marigold right offset on the landing trace plate. QR substrates remain square and high contrast.
+All documented surfaces and controls use square corners. One- and two-pixel slate rules, heavier top rules, and asymmetric accent edges provide shape. Identity plates use a 2px perimeter plus a marigold left edge in the authenticated product. The public Ticket preview uses square borders and restrained graphite offsets; QR substrates remain square and high contrast.
 
 **The No-Radius Rule.** Buttons, fields, ledgers, plates, dialogs, labels, and navigation stay at zero radius.
 
@@ -198,7 +248,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 ### Navigation
 
 - **Authenticated:** Slate spine with chalk text; hover and active states add a 2px marigold left rule and a restrained translucent white field. At 700px it becomes a slate mobile bar with a native disclosure menu.
-- **Landing:** Chalk masthead bounded by 2px rules. Mono uppercase links occupy divided cells; below 759px they form a full-width second row with 44px targets.
+- **Landing:** Paper masthead with a solid background, divided mono uppercase links, sticky positioning, and a full-width second row below 760px. Hash targets clear the masthead, and all controls retain 44px targets.
 - **Focus:** The same global marigold focus outline applies; skip links move into view only on keyboard focus.
 
 ### Inputs / Fields
@@ -229,11 +279,17 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **QR:** A white square substrate, up to 220px, with pixelated image rendering. Alt text names the Asset Code; loading and download behavior retain readable labels.
 - **Responsive:** Below 700px, the plate stacks with 20px padding and the QR region remains bounded.
 
-### Trace Sequence
+### Landing Ticket Preview
 
-- **Pattern:** Four ordered stages, Register, Label, Scan, Retrieve, connect one physical Asset to one protected Society-scoped record.
-- **Reuse:** Use the sequence only for traceability explanation, onboarding, or documentation where all four stages are truthful. Operational ledgers should reuse rules and type roles, not this narrative composition.
-- **Motion:** Stages reveal over 480ms with `cubic-bezier(0.16, 1, 0.3, 1)` and 90ms increments. Motion changes opacity and vertical position only; reduced-motion mode displays all stages immediately with no transform.
+- **Pattern:** A static synthetic Ticket record exposes Ticket identity, Unit, Asset, Reporter, Owner, latest note, and chronological Reported/Assigned/Submitted/Verified history.
+- **States:** `data-step` changes the written lifecycle state and marks reached history rows with redundant text; it never relies on color alone.
+- **Depth:** The preview uses square borders and restrained solid graphite offsets, with a compact stacked form at mobile widths.
+
+### Workflow Tour
+
+- **Pattern:** Four visible Report, Assign, Complete, and Verify tabs synchronize one preview inside a labeled tablist and tabpanel.
+- **Interaction:** Pointer selection and ArrowLeft/ArrowRight/Home/End movement select and focus the same step; only one tab is in the tab order.
+- **Motion:** Progressive page reveals use opacity and vertical translation only; reduced motion reveals every `[data-reveal]` target immediately.
 
 ### State and Feedback
 
@@ -250,7 +306,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Do** preserve canonical terms including Society, Member, Administrator, Resident, Technician, Unit, Asset, Asset Code, QR Token, and Archive.
 - **Do** keep controls keyboard operable, expose a visible `:focus-visible` treatment, and maintain 44px minimum targets on narrow screens.
 - **Do** stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.
-- **Do** honor `prefers-reduced-motion`: remove transitions, reduce animation duration to 0.01ms globally, and reveal trace stages without transform.
+- **Do** honor `prefers-reduced-motion`: remove transitions, reduce animation duration to 0.01ms globally, and reveal every landing content target without transform.
 - **Do** keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record.
 - **Do** present Ticket status, assignment, actions, and immutable history as one accountable record with a stable reading order.
 
@@ -258,7 +314,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 
 - **Don't** use gradients, background images, glassmorphism, blurred ambient shadows, rounded cards, pills, or soft floating containers.
 - **Don't** use a generic centered SaaS hero, feature-card grid, ornamental eyebrow, or decorative illustration in place of an implemented record form.
-- **Don't** promote the landing page's synthetic record, exact trace rail, or section sequence into a system-wide layout requirement.
+- **Don't** promote the landing page's synthetic Ticket preview, workflow tour, or section sequence into a system-wide layout requirement.
 - **Don't** use marigold as a broad fill or verified green as decoration.
 - **Don't** communicate error, archive, active, or verified state through color alone.
 - **Don't** visualize vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.

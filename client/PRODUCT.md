@@ -8,7 +8,7 @@ web
 
 ## Users
 
-ApartCheck is presented primarily as a portfolio demonstration for people evaluating product thinking, frontend and backend engineering, security, accessibility, and deployment quality.
+The public page speaks primarily to Society operators evaluating a maintenance workflow and existing Members who need to sign in. It is also a portfolio demonstration for people evaluating product thinking, frontend and backend engineering, security, accessibility, and deployment quality.
 
 Within the product, a Society has three Member roles:
 
@@ -18,7 +18,9 @@ Within the product, a Society has three Member roles:
 
 ## Product Purpose
 
-ApartCheck demonstrates a deployed Asset identity foundation and Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, notes-only completion proof, Administrator verification, and immutable history.
+ApartCheck gives Society operators and existing Members a clear view of a deployed Asset identity foundation and Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, notes-only completion proof, Administrator verification, and immutable history.
+
+The public page offers a static product tour and existing-user sign-in. It does not offer public signup, demo credentials, or a live public workspace.
 
 Success means the shipped workflow is understandable, secure, accessible at desktop and phone widths, verifiable through automated tests, and usable in a live synthetic demonstration without implying capabilities that are not implemented or publicly verified.
 
@@ -26,7 +28,9 @@ The longer-term direction is an evidence-backed accountability workflow connecti
 
 ## Positioning
 
-ApartCheck is an Asset identity and accountability foundation rather than a generic property-management dashboard or helpdesk. Its distinguishing mechanism is the durable bridge between a shared physical Asset, its human-readable Asset Code, its printable QR label, and a Society-scoped authenticated record.
+ApartCheck is an Asset identity and accountability foundation for Society operators and existing Members rather than a generic property-management dashboard or helpdesk. Its distinguishing mechanism is the durable bridge between a shared physical Asset, its human-readable Asset Code, its printable QR label, and a Society-scoped authenticated record.
+
+The public landing surface is a static explanation of that mechanism and a route to sign in for existing Members, not a signup funnel or credentialed demo.
 
 The deployed Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual completion proof was submitted, and whether an Administrator verified it. Render bundle, health, and direct-route verification are recorded; live role-by-role manual Ticket acceptance is not claimed yet.
 
@@ -50,6 +54,8 @@ The production demonstration runs as one same-origin web service backed by Mongo
 The product name is **ApartCheck**. Future product language uses the canonical terms Society, Member, Administrator, Resident, Technician, Unit, Asset, Asset Code, QR Token, and Archive as defined in the repository's `CONTEXT.md`.
 
 Copy should be direct and operational. Controls name outcomes, and empty, loading, and error states explain the current condition or recovery action. Current shell phrases such as “MAINTENANCE ARTIFACT” are implementation copy, not confirmed product claims or durable taglines.
+
+Public copy addresses Society operators and existing Members first. It must distinguish the static product tour from the authenticated product, offer existing-user sign-in only, and never imply public signup, demo credentials, or access to live data.
 
 ## Evidence on Hand
 

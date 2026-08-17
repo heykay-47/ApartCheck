@@ -125,6 +125,12 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  background: var(--landing-deep);
+  color: var(--landing-panel);
+}
+
+.landing-page :is(#landing-content, #product-tour, #workflow, #security) {
+  scroll-margin-top: 8rem;
 }
 
 .landing-page .landing-primary-action,
@@ -174,23 +180,6 @@
 .landing-page .landing-primary-action:active,
 .landing-page .landing-secondary-action:active {
   transform: translateY(0);
-}
-
-@supports (animation-timeline: scroll()) {
-  .landing-page .landing-masthead {
-    border-bottom-color: transparent;
-    background: transparent;
-    animation: landing-header-state linear both;
-    animation-timeline: scroll(root block);
-    animation-range: 0 120px;
-  }
-
-  @keyframes landing-header-state {
-    to {
-      border-bottom-color: var(--landing-line);
-      background: var(--landing-panel);
-    }
-  }
 }
 
 .landing-page main > section + section {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-13T01:16:38.000Z",
+  "generatedAt": "2026-08-17T17:50:46.000Z",
   "title": "Design System: ApartCheck",
   "extensions": {
     "colorMeta": {
@@ -123,6 +123,111 @@
           "#f2f2f2",
           "#ffffff"
         ]
+      },
+      "landing-ink": {
+        "role": "neutral",
+        "displayName": "Landing Graphite",
+        "canonical": "#171a18",
+        "tonalRamp": [
+          "#0d0e0d",
+          "#171a18",
+          "#363a37",
+          "#555a56",
+          "#777c77",
+          "#a0a49f",
+          "#cbd0ca",
+          "#f1f3ef"
+        ]
+      },
+      "landing-muted": {
+        "role": "neutral",
+        "displayName": "Landing Muted Ink",
+        "canonical": "#626761",
+        "tonalRamp": [
+          "#20231f",
+          "#343833",
+          "#4a504a",
+          "#626761",
+          "#858a84",
+          "#a9aea8",
+          "#d1d5cf",
+          "#f2f4ef"
+        ]
+      },
+      "landing-line": {
+        "role": "neutral",
+        "displayName": "Landing Rule",
+        "canonical": "#d9ddd7",
+        "tonalRamp": [
+          "#222522",
+          "#414640",
+          "#626861",
+          "#858b84",
+          "#aab0a9",
+          "#c1c6c0",
+          "#d9ddd7",
+          "#f4f6f1"
+        ]
+      },
+      "landing-paper": {
+        "role": "neutral",
+        "displayName": "Landing Paper",
+        "canonical": "#f7f8f4",
+        "tonalRamp": [
+          "#222522",
+          "#414641",
+          "#626861",
+          "#858b84",
+          "#aab0aa",
+          "#cdd2cb",
+          "#e7eae4",
+          "#f7f8f4"
+        ]
+      },
+      "landing-panel": {
+        "role": "neutral",
+        "displayName": "Landing Panel",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#4a4a4a",
+          "#707070",
+          "#979797",
+          "#bdbdbd",
+          "#dedede",
+          "#f2f2f2",
+          "#ffffff"
+        ]
+      },
+      "landing-accent": {
+        "role": "secondary",
+        "displayName": "Landing Signal Amber",
+        "canonical": "#f0a51a",
+        "tonalRamp": [
+          "#332406",
+          "#60450b",
+          "#8f6814",
+          "#bd8b1d",
+          "#f0a51a",
+          "#f6c35b",
+          "#fbe0a0",
+          "#fff5dc"
+        ]
+      },
+      "landing-deep": {
+        "role": "neutral",
+        "displayName": "Landing Deep Graphite",
+        "canonical": "#27332f",
+        "tonalRamp": [
+          "#131a18",
+          "#27332f",
+          "#414d48",
+          "#5c6862",
+          "#7b8580",
+          "#a1aaa5",
+          "#cbd1cd",
+          "#eff2ef"
+        ]
       }
     },
     "typographyMeta": {
@@ -145,6 +250,18 @@
       "label": {
         "displayName": "Record Label",
         "purpose": "Metadata, controls, stages, and system boundaries."
+      },
+      "landing-headline": {
+        "displayName": "Landing Headline",
+        "purpose": "Readable public first-viewport value statement."
+      },
+      "landing-body": {
+        "displayName": "Landing Body",
+        "purpose": "Public product explanation and benefit copy."
+      },
+      "landing-label": {
+        "displayName": "Landing Label",
+        "purpose": "Public masthead, preview metadata, evidence labels, and workflow controls."
       }
     },
     "shadows": [
@@ -159,9 +276,9 @@
         "purpose": "Credential dialogs."
       },
       {
-        "name": "trace-edge",
-        "value": "12px 0 0 var(--color-marigold)",
-        "purpose": "Landing trace identity plate edge."
+        "name": "landing-preview-offset",
+        "value": "9px 9px 0 #171a18",
+        "purpose": "Public Ticket preview depth kept inside the mobile viewport."
       }
     ],
     "motion": [
@@ -182,8 +299,9 @@
       }
     ],
     "breakpoints": [
-      { "name": "landing-stack", "value": "979px" },
-      { "name": "landing-mobile", "value": "759px" },
+      { "name": "landing-stack", "value": "1099px" },
+      { "name": "landing-mobile", "value": "760px" },
+      { "name": "landing-tight", "value": "600px" },
       { "name": "shell-mobile", "value": "700px" },
       { "name": "minimum-supported", "value": "360px" }
     ]
@@ -216,9 +334,9 @@
     {
       "name": "Landing Navigation",
       "kind": "nav",
-      "description": "Divided mono navigation cells inside a chalk ruled masthead.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Example navigation\"><a href=\"#mechanism\">MECHANISM</a><a href=\"#proof\">PROOF</a><a href=\"#architecture\">ARCHITECTURE</a></nav>",
-      "css": ".ds-nav { display: flex; border: 1px solid var(--color-slate); background: var(--color-chalk); } .ds-nav a { min-height: 44px; padding: 0 18px; display: grid; place-items: center; color: var(--color-slate); font: 500 0.72rem/1 var(--font-utility); letter-spacing: 0.07em; text-decoration: underline; text-underline-offset: 0.3em; } .ds-nav a + a { border-left: 1px solid var(--color-slate); } .ds-nav a:hover { background: var(--color-plaster); } .ds-nav a:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: -4px; }"
+      "description": "Sticky paper masthead with divided mono product anchors and existing-user sign-in.",
+      "html": "<nav class=\"ds-landing-nav\" aria-label=\"Landing page\"><a href=\"#product-tour\">PRODUCT</a><a href=\"#workflow\">WORKFLOW</a><a href=\"#security\">SECURITY</a></nav>",
+      "css": ".ds-landing-nav { display: flex; border-inline: 1px solid var(--color-landing-line, #d9ddd7); background: var(--color-landing-panel, #fff); } .ds-landing-nav a { min-height: 44px; padding: 0 18px; display: grid; place-items: center; color: var(--color-landing-ink, #171a18); font: 500 0.68rem/1.2 var(--font-utility); letter-spacing: 0.08em; text-transform: uppercase; text-underline-offset: 0.3em; } .ds-landing-nav a + a { border-left: 1px solid var(--color-landing-line, #d9ddd7); } .ds-landing-nav a:hover { background: var(--color-landing-paper, #f7f8f4); } .ds-landing-nav a:focus-visible { outline: 2px solid var(--color-landing-accent, #f0a51a); outline-offset: -4px; }"
     },
     {
       "name": "Ledger Row",
@@ -250,19 +368,19 @@
       "css": ".ds-plate { padding: 28px; display: grid; grid-template-columns: 1fr 150px; gap: 30px; border: 2px solid var(--color-slate); border-left: 12px solid var(--color-marigold); border-radius: 0; background: var(--color-chalk); color: var(--color-slate); } .ds-plate > div > span, .ds-plate dt { font: 500 0.7rem/1.3 var(--font-utility); letter-spacing: 0.08em; } .ds-plate strong { display: block; margin-top: 8px; font: 600 3.5rem/0.9 var(--font-display); } .ds-plate h2 { margin: 18px 0; font: 600 2rem/1 var(--font-display); } .ds-plate dl { margin: 0; } .ds-plate dd { margin: 2px 0 10px; font: 400 1rem/1.3 var(--font-body); } .ds-plate-qr { min-height: 150px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; place-self: center; border: 2px solid var(--color-slate); background: var(--color-white, #fff); } .ds-plate-qr span { background: var(--color-slate); }"
     },
     {
-      "name": "Trace Stage Rail",
+      "name": "Workflow Tour",
       "kind": "custom",
-      "description": "Four ruled stages explain the physical Asset-to-record trace and are not a generic app stepper.",
-      "html": "<ol class=\"ds-trace\"><li><span>01</span><strong>Register</strong></li><li><span>02</span><strong>Label</strong></li><li><span>03</span><strong>Scan</strong></li><li><span>04</span><strong>Retrieve</strong></li></ol>",
-      "css": ".ds-trace { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); border-block: 2px solid var(--color-slate); color: var(--color-slate); list-style: none; } .ds-trace li { min-height: 54px; padding: 16px; display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; animation: ds-trace-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both; } .ds-trace li + li { border-left: 1px solid var(--color-slate); } .ds-trace span { font: 500 0.72rem/1.3 var(--font-utility); letter-spacing: 0.06em; } .ds-trace strong { font: 600 1rem/1.2 var(--font-body); } .ds-trace li:hover { background: var(--color-chalk); } @keyframes ds-trace-in { from { opacity: 0.35; transform: translateY(12px); } to { opacity: 1; transform: none; } } @media (prefers-reduced-motion: reduce) { .ds-trace li { opacity: 1; transform: none; animation-duration: 0.01ms; } }"
+      "description": "Keyboard-operable Report, Assign, Complete, and Verify tabs synchronized with one synthetic Ticket preview.",
+      "html": "<div class=\"ds-workflow\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">REPORT</button><button role=\"tab\" aria-selected=\"false\">ASSIGN</button><button role=\"tab\" aria-selected=\"false\">COMPLETE</button><button role=\"tab\" aria-selected=\"false\">VERIFY</button></div>",
+      "css": ".ds-workflow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 2px solid var(--color-slate); } .ds-workflow button { min-height: 54px; padding: 14px 16px; border: 0; border-right: 1px solid var(--color-landing-line, #d9ddd7); background: transparent; color: var(--color-slate); font: 500 0.68rem/1.2 var(--font-utility); letter-spacing: 0.08em; text-align: left; } .ds-workflow button[aria-selected=\"true\"] { border-top: 3px solid var(--color-landing-accent, #f0a51a); background: var(--color-landing-paper, #f7f8f4); } .ds-workflow button:focus-visible { outline: 2px solid var(--color-landing-accent, #f0a51a); outline-offset: -4px; }"
     }
   ],
   "narrative": {
     "northStar": "The Maintenance Artifact",
-    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The visual system is operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nCondensed display type supplies the force of stamped headings and Asset Codes. Humanist body type keeps instructions and evidence readable, while monospaced labels make metadata, controls, stages, and system boundaries feel recorded. Pump blue identifies primary action, marigold marks a trace or selected edge, and verified green is reserved for positive state.",
+    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The authenticated product remains operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nThe public landing surface is a deliberately scoped Lifecycle Control Room expression of that system. It uses warm and cool white planes, graphite structure, a signal-amber trace, and precise square product geometry to explain one Ticket lifecycle before an existing Member signs in. Condensed display type remains the voice of authenticated Asset identity; readable Hind carries the landing value statement, while monospaced labels record metadata and controls.",
     "keyCharacteristics": [
       "Hard-edged, square-cornered surfaces with visible construction.",
-      "Oversized condensed headings paired with compact monospaced record labels.",
+      "Strong readable landing statements paired with compact monospaced record labels.",
       "Flat plaster and chalk fields separated by slate rules.",
       "Identity plates, ledgers, and lifecycle histories as the recurring information forms.",
       "Sparse, functional color that distinguishes action, trace, and state."
@@ -300,7 +418,7 @@
       },
       {
         "name": "The Boundary Rule",
-        "body": "The landing trace sequence is reusable when explaining physical Asset to protected record traceability. Its exact hero composition, synthetic LFT-0007 plate, four-stage first-viewport rail, and section order are landing-surface expressions, not a template for authenticated screens.",
+        "body": "The public Lifecycle Control Room is a landing-only explanation of the shipped Ticket lifecycle. Its synthetic preview, section pacing, and workflow tour are not templates for authenticated screens.",
         "section": "layout"
       },
       {
@@ -324,14 +442,14 @@
       "Do preserve canonical terms including Society, Member, Administrator, Resident, Technician, Unit, Asset, Asset Code, QR Token, and Archive.",
       "Do keep controls keyboard operable, expose a visible :focus-visible treatment, and maintain 44px minimum targets on narrow screens.",
       "Do stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.",
-      "Do honor prefers-reduced-motion: remove transitions, reduce animation duration to 0.01ms globally, and reveal trace stages without transform.",
+      "Do honor prefers-reduced-motion: remove transitions, reduce animation duration to 0.01ms globally, and reveal every landing content target without transform.",
       "Do keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record.",
       "Do present Ticket status, assignment, actions, and immutable history as one accountable record with a stable reading order."
     ],
     "donts": [
       "Don't use gradients, background images, glassmorphism, blurred ambient shadows, rounded cards, pills, or soft floating containers.",
       "Don't use a generic centered SaaS hero, feature-card grid, ornamental eyebrow, or decorative illustration in place of an implemented record form.",
-      "Don't promote the landing page's synthetic record, exact trace rail, or section sequence into a system-wide layout requirement.",
+      "Don't promote the landing page's synthetic Ticket preview, workflow tour, or section sequence into a system-wide layout requirement.",
       "Don't use marigold as a broad fill or verified green as decoration.",
       "Don't communicate error, archive, active, or verified state through color alone.",
       "Don't visualize vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.",

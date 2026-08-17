@@ -11,15 +11,15 @@ Public root landing page. Mode: Persuade.
 
 ## Audience and Action
 
-Portfolio reviewers evaluating product thinking, engineering, security, accessibility, and deployment quality. Primary action: inspect the public GitHub source. Secondary action: open the live sign-in.
+Society operators evaluating an accountable maintenance workflow and existing Members who need to sign in. Portfolio reviewers remain a secondary audience. Primary action: Explore the product through the static tour. Secondary action: sign in as an existing Member.
 
 ## Proof and Constraints
 
-Demonstrate the physical Asset → Asset Code and label → protected QR → Society-scoped record mechanism. Use only verified shipped evidence and explicitly separate future direction. Static, dependency-free, responsive from 360px, and accessible with reduced motion.
+Demonstrate the shipped Ticket lifecycle from physical Asset context through report, assignment, completion proof, and Administrator verification. Use static synthetic proof only, explicitly separate future direction, and never imply public signup or demo credentials. Static, dependency-free, responsive from 360px, and accessible with reduced motion.
 
 ## Chosen Direction
 
-Traceability chain inside the incumbent maintenance-artifact visual system. Memorable moment: one synthetic Asset resolves across four connected stages while its identity plate remains the visual anchor. Seed: 18ff4db7.
+Lifecycle Control Room inside a scoped warm-white/graphite/signal-amber landing system. Memorable moment: one synthetic Ticket resolves across synchronized Report, Assign, Complete, and Verify stages while the product preview remains the visual anchor. Seed: dc70aa24. Signature transition: the same record advances from report to verification without losing ownership or history.
 
 ## Unresolved Decisions
 
