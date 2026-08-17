@@ -1,36 +1,48 @@
 import type { JSX } from 'react'
 import { Link } from 'react-router-dom'
+import { ProductPreview } from './ProductPreview'
 import './landing.css'
 
 const sourceUrl = 'https://github.com/heykay-47/ApartCheck'
 
-const stages = [
-  ['01', 'Register', 'Record category, location, install date, and state.'],
-  ['02', 'Label', 'Issue a readable Asset Code and printable identity plate.'],
-  ['03', 'Scan', 'Open the protected QR route from the physical location.'],
-  ['04', 'Retrieve', 'Return the Society-scoped record after authentication.'],
-] as const
+function LandingHeader(): JSX.Element {
+  return (
+    <header
+      className="landing-masthead"
+      style={{ position: 'sticky', top: 0, zIndex: 10 }}
+    >
+      <a
+        className="brand-mark"
+        href="#landing-content"
+        aria-label="ApartCheck home"
+      >
+        APART<span>CHECK</span>
+      </a>
+      <nav className="landing-nav" aria-label="Landing page">
+        <a href="#product-tour">Product</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#security">Security</a>
+      </nav>
+      <Link className="landing-primary-action" to="/login">
+        Sign in
+      </Link>
+    </header>
+  )
+}
 
-const proof = [
+const evidence = [
+  ['Three enforced Member roles', 'Administrator, Resident, and Technician.'],
   [
-    'ROLE BOUNDARIES',
-    'Administrator, Resident, and Technician access is enforced server-side.',
+    'Society-scoped records',
+    'Every Unit, Asset, Member, and Ticket stays in its Society.',
   ],
   [
-    'SOCIETY ISOLATION',
-    'Unit, Member, Asset, and QR lookups stay inside the authenticated Society.',
+    'Deployed Ticket workflow',
+    'Report, assign, complete, verify, and preserve history.',
   ],
   [
-    'CREDENTIAL HANDOFF',
-    'Temporary passwords appear once and are never stored as plaintext.',
-  ],
-  [
-    'DELIVERY GATES',
-    'Formatting, linting, type checks, tests, build, browser, and accessibility checks run in CI.',
-  ],
-  [
-    'LIVE SURFACE',
-    'The deployed phone-width QR flow was verified with synthetic data.',
+    'Automated delivery gates',
+    'Formatting, linting, type checks, tests, and build checks.',
   ],
 ] as const
 
@@ -41,113 +53,36 @@ export function LandingPage(): JSX.Element {
         Skip to landing content
       </a>
 
-      <header className="landing-masthead">
-        <a
-          className="brand-mark"
-          href="#landing-content"
-          aria-label="ApartCheck home"
-        >
-          APART<span>CHECK</span>
-        </a>
-        <nav className="landing-nav" aria-label="Landing page">
-          <a href="#mechanism">Mechanism</a>
-          <a href="#proof">Proof</a>
-          <a href="#architecture">Architecture</a>
-        </nav>
-        <a
-          className="landing-primary-action"
-          href={sourceUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Inspect source
-        </a>
-      </header>
+      <LandingHeader />
 
       <main id="landing-content" tabIndex={-1}>
         <section className="landing-hero" aria-labelledby="landing-title">
           <div>
-            <h1 id="landing-title">Put a record where the work begins.</h1>
+            <h1 id="landing-title">Every repair. One accountable record.</h1>
             <p>
-              ApartCheck links a shared physical Asset to its protected Society
-              record through a readable Asset Code and QR label.
+              ApartCheck gives a Society one place to see what happened to a
+              shared Asset: who reported the issue, who owns the work, what was
+              completed, and who verified it.
             </p>
             <div className="landing-actions">
-              <a
-                className="landing-primary-action"
-                href={sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Inspect source
+              <a className="landing-primary-action" href="#product-tour">
+                Explore the product
               </a>
               <Link className="landing-secondary-action" to="/login">
-                Open the work record
+                Sign in
               </Link>
             </div>
           </div>
 
-          <div className="trace-plate">
-            <p>SYNTHETIC RECORD</p>
-            <div>
-              <p>ASSET CODE</p>
-              <strong>LFT-0007</strong>
-            </div>
-            <div>
-              <p>ASSET</p>
-              <strong>North tower passenger lift</strong>
-            </div>
-            <div>
-              <p>LOCATION</p>
-              <strong>Ground-floor lobby</strong>
-            </div>
-            <svg
-              className="trace-qr"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M2 2h14v14H2zM32 2h14v14H32zM2 32h14v14H2z" />
-              <path d="M6 6h6v6H6zM36 6h6v6h-6zM6 36h6v6H6z" />
-              <path d="M22 4h4v8h-4zM20 18h8v4h-8zM32 22h4v8h-4zM40 20h6v6h-6zM20 28h8v8h-8zM30 38h6v8h-6zM40 34h6v4h-6zM40 42h4v4h-4z" />
-            </svg>
-          </div>
-
-          <ol className="trace-stages" aria-label="Asset trace stages">
-            {stages.map(([number, name]) => (
-              <li className="trace-stage" key={number}>
-                <span>{number}</span>
-                <strong>{name}</strong>
-              </li>
-            ))}
-          </ol>
+          <ProductPreview step="verify" />
         </section>
 
         <section
-          className="mechanism-sequence"
-          id="mechanism"
-          aria-labelledby="mechanism-title"
+          className="proof-ledger evidence-strip"
+          aria-label="Product evidence"
         >
-          <h2 id="mechanism-title">Trace the Asset.</h2>
-          <ol>
-            {stages.map(([number, name, description]) => (
-              <li className="trace-stage" key={number}>
-                <span>{number}</span>
-                <h3>{name}</h3>
-                <p>{description}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section
-          className="proof-ledger"
-          id="proof"
-          aria-labelledby="proof-title"
-        >
-          <h2 id="proof-title">Engineering proof, on the record.</h2>
           <dl>
-            {proof.map(([label, detail]) => (
+            {evidence.map(([label, detail]) => (
               <div className="proof-row" key={label}>
                 <dt>{label}</dt>
                 <dd>{detail}</dd>
@@ -157,66 +92,144 @@ export function LandingPage(): JSX.Element {
         </section>
 
         <section
-          className="architecture-strip"
-          id="architecture"
-          aria-labelledby="architecture-title"
+          id="product-tour"
+          className="product-tour"
+          aria-labelledby="product-tour-title"
         >
-          <h2 id="architecture-title">One shipped path.</h2>
-          <ol aria-label="Application architecture">
-            <li>Browser</li>
-            <li>Express API + static React client</li>
-            <li>MongoDB Atlas</li>
-          </ol>
-          <ul aria-label="Architecture boundaries">
-            <li>HTTPS + HttpOnly session</li>
-            <li>same-origin deployment</li>
-            <li>Society-scoped queries</li>
-          </ul>
+          <h2 id="product-tour-title">
+            Maintenance work, without the missing middle.
+          </h2>
+          <p className="section-intro">
+            The product keeps the physical Asset, the Ticket, and the
+            accountable history in the same readable record.
+          </p>
+          <div className="benefit-sections">
+            <section className="benefit-section" aria-labelledby="asset-title">
+              <div>
+                <h3 id="asset-title">Know the Asset before work begins.</h3>
+                <p>
+                  Start with the Unit and Asset identity, not a vague message
+                  thread. The record gives the person doing the work the place,
+                  equipment, and context before the first visit.
+                </p>
+              </div>
+              <ProductPreview step="report" compact />
+            </section>
+
+            <section
+              className="benefit-section"
+              aria-labelledby="responsibility-title"
+            >
+              <div>
+                <h3 id="responsibility-title">Keep responsibility visible.</h3>
+                <p>
+                  Assignment is a recorded step. Administrators can see who owns
+                  the inspection, while Technicians can see the work that is
+                  waiting for them.
+                </p>
+              </div>
+              <ProductPreview step="assign" compact />
+            </section>
+
+            <section
+              className="benefit-section"
+              aria-labelledby="history-title"
+            >
+              <div>
+                <h3 id="history-title">Preserve what happened.</h3>
+                <p>
+                  Completion notes and verification stay attached to the Ticket.
+                  The next person gets the sequence, not a reconstructed story.
+                </p>
+              </div>
+              <ProductPreview step="complete" compact />
+            </section>
+          </div>
         </section>
 
-        <section className="scope-boundary" aria-labelledby="scope-title">
-          <h2 id="scope-title">The product boundary is explicit.</h2>
+        <section
+          id="workflow"
+          className="mechanism-sequence"
+          aria-labelledby="workflow-title"
+        >
+          <h2 id="workflow-title">
+            Follow the Ticket from report to verification.
+          </h2>
+          <ol>
+            <li className="trace-stage">
+              <span>01</span>
+              <h3>Report</h3>
+              <p>
+                A Resident or Administrator records the problem against the
+                right Asset.
+              </p>
+            </li>
+            <li className="trace-stage">
+              <span>02</span>
+              <h3>Assign</h3>
+              <p>
+                An Administrator makes the next owner explicit for the Society.
+              </p>
+            </li>
+            <li className="trace-stage">
+              <span>03</span>
+              <h3>Complete</h3>
+              <p>
+                A Technician submits textual completion proof against the same
+                Ticket.
+              </p>
+            </li>
+            <li className="trace-stage">
+              <span>04</span>
+              <h3>Verify</h3>
+              <p>
+                An Administrator accepts or returns the work and preserves the
+                history.
+              </p>
+            </li>
+          </ol>
+        </section>
+
+        <section
+          id="security"
+          className="scope-boundary"
+          aria-labelledby="security-title"
+        >
+          <h2 id="security-title">
+            Accountability only works when the boundaries hold.
+          </h2>
           <div>
-            <h3>SHIPPED NOW</h3>
+            <h3>SERVER-ENFORCED</h3>
             <ul>
-              <li>Society setup</li>
-              <li>Units, Members, and Assets</li>
-              <li>Role boundaries</li>
-              <li>Protected QR lookup</li>
-              <li>Tickets</li>
-              <li>Technician assignment</li>
-              <li>Textual completion proof</li>
-              <li>Administrator verification</li>
-              <li>Immutable history</li>
+              <li>Three Member roles are checked on the server.</li>
+              <li>Every resource query includes the authenticated Society.</li>
+              <li>Sessions stay in HttpOnly cookies.</li>
             </ul>
           </div>
           <div>
-            <h3>DIRECTION, NOT CLAIM</h3>
+            <h3>QUIET FAILURES</h3>
             <ul>
-              <li>Vendors</li>
-              <li>Media evidence</li>
-              <li>SLAs</li>
-              <li>Notifications</li>
-              <li>Analytics and exports</li>
-              <li>Multi-Society administration</li>
+              <li>Unknown and archived records do not disclose their state.</li>
+              <li>
+                Malformed and cross-Society lookups remain indistinguishable.
+              </li>
+              <li>Protected routes return only what the Member can access.</li>
             </ul>
           </div>
         </section>
 
         <section className="landing-close" aria-labelledby="close-title">
-          <h2 id="close-title">Inspect the foundation.</h2>
-          <p>Live data is synthetic. Demo credentials are private.</p>
+          <h2 id="close-title">See the record before you sign in.</h2>
+          <p>
+            Records shown here are generated for demonstration. Sign in to
+            inspect the deployed experience if you are already a Member.
+          </p>
           <div className="landing-actions">
-            <a
-              className="landing-primary-action"
-              href={sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Inspect source
+            <a className="landing-primary-action" href="#product-tour">
+              Explore the product
             </a>
             <Link className="landing-secondary-action" to="/login">
-              Open the work record
+              Sign in
             </Link>
           </div>
         </section>
@@ -227,10 +240,10 @@ export function LandingPage(): JSX.Element {
           APART<span>CHECK</span>
         </span>
         <p>Asset &amp; Ticket accountability</p>
+        <p className="landing-disclosure">Synthetic records only.</p>
         <a href={sourceUrl} target="_blank" rel="noreferrer">
-          Source
+          GitHub source
         </a>
-        <Link to="/login">Sign in</Link>
       </footer>
     </div>
   )
