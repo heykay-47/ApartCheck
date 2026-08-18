@@ -1,7 +1,13 @@
 import { createRef } from 'react'
 import { readFileSync } from 'node:fs'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, sessionRequest } from '../../app/api'
@@ -183,7 +189,7 @@ describe('Ticket evidence client workflow', () => {
         type: 'image/png',
       }),
     )
-    expect(screen.getByRole('status')).toHaveTextContent(
+    expect(screen.getByRole('alert')).toHaveTextContent(
       'large.png exceeds 8 MiB.',
     )
 
@@ -193,7 +199,7 @@ describe('Ticket evidence client workflow', () => {
       new File(['three'], 'three.png', { type: 'image/png' }),
       new File(['four'], 'four.png', { type: 'image/png' }),
     ])
-    expect(screen.getByRole('status')).toHaveTextContent(
+    expect(screen.getByRole('alert')).toHaveTextContent(
       'Select no more than 3 photos.',
     )
   })
@@ -384,11 +390,23 @@ describe('Ticket evidence client workflow', () => {
         name: 'Retry viewing evidence photo 1 from submission attempt 1',
       }),
     )
-    expect(
-      await screen.findByRole('img', {
-        name: 'Evidence photo 1 from submission attempt 1',
+    const image = await screen.findByAltText(
+      'Evidence photo 1 from submission attempt 1',
+    )
+    expect(image).toHaveAttribute('src', 'https://image.example/proof')
+    fireEvent.error(image)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Evidence image could not be displayed. Try again.',
+    )
+    await actor.click(
+      screen.getByRole('button', {
+        name: 'Retry viewing evidence photo 1 from submission attempt 1',
       }),
+    )
+    expect(
+      await screen.findByAltText('Evidence photo 1 from submission attempt 1'),
     ).toHaveAttribute('src', 'https://image.example/proof')
+    expect(views).toBe(3)
     expect(queryClient.getQueryData(['ticket', 't1'])).not.toEqual(
       expect.objectContaining({ url: 'https://image.example/proof' }),
     )
@@ -468,6 +486,9 @@ describe('Ticket evidence client workflow', () => {
     )
     expect(globalCss).toMatch(
       /\.ticket-evidence-section \.dialog-actions > \*[\s\S]*min-height:\s*44px/,
+    )
+    expect(globalCss).toMatch(
+      /\.evidence-file-picker:focus-within\s*\{[^}]*outline:\s*3px\s+solid\s+var\(--color-marigold\)/,
     )
   })
 

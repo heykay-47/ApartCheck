@@ -49,6 +49,14 @@ export function EvidenceAttemptGallery({
     }
   }
 
+  function imageLoadFailed(photo: TicketEvidence) {
+    setView({
+      photo,
+      error: 'Evidence image could not be displayed. Try again.',
+      pending: false,
+    })
+  }
+
   return (
     <div className="evidence-attempts">
       {attempts.map((attempt) => (
@@ -109,6 +117,7 @@ export function EvidenceAttemptGallery({
                       <img
                         src={current.url}
                         alt={`Evidence photo ${photoNumber} from submission attempt ${attempt.setNumber}`}
+                        onError={() => imageLoadFailed(photo)}
                       />
                       <button type="button" onClick={() => setView(null)}>
                         Close photo

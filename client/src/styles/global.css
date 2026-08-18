@@ -750,6 +750,11 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+.evidence-file-picker:focus-within {
+  outline: 3px solid var(--color-marigold);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 2px var(--color-slate);
+}
 .evidence-file-list,
 .active-evidence-list,
 .evidence-photo-list {

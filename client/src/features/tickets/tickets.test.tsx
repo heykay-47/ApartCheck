@@ -160,6 +160,7 @@ const detailTicket: Ticket = {
       toStatus: 'open',
       actor: { id: 'r1', name: 'Resident One' },
       assigneeId: null,
+      assignee: null,
       note: null,
       previousRequiredPhotoCount: null,
       requiredPhotoCount: null,
@@ -432,6 +433,59 @@ describe('Ticket client workflow', () => {
     const saving = await screen.findByRole('button', { name: 'Saving…' })
     expect(saving).toBeDisabled()
     expect(saving).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('renders assignment identities and human-readable photo requirement changes', async () => {
+    const assignmentEvent = {
+      id: 'event-assigned',
+      type: 'assigned',
+      fromStatus: 'open',
+      toStatus: 'assigned',
+      actor: { id: administrator.id, name: administrator.name },
+      assigneeId: technician.id,
+      assignee: { id: technician.id, name: technician.name },
+      note: null,
+      previousRequiredPhotoCount: null,
+      requiredPhotoCount: 2,
+      evidenceSetNumber: null,
+      createdAt: '2026-01-01T01:00:00.000Z',
+    } as Ticket['events'][number]
+    const requirementEvent: Ticket['events'][number] = {
+      id: 'event-requirement',
+      type: 'photo_requirement_changed',
+      fromStatus: 'assigned',
+      toStatus: 'assigned',
+      actor: { id: administrator.id, name: administrator.name },
+      assigneeId: technician.id,
+      assignee: { id: technician.id, name: technician.name },
+      note: null,
+      previousRequiredPhotoCount: 2,
+      requiredPhotoCount: 4,
+      evidenceSetNumber: null,
+      createdAt: '2026-01-01T02:00:00.000Z',
+    }
+    const item: Ticket = {
+      ...detailTicket,
+      status: 'assigned',
+      events: [assignmentEvent, requirementEvent],
+    }
+    mockTicketDetail(administrator, item)
+    renderTicketDetail(item)
+
+    const events = await screen.findAllByRole('article')
+    expect(within(events[0]!).getByText('Administrator One')).toBeVisible()
+    expect(within(events[0]!).getByText('assigned the ticket')).toBeVisible()
+    expect(
+      within(events[0]!).getByText('open → assigned · Technician One'),
+    ).toBeVisible()
+    expect(within(events[1]!).getByText('Administrator One')).toBeVisible()
+    expect(
+      within(events[1]!).getByText('changed the photo requirement'),
+    ).toBeVisible()
+    expect(
+      within(events[1]!).getByText('Photo requirement: 2 photos → 4 photos.'),
+    ).toBeVisible()
+    expect(screen.queryByText('photo_requirement_changed')).toBeNull()
   })
 
   it('keeps a failed confirmation open and announces the server message', async () => {

@@ -18,6 +18,7 @@ type QueuedFile = {
   status: 'uploading' | 'failed'
   error?: string | undefined
 }
+type Notice = { message: string; tone: 'error' | 'success' }
 
 function errorMessage(error: unknown) {
   return error instanceof ApiError
@@ -41,7 +42,7 @@ export function EvidenceUploader({
   activeEvidence: TicketEvidence[]
 }) {
   const [queued, setQueued] = useState<QueuedFile[]>([])
-  const [status, setStatus] = useState('')
+  const [notice, setNotice] = useState<Notice | null>(null)
   const nextId = useRef(0)
   const queuedRef = useRef(queued)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -80,7 +81,7 @@ export function EvidenceUploader({
         if (resolved) revoke(resolved)
         return current.filter((candidate) => candidate.id !== item.id)
       })
-      setStatus(`${item.file.name} uploaded.`)
+      setNotice({ message: `${item.file.name} uploaded.`, tone: 'success' })
     } catch (error) {
       setQueued((current) =>
         current.map((candidate) =>
@@ -89,14 +90,17 @@ export function EvidenceUploader({
             : candidate,
         ),
       )
-      setStatus(`${item.file.name} could not be uploaded.`)
+      setNotice({
+        message: `${item.file.name} could not be uploaded.`,
+        tone: 'error',
+      })
     }
   }
 
   function selectFiles(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
     event.target.value = ''
-    setStatus('')
+    setNotice(null)
     if (files.length === 0) return
 
     const remainingCapacity = Math.max(
@@ -104,18 +108,24 @@ export function EvidenceUploader({
       0,
     )
     if (files.length > remainingCapacity) {
-      setStatus(`Select no more than ${remainingCapacity} photos.`)
+      setNotice({
+        message: `Select no more than ${remainingCapacity} photos.`,
+        tone: 'error',
+      })
       return
     }
 
     const accepted: QueuedFile[] = []
     for (const file of files) {
       if (file.size > MAX_PHOTO_BYTES) {
-        setStatus(`${file.name} exceeds 8 MiB.`)
+        setNotice({ message: `${file.name} exceeds 8 MiB.`, tone: 'error' })
         continue
       }
       if (!acceptedTypes.has(file.type)) {
-        setStatus(`${file.name} is not a JPEG, PNG, or WebP image.`)
+        setNotice({
+          message: `${file.name} is not a JPEG, PNG, or WebP image.`,
+          tone: 'error',
+        })
         continue
       }
       accepted.push({
@@ -138,7 +148,7 @@ export function EvidenceUploader({
     setQueued((current) =>
       current.filter((candidate) => candidate.id !== item.id),
     )
-    setStatus(`${item.file.name} removed.`)
+    setNotice({ message: `${item.file.name} removed.`, tone: 'success' })
   }
 
   const remaining = Math.max(requiredPhotoCount - activeEvidence.length, 0)
@@ -170,7 +180,7 @@ export function EvidenceUploader({
           onChange={selectFiles}
         />
       </label>
-      <Feedback message={status} tone="success" />
+      <Feedback message={notice?.message} tone={notice?.tone} />
       <Feedback
         message={remove.error ? removeErrorMessage(remove.error) : undefined}
       />

@@ -32,11 +32,16 @@ function eventText(event: TicketEvent) {
     submitted_for_verification: 'submitted work for verification',
     returned: 'returned the work for rework',
     verified: 'verified the completed work',
+    photo_requirement_changed: 'changed the photo requirement',
     reopened: 'reopened the ticket',
     cancelled: 'cancelled the ticket',
     archived: 'archived the ticket',
   }
   return labels[event.type] ?? event.type
+}
+
+function photoCountLabel(count: number) {
+  return count === 0 ? 'no photos' : `${count} photo${count === 1 ? '' : 's'}`
 }
 
 export function TicketDetailPage() {
@@ -265,7 +270,17 @@ export function TicketDetailPage() {
               <p>
                 {event.fromStatus ? `${statusLabel(event.fromStatus)} → ` : ''}
                 {statusLabel(event.toStatus)}
+                {event.assignee ? ` · ${event.assignee.name}` : ''}
               </p>
+              {event.type === 'photo_requirement_changed' &&
+              event.previousRequiredPhotoCount !== null &&
+              event.requiredPhotoCount !== null ? (
+                <p className="ticket-event-detail">
+                  Photo requirement:{' '}
+                  {photoCountLabel(event.previousRequiredPhotoCount)} →{' '}
+                  {photoCountLabel(event.requiredPhotoCount)}.
+                </p>
+              ) : null}
               {event.note ? <blockquote>{event.note}</blockquote> : null}
               <time dateTime={event.createdAt}>
                 {formatTicketDate(event.createdAt)}

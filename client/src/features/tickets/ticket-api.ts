@@ -57,6 +57,7 @@ export type TicketEvent = {
   toStatus: TicketStatus
   actor: TicketPerson
   assigneeId: string | null
+  assignee: TicketPerson | null
   note: string | null
   previousRequiredPhotoCount: number | null
   requiredPhotoCount: number | null
