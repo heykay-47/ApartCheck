@@ -12,6 +12,7 @@ export const ticketEventTypes = [
   'reopened',
   'cancelled',
   'archived',
+  'photo_requirement_changed',
 ] as const
 export type TicketEventType = (typeof ticketEventTypes)[number]
 
@@ -24,6 +25,9 @@ export interface TicketEvent {
   toStatus: TicketStatus
   assigneeId: Types.ObjectId | null
   note: string | null
+  previousRequiredPhotoCount: number | null
+  requiredPhotoCount: number | null
+  evidenceSetNumber: number | null
   createdAt: Date
 }
 
@@ -41,6 +45,9 @@ const ticketEventSchema = new Schema<TicketEvent>(
     toStatus: { type: String, enum: ticketStatuses, required: true },
     assigneeId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     note: { type: String, default: null },
+    previousRequiredPhotoCount: { type: Number, default: null },
+    requiredPhotoCount: { type: Number, default: null },
+    evidenceSetNumber: { type: Number, default: null },
     createdAt: { type: Date, default: Date.now, immutable: true },
   },
   {

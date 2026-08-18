@@ -75,6 +75,7 @@ const ticket = {
   id: 't1',
   title: 'Lift vibration',
   status: 'open',
+  requiredPhotoCount: 0,
   unit: {
     id: 'u1',
     building: 'A',
@@ -95,6 +96,7 @@ const detailTicket: Ticket = {
   description:
     'The passenger lift vibrates during travel and needs a guide inspection.',
   status: 'in_progress',
+  requiredPhotoCount: 2,
   unit: {
     id: 'u1',
     building: 'Tower A',
@@ -126,6 +128,9 @@ const detailTicket: Ticket = {
       actor: { id: 'r1', name: 'Resident One' },
       assignee: null,
       note: null,
+      previousRequiredPhotoCount: null,
+      requiredPhotoCount: null,
+      evidenceSetNumber: null,
       createdAt: '2026-01-01T00:00:00.000Z',
     },
   ],
@@ -367,6 +372,7 @@ describe('Ticket client workflow', () => {
     const awaitingVerification: Ticket = {
       ...detailTicket,
       status: 'awaiting_verification',
+      requiredPhotoCount: 0,
     }
     mockTicketDetail(administrator, awaitingVerification, (url) => {
       if (url === '/api/tickets/t1/verify') return new Promise(() => undefined)
@@ -397,6 +403,7 @@ describe('Ticket client workflow', () => {
     const assignedTicket: Ticket = {
       ...detailTicket,
       status: 'assigned',
+      requiredPhotoCount: 0,
     }
     mockTicketDetail(technician, assignedTicket, (url) => {
       if (url === '/api/tickets/t1/start-work')

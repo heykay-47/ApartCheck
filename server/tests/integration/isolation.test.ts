@@ -153,7 +153,7 @@ describe('society isolation', () => {
     const hiddenAssignment = await request(app)
       .put(`/api/tickets/${ticketB.id}/assignment`)
       .set('Cookie', session)
-      .send({ technicianId: technicianB.id })
+      .send({ technicianId: technicianB.id, requiredPhotoCount: 0 })
     expect(hiddenAssignment.status).toBe(404)
     expect(hiddenAssignment.body.error.code).toBe('TICKET_NOT_FOUND')
 

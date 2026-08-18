@@ -24,6 +24,7 @@ export type TicketEventType =
   | 'reopened'
   | 'cancelled'
   | 'archived'
+  | 'photo_requirement_changed'
 export type TicketPerson = {
   id: string
   name: string
@@ -41,6 +42,7 @@ export type TicketSummary = {
   id: string
   title: string
   status: TicketStatus
+  requiredPhotoCount: number
   unit: TicketUnit
   asset: TicketAsset | null
   reporter: TicketPerson
@@ -56,6 +58,9 @@ export type TicketEvent = {
   actor: TicketPerson
   assignee: TicketPerson | null
   note: string | null
+  previousRequiredPhotoCount: number | null
+  requiredPhotoCount: number | null
+  evidenceSetNumber: number | null
   createdAt: string
 }
 export type Ticket = TicketSummary & {
@@ -184,11 +189,12 @@ export function useCreateTicket() {
 }
 
 export function useAssignTicket(id: string) {
-  return useTicketMutation((input: { technicianId: string }) =>
-    api<{ ticket: Ticket }>(`/api/tickets/${id}/assignment`, {
-      method: 'PUT',
-      body: JSON.stringify(input),
-    }),
+  return useTicketMutation(
+    (input: { technicianId: string; requiredPhotoCount: number }) =>
+      api<{ ticket: Ticket }>(`/api/tickets/${id}/assignment`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
   )
 }
 

@@ -6,6 +6,7 @@ import {
 import { SocietyModel } from '../src/features/societies/society.model.js'
 import { UnitModel } from '../src/features/units/unit.model.js'
 import { UserModel } from '../src/features/users/user.model.js'
+import { TicketModel } from '../src/features/tickets/ticket.model.js'
 import {
   createAssetFixture,
   createSocietyFixture,
@@ -14,6 +15,31 @@ import {
 } from './helpers/factories.js'
 
 describe('persistence models', () => {
+  it('defaults Ticket photo requirements and enforces the 0 to 5 bounds', async () => {
+    const society = await createSocietyFixture()
+    const unit = await createUnitFixture({ societyId: society._id })
+    const reporter = await createUserFixture({ societyId: society._id })
+    const ticket = await TicketModel.create({
+      societyId: society._id,
+      unitId: unit._id,
+      reporterId: reporter._id,
+      title: 'Photo requirement ticket',
+      description: 'A ticket with a photo requirement.',
+    })
+    expect(ticket.requiredPhotoCount).toBe(0)
+
+    await expect(
+      TicketModel.create({
+        societyId: society._id,
+        unitId: unit._id,
+        reporterId: reporter._id,
+        title: 'Too many photos',
+        description: 'A ticket with too many photos.',
+        requiredPhotoCount: 6,
+      }),
+    ).rejects.toMatchObject({ name: 'ValidationError' })
+  })
+
   it('rejects a second primary society', async () => {
     await SocietyModel.create({
       name: 'Lake View',

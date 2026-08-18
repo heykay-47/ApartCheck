@@ -22,7 +22,13 @@ export const ticketListSchema = z
   })
   .strict()
 
-export const ticketAssignmentSchema = z.object({ technicianId: id }).strict()
+const requiredPhotoCount = z.number().int().min(0).max(5)
+export const ticketAssignmentSchema = z
+  .object({ technicianId: id, requiredPhotoCount })
+  .strict()
+export const ticketPhotoRequirementSchema = z
+  .object({ requiredPhotoCount })
+  .strict()
 export const ticketStartWorkSchema = z.object({}).strict()
 export const ticketSubmitSchema = z
   .object({ completionSummary: z.string().trim().min(10).max(2000) })
@@ -49,6 +55,9 @@ export const assetTicketListSchema = z
 export type TicketCreateInput = z.infer<typeof ticketCreateSchema>
 export type TicketListInput = z.infer<typeof ticketListSchema>
 export type TicketAssignmentInput = z.infer<typeof ticketAssignmentSchema>
+export type TicketPhotoRequirementInput = z.infer<
+  typeof ticketPhotoRequirementSchema
+>
 export type TicketSubmitInput = z.infer<typeof ticketSubmitSchema>
 export type TicketReturnInput = z.infer<typeof ticketReturnSchema>
 export type TicketReopenInput = z.infer<typeof ticketReopenSchema>

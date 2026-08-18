@@ -21,6 +21,7 @@ import type {
   TicketReopenInput,
   TicketReturnInput,
   TicketSubmitInput,
+  TicketPhotoRequirementInput,
 } from './ticket.schema.js'
 
 const ticketNotFound = () =>
@@ -101,12 +102,28 @@ async function appendEvent(
     toStatus: TicketStatus
     assigneeId: Types.ObjectId | null
     note: string | null
+    previousRequiredPhotoCount?: number | null
+    requiredPhotoCount?: number | null
+    evidenceSetNumber?: number | null
   },
   session: mongoose.ClientSession,
 ) {
-  await TicketEventModel.create([{ societyId, ticketId, actorId, ...event }], {
-    session,
-  })
+  await TicketEventModel.create(
+    [
+      {
+        societyId,
+        ticketId,
+        actorId,
+        previousRequiredPhotoCount: null,
+        requiredPhotoCount: null,
+        evidenceSetNumber: null,
+        ...event,
+      },
+    ],
+    {
+      session,
+    },
+  )
 }
 
 async function activeUnit(
@@ -181,6 +198,7 @@ async function summary(ticket: Ticket) {
     id: idOf(ticket._id),
     title: ticket.title,
     status: ticket.status,
+    requiredPhotoCount: ticket.requiredPhotoCount,
     unit: {
       id: idOf(ticket.unitId),
       building: unit?.building ?? 'Unavailable',
@@ -248,6 +266,9 @@ async function detail(ticket: Ticket) {
           }
         : null,
       note: event.note,
+      previousRequiredPhotoCount: event.previousRequiredPhotoCount,
+      requiredPhotoCount: event.requiredPhotoCount,
+      evidenceSetNumber: event.evidenceSetNumber,
       createdAt: event.createdAt,
     })),
   }
@@ -395,6 +416,7 @@ export const TicketService = {
             title: input.title,
             description: input.description,
             status: 'open',
+            requiredPhotoCount: 0,
             assigneeId: null,
             archivedAt: null,
           },
@@ -435,6 +457,8 @@ export const TicketService = {
         input.technicianId,
         session,
       )
+      const previousRequiredPhotoCount = ticket.requiredPhotoCount
+      ticket.requiredPhotoCount = input.requiredPhotoCount
       const current = ticket.assigneeId ? idOf(ticket.assigneeId) : null
       if (current === input.technicianId) throw assignmentUnchanged()
       const legal = ['open', 'assigned', 'in_progress'].includes(ticket.status)
@@ -461,6 +485,14 @@ export const TicketService = {
             toStatus: from,
             assigneeId: technician._id,
             note: null,
+            previousRequiredPhotoCount:
+              previousRequiredPhotoCount === input.requiredPhotoCount
+                ? null
+                : previousRequiredPhotoCount,
+            requiredPhotoCount:
+              previousRequiredPhotoCount === input.requiredPhotoCount
+                ? null
+                : input.requiredPhotoCount,
           },
           session,
         )
@@ -482,6 +514,57 @@ export const TicketService = {
           toStatus: ticket.status,
           assigneeId: technician._id,
           note: null,
+          previousRequiredPhotoCount:
+            previousRequiredPhotoCount === input.requiredPhotoCount
+              ? null
+              : previousRequiredPhotoCount,
+          requiredPhotoCount:
+            previousRequiredPhotoCount === input.requiredPhotoCount
+              ? null
+              : input.requiredPhotoCount,
+        },
+        session,
+      )
+    })
+    return detail(await findVisible(actor, ticketId))
+  },
+
+  async updatePhotoRequirement(
+    actor: Express.Actor,
+    ticketId: string,
+    input: TicketPhotoRequirementInput,
+  ) {
+    if (actor.role !== 'admin')
+      throw new AppError(403, 'FORBIDDEN', 'Forbidden.')
+    await mongoose.connection.transaction(async (session) => {
+      await guardSocietyMutation(actor.societyId, session)
+      const ticket = await findVisible(actor, ticketId, session)
+      if (
+        !['assigned', 'in_progress'].includes(ticket.status) ||
+        !ticket.assigneeId
+      )
+        throw invalidTransition()
+      if (ticket.requiredPhotoCount === input.requiredPhotoCount)
+        throw new AppError(
+          409,
+          'TICKET_PHOTO_REQUIREMENT_UNCHANGED',
+          'Photo requirement is unchanged.',
+        )
+      const previous = ticket.requiredPhotoCount
+      ticket.requiredPhotoCount = input.requiredPhotoCount
+      await ticket.save({ session })
+      await appendEvent(
+        actor.societyId,
+        actor.userId,
+        ticket._id,
+        {
+          type: 'photo_requirement_changed',
+          fromStatus: ticket.status,
+          toStatus: ticket.status,
+          assigneeId: ticket.assigneeId,
+          note: null,
+          previousRequiredPhotoCount: previous,
+          requiredPhotoCount: input.requiredPhotoCount,
         },
         session,
       )

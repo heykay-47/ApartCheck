@@ -126,6 +126,7 @@ export async function createTicketFixture(
         | 'title'
         | 'description'
         | 'status'
+        | 'requiredPhotoCount'
         | 'assigneeId'
         | 'archivedAt'
       >
@@ -139,6 +140,7 @@ export async function createTicketFixture(
     title: overrides.title ?? 'Fixture ticket',
     description: overrides.description ?? 'Fixture ticket description',
     status: overrides.status ?? 'open',
+    requiredPhotoCount: overrides.requiredPhotoCount ?? 0,
     assigneeId: overrides.assigneeId ?? null,
     archivedAt: overrides.archivedAt ?? null,
   })
@@ -149,7 +151,14 @@ export async function createTicketEventFixture(
     Partial<
       Pick<
         TicketEvent,
-        'type' | 'fromStatus' | 'toStatus' | 'assigneeId' | 'note'
+        | 'type'
+        | 'fromStatus'
+        | 'toStatus'
+        | 'assigneeId'
+        | 'note'
+        | 'previousRequiredPhotoCount'
+        | 'requiredPhotoCount'
+        | 'evidenceSetNumber'
       >
     >,
 ) {
@@ -162,5 +171,8 @@ export async function createTicketEventFixture(
     toStatus: overrides.toStatus ?? 'open',
     assigneeId: overrides.assigneeId ?? null,
     note: overrides.note ?? null,
+    previousRequiredPhotoCount: overrides.previousRequiredPhotoCount ?? null,
+    requiredPhotoCount: overrides.requiredPhotoCount ?? null,
+    evidenceSetNumber: overrides.evidenceSetNumber ?? null,
   })
 }

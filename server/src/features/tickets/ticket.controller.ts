@@ -10,6 +10,7 @@ import {
   ticketStartWorkSchema,
   ticketReturnSchema,
   ticketSubmitSchema,
+  ticketPhotoRequirementSchema,
 } from './ticket.schema.js'
 import { TicketService } from './ticket.service.js'
 
@@ -96,6 +97,24 @@ export const assignTicket: RequestHandler = async (request, response, next) => {
         request.actor,
         param(request, 'id'),
         ticketAssignmentSchema.parse(request.body),
+      ),
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updateTicketPhotoRequirement: RequestHandler = async (
+  request,
+  response,
+  next,
+) => {
+  try {
+    response.json({
+      ticket: await TicketService.updatePhotoRequirement(
+        request.actor,
+        param(request, 'id'),
+        ticketPhotoRequirementSchema.parse(request.body),
       ),
     })
   } catch (error) {

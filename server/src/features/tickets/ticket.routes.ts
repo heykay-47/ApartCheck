@@ -14,6 +14,7 @@ import {
   startTicketWork,
   submitTicket,
   verifyTicket,
+  updateTicketPhotoRequirement,
 } from './ticket.controller.js'
 
 export const ticketRoutes = Router()
@@ -27,6 +28,11 @@ ticketRoutes.get(
 ticketRoutes.get('/for-asset/:assetId', listAssetTickets)
 ticketRoutes.get('/:id', getTicket)
 ticketRoutes.put('/:id/assignment', authorize('admin'), assignTicket)
+ticketRoutes.put(
+  '/:id/photo-requirement',
+  authorize('admin'),
+  updateTicketPhotoRequirement,
+)
 ticketRoutes.post('/:id/start-work', authorize('technician'), startTicketWork)
 ticketRoutes.post('/:id/submit', authorize('technician'), submitTicket)
 ticketRoutes.post('/:id/return', authorize('admin'), returnTicket)

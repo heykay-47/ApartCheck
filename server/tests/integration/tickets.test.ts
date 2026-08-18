@@ -72,9 +72,13 @@ describe('Ticket workflow APIs', () => {
     const assigned = await request(app)
       .put(`/api/tickets/${ticketId}/assignment`)
       .set('Cookie', adminCookie)
-      .send({ technicianId: technician.id })
+      .send({ technicianId: technician.id, requiredPhotoCount: 0 })
     expect(assigned.status).toBe(200)
     expect(assigned.body.ticket.status).toBe('assigned')
+    expect(assigned.body.ticket.events.at(-1)).toMatchObject({
+      previousRequiredPhotoCount: null,
+      requiredPhotoCount: null,
+    })
 
     const started = await request(app)
       .post(`/api/tickets/${ticketId}/start-work`)
@@ -109,6 +113,82 @@ describe('Ticket workflow APIs', () => {
       'submitted_for_verification',
       'verified',
     ])
+  })
+
+  it('allows administrators to change photo requirements only before submission', async () => {
+    const society = await createSocietyFixture()
+    const unit = await createUnitFixture({ societyId: society._id })
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const technician = await createUserFixture({
+      societyId: society._id,
+      role: 'technician',
+      mustChangePassword: false,
+    })
+    const app = createApp()
+    const adminCookie = await login(app, admin.email)
+    const technicianCookie = await login(app, technician.email)
+    const ticket = await createTicketFixture({
+      societyId: society._id,
+      unitId: unit._id,
+      reporterId: admin._id,
+    })
+
+    const assigned = await request(app)
+      .put(`/api/tickets/${ticket.id}/assignment`)
+      .set('Cookie', adminCookie)
+      .send({ technicianId: technician.id, requiredPhotoCount: 2 })
+    expect(assigned.status).toBe(200)
+    expect(assigned.body.ticket.requiredPhotoCount).toBe(2)
+    expect(assigned.body.ticket.events.at(-1)).toMatchObject({
+      previousRequiredPhotoCount: 0,
+      requiredPhotoCount: 2,
+    })
+
+    const changed = await request(app)
+      .put(`/api/tickets/${ticket.id}/photo-requirement`)
+      .set('Cookie', adminCookie)
+      .send({ requiredPhotoCount: 3 })
+    expect(changed.status).toBe(200)
+    expect(changed.body.ticket.requiredPhotoCount).toBe(3)
+    expect(changed.body.ticket.events.at(-1)).toMatchObject({
+      type: 'photo_requirement_changed',
+      previousRequiredPhotoCount: 2,
+      requiredPhotoCount: 3,
+      evidenceSetNumber: null,
+    })
+
+    const unchanged = await request(app)
+      .put(`/api/tickets/${ticket.id}/photo-requirement`)
+      .set('Cookie', adminCookie)
+      .send({ requiredPhotoCount: 3 })
+    expect(unchanged.status).toBe(409)
+    expect(unchanged.body.error.code).toBe('TICKET_PHOTO_REQUIREMENT_UNCHANGED')
+
+    await request(app)
+      .post(`/api/tickets/${ticket.id}/start-work`)
+      .set('Cookie', technicianCookie)
+      .send({})
+    const inProgress = await request(app)
+      .put(`/api/tickets/${ticket.id}/photo-requirement`)
+      .set('Cookie', adminCookie)
+      .send({ requiredPhotoCount: 4 })
+    expect(inProgress.status).toBe(200)
+    expect(inProgress.body.ticket.requiredPhotoCount).toBe(4)
+
+    await request(app)
+      .post(`/api/tickets/${ticket.id}/submit`)
+      .set('Cookie', technicianCookie)
+      .send({ completionSummary: 'Completed work and checked operation.' })
+    const afterSubmission = await request(app)
+      .put(`/api/tickets/${ticket.id}/photo-requirement`)
+      .set('Cookie', adminCookie)
+      .send({ requiredPhotoCount: 5 })
+    expect(afterSubmission.status).toBe(409)
+    expect(afterSubmission.body.error.code).toBe('TICKET_INVALID_TRANSITION')
   })
 
   it('keeps visibility and identity fields server-owned', async () => {
@@ -208,7 +288,7 @@ describe('Ticket workflow APIs', () => {
       const repaired = await request(app)
         .put(`/api/tickets/${ticket.id}/assignment`)
         .set('Cookie', session)
-        .send({ technicianId: replacement.id })
+        .send({ technicianId: replacement.id, requiredPhotoCount: 0 })
       expect(repaired.status).toBe(200)
       expect(repaired.body.ticket).toMatchObject({
         id: ticket.id,

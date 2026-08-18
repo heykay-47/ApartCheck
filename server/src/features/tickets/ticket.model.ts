@@ -26,6 +26,7 @@ export interface Ticket {
   title: string
   description: string
   status: TicketStatus
+  requiredPhotoCount: number
   assigneeId: Types.ObjectId | null
   archivedAt: Date | null
   createdAt: Date
@@ -45,6 +46,14 @@ const ticketSchema = new Schema<Ticket>(
       enum: ticketStatuses,
       required: true,
       default: 'open',
+    },
+    requiredPhotoCount: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+      max: 5,
+      validate: Number.isInteger,
     },
     assigneeId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     archivedAt: { type: Date, default: null },

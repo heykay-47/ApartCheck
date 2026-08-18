@@ -448,7 +448,13 @@ function AssignmentDialog({
           disabled={!selected || assign.isPending}
           aria-busy={assign.isPending}
           onClick={() =>
-            assign.mutate({ technicianId: selected }, { onSuccess: onClose })
+            assign.mutate(
+              {
+                technicianId: selected,
+                requiredPhotoCount: ticket.requiredPhotoCount,
+              },
+              { onSuccess: onClose },
+            )
           }
         >
           {assign.isPending ? 'Saving assignment…' : 'Save assignment'}
