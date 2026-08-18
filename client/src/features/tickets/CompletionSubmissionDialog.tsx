@@ -68,7 +68,7 @@ export function CompletionSubmissionDialog({
             ? ticket.requiredPhotoCount === 0
               ? 'No photo required.'
               : 'Photo requirement met.'
-            : `Add ${remaining} more photo(s) before submitting.`}
+            : `${remaining} more photo${remaining === 1 ? '' : 's'} required.`}
         </p>
         <FormField
           label="Completion summary"

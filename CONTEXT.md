@@ -61,9 +61,13 @@ The exact lifecycle state: open, assigned, in_progress, awaiting_verification, c
 _Avoid_: stage, label
 
 **Verification**:
-An Administrator action that accepts submitted textual completion proof and moves a Ticket to completed, or returns it to in-progress with a reason.
+An Administrator action that accepts submitted textual completion proof and sealed Ticket Evidence, moves a Ticket to completed, or returns it to in-progress with a reason.
 _Avoid_: approval score, inspection certificate
 
 **Ticket Event**:
-An immutable, Society-scoped history record appended for each Ticket creation, assignment, lifecycle transition, or archive action.
+An immutable, Society-scoped history record appended for each Ticket creation, assignment, photo-requirement change, evidence submission, lifecycle transition, or archive action.
 _Avoid_: comment, editable audit note
+
+**Ticket Evidence**:
+A Society- and Ticket-scoped image record uploaded by the assigned Technician during assigned or in-progress work. Active Evidence may be removed before submission; submitting seals the current ordered set as an immutable attempt that remains visible with its returned or verified outcome.
+_Avoid_: attachment, comment, vendor proof, public image URL

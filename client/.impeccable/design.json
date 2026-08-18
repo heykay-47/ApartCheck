@@ -360,6 +360,13 @@
       "css": ".ds-history { padding: 0 18px 20px; border-top: 2px solid var(--color-slate); border-bottom: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); color: var(--color-slate); } .ds-history h2 { margin: 12px 0; font: 600 2.4rem/1 var(--font-display); } .ds-history article { padding: 16px 0; border-top: 1px solid color-mix(in srgb, var(--color-slate) 35%, transparent); overflow-wrap: anywhere; } .ds-history strong { font: 600 1rem/1.4 var(--font-body); } .ds-history p, .ds-history time { font: 500 0.72rem/1.4 var(--font-utility); letter-spacing: 0.04em; } .ds-history blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--color-marigold); font: 400 1rem/1.5 var(--font-body); }"
     },
     {
+      "name": "Ticket Completion Evidence",
+      "kind": "custom",
+      "description": "Ruled active-photo uploader and immutable attempt gallery with explicit readiness, outcomes, and contextual controls.",
+      "html": "<section class=\"ds-ticket-evidence\"><h2>Completion evidence</h2><p>1 more photo required.</p><label>Completion photos<input type=\"file\" multiple></label><button>Remove evidence photo 1</button><h3>Submission attempt 1 — Returned</h3><button>View evidence photo 1 from submission attempt 1</button></section>",
+      "css": ".ds-ticket-evidence { border-top: 2px solid var(--color-slate); color: var(--color-slate); overflow-wrap: anywhere; } .ds-ticket-evidence input, .ds-ticket-evidence button { min-height: 44px; } .ds-ticket-evidence button:focus-visible, .ds-ticket-evidence input:focus-visible { outline: 2px solid var(--color-marigold); outline-offset: 3px; } @media (max-width: 700px) { .ds-ticket-evidence { display: grid; gap: 10px; } .ds-ticket-evidence button { width: 100%; } }"
+    },
+    {
       "name": "Asset Identity Plate",
       "kind": "custom",
       "refersTo": "identity-plate",
@@ -377,12 +384,13 @@
   ],
   "narrative": {
     "northStar": "The Maintenance Artifact",
-    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, and immutable lifecycle records. The authenticated product remains operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nThe public landing surface is a deliberately scoped Lifecycle Control Room expression of that system. It uses warm and cool white planes, graphite structure, a signal-amber trace, and precise square product geometry to explain one Ticket lifecycle before an existing Member signs in. Condensed display type remains the voice of authenticated Asset identity; readable Hind carries the landing value statement, while monospaced labels record metadata and controls.",
+    "overview": "ApartCheck looks like a durable field record attached to physical infrastructure: pale plaster and chalk stock, dark monsoon-slate ink, ruled ledgers, registration marks, identity plates, completion evidence, and immutable lifecycle records. The authenticated product remains operational rather than ornamental. Structure comes from borders, alignment, typography, and recorded states instead of soft cards, decorative imagery, or generic SaaS chrome.\n\nThe public landing surface is a deliberately scoped Lifecycle Control Room expression of that system. It uses warm and cool white planes, graphite structure, a signal-amber trace, and precise square product geometry to explain one Ticket lifecycle before an existing Member signs in. Condensed display type remains the voice of authenticated Asset identity; readable Hind carries the landing value statement, while monospaced labels record metadata and controls.",
     "keyCharacteristics": [
       "Hard-edged, square-cornered surfaces with visible construction.",
       "Strong readable landing statements paired with compact monospaced record labels.",
       "Flat plaster and chalk fields separated by slate rules.",
       "Identity plates, ledgers, and lifecycle histories as the recurring information forms.",
+      "Completion evidence presented as readable active readiness and immutable attempt records.",
       "Sparse, functional color that distinguishes action, trace, and state."
     ],
     "rules": [
@@ -452,7 +460,7 @@
       "Don't promote the landing page's synthetic Ticket preview, workflow tour, or section sequence into a system-wide layout requirement.",
       "Don't use marigold as a broad fill or verified green as decoration.",
       "Don't communicate error, archive, active, or verified state through color alone.",
-      "Don't visualize vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.",
+      "Don't visualize vendors, costs, PDFs, comments, richer uploads/media beyond Ticket completion photos, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.",
       "Don't turn Ticket statuses into decorative pills, hide lifecycle meaning behind color, or detach history from its Ticket record.",
       "Don't remove semantic landmarks, labels, skip links, programmatic errors, expected dialog focus/Escape behavior, or the single-main-landmark contract for visual cleanliness."
     ]

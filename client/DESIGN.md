@@ -272,6 +272,13 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Actions:** Controls appear only when valid for the current role and status. Primary lifecycle actions use Pump Blue; return, cancel, and archive remain explicit text actions with destructive meaning in words as well as color.
 - **History:** Every lifecycle event is a ruled row naming the actor, action, status transition, optional assignee or note, and timestamp. Notes use a narrow marigold left rule to mark evidence without turning the history into cards.
 
+### Ticket Completion Evidence
+
+- **Placement:** Completion evidence follows Ticket actions and precedes immutable lifecycle history so readiness and proof are read before the audit trail.
+- **Active state:** The assigned Technician sees a square file control, explicit active-photo count, requirement readiness text, contextual Remove names, and retryable per-file feedback only while work is upload-legal.
+- **Immutable state:** Submitted photos render as ordered attempt records with textual Awaiting verification, Returned, or Verified outcomes. View controls name the photo and attempt; signed URLs are requested on activation and are never shown as provider IDs.
+- **Responsive behavior:** Evidence rows wrap and photo grids stack at the documented 360px minimum without horizontal scrolling. Controls retain at least 44px targets and visible marigold focus.
+
 ### Asset Identity Plate
 
 - **Structure:** Chalk stock, 2px slate perimeter, 12px marigold left edge, 28px padding, and a two-column copy/220px QR layout.
@@ -317,6 +324,6 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Don't** promote the landing page's synthetic Ticket preview, workflow tour, or section sequence into a system-wide layout requirement.
 - **Don't** use marigold as a broad fill or verified green as decoration.
 - **Don't** communicate error, archive, active, or verified state through color alone.
-- **Don't** visualize vendors, costs, uploads/media, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.
+- **Don't** visualize vendors, costs, PDFs, comments, richer uploads/media beyond Ticket completion photos, SLAs, notifications, analytics, integrations, or multi-Society administration as shipped behavior.
 - **Don't** turn Ticket statuses into decorative pills, hide lifecycle meaning behind color, or detach history from its Ticket record.
 - **Don't** remove semantic landmarks, labels, skip links, programmatic errors, expected dialog focus/Escape behavior, or the single-main-landmark contract for visual cleanliness.

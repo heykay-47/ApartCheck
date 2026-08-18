@@ -7,6 +7,7 @@ const e2eServerUrl = `http://127.0.0.1:${e2eServerPort}`
 
 export default defineConfig({
   testDir: './e2e',
+  workers: 1,
   use: {
     baseURL: 'http://127.0.0.1:5173',
     trace: 'retain-on-failure',

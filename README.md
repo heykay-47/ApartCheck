@@ -1,8 +1,8 @@
 # ApartCheck
 
-ApartCheck is a deployed Asset and Ticket accountability ledger for one residential Society. It records what shared infrastructure exists, where it is, who owns the next action, what textual completion proof was submitted, and whether an Administrator verified the work.
+ApartCheck is an Asset and Ticket accountability ledger for one residential Society. It records what shared infrastructure exists, where it is, who owns the next action, what textual and photo completion proof was submitted, and whether an Administrator verified the work.
 
-The shipped workflow covers Administrator setup and recovery, Units, Members, shared Assets, protected QR lookup, role boundaries, session invalidation, and the complete internal Ticket lifecycle. It is not a multi-property platform, vendor system, notification service, or analytics product.
+The shipped workflow covers Administrator setup and recovery, Units, Members, shared Assets, protected QR lookup, role boundaries, session invalidation, and the complete internal Ticket lifecycle with assigned Technician completion photos and immutable evidence attempts. It is not a multi-property platform, vendor system, notification service, or analytics product.
 
 ## Architecture
 
@@ -62,18 +62,22 @@ npm run start -w server
 
 ## Environment Contract
 
-| Variable           | Required | Meaning                                                                       |
-| ------------------ | -------- | ----------------------------------------------------------------------------- |
-| `NODE_ENV`         | No       | `development`, `test`, or `production`; defaults to development               |
-| `PORT`             | No       | HTTP port; Render sets this, local default is `3000`                          |
-| `MONGODB_URI`      | Yes      | MongoDB connection URI                                                        |
-| `JWT_SECRET`       | Yes      | Session signing secret, minimum 32 characters; use random production material |
-| `APP_BASE_URL`     | Yes      | Browser origin used by origin guard and QR URLs                               |
-| `TRUST_PROXY_HOPS` | No       | Trusted proxy count; use `0` locally and `1` behind Render                    |
-| `VITE_API_TARGET`  | E2E only | API target for the Vite dev proxy                                             |
-| `E2E_SERVER_PORT`  | E2E only | Ephemeral API port used by Playwright setup                                   |
+| Variable                    | Required   | Meaning                                                                       |
+| --------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| `NODE_ENV`                  | No         | `development`, `test`, or `production`; defaults to development               |
+| `PORT`                      | No         | HTTP port; Render sets this, local default is `3000`                          |
+| `MONGODB_URI`               | Yes        | MongoDB connection URI                                                        |
+| `JWT_SECRET`                | Yes        | Session signing secret, minimum 32 characters; use random production material |
+| `APP_BASE_URL`              | Yes        | Browser origin used by origin guard and QR URLs                               |
+| `TRUST_PROXY_HOPS`          | No         | Trusted proxy count; use `0` locally and `1` behind Render                    |
+| `VITE_API_TARGET`           | E2E only   | API target for the Vite dev proxy                                             |
+| `E2E_SERVER_PORT`           | E2E only   | Ephemeral API port used by Playwright setup                                   |
+| `CLOUDINARY_CLOUD_NAME`     | Production | Cloudinary cloud name for authenticated Ticket Evidence storage               |
+| `CLOUDINARY_API_KEY`        | Production | Cloudinary API key for authenticated Ticket Evidence storage                  |
+| `CLOUDINARY_API_SECRET`     | Production | Cloudinary API secret; keep it in the deployment secret store                 |
+| `CLOUDINARY_AUTH_TOKEN_KEY` | Production | Hex-encoded Cloudinary authenticated-delivery token key                       |
 
-Never commit `.env`, Atlas URIs, passwords, or JWT secrets. Render values
+Never commit `.env`, Atlas URIs, passwords, Cloudinary credentials, or JWT secrets. Render values
 marked `sync: false` are entered in the service dashboard.
 
 The checked-in `render.yaml` sets `TRUST_PROXY_HOPS=1` for Render's single
@@ -101,6 +105,12 @@ npm run test:e2e
 npm run test:a11y
 ```
 
+`test:e2e` runs the Phase 1 flow and the Ticket photo-evidence flow in one
+Playwright invocation. Run `test:a11y` afterward, not concurrently: both suites
+own frontend port `5173`. E2E and accessibility server setup injects ephemeral
+MongoDB and fake image storage, so these browser checks do not contact
+Cloudinary or require Cloudinary credentials.
+
 GitHub Actions runs this sequence on pushes and pull requests. It uploads the
 Playwright report only when E2E or accessibility checks fail.
 
@@ -127,7 +137,9 @@ account disable invalidate older sessions.
 cold-start the free service; the first request can take longer while the process
 and Atlas connection wake.
 
-The public Render service is provisioned and verified at the URL below. New deployments still require the same secret configuration, health checks, and browser acceptance before their URL or revision can be claimed as verified.
+Render/Atlas provisioning, Cloudinary credential setup, and public URL/browser
+acceptance are external follow-up. This task does not claim live Cloudinary
+delivery or deployment verification for the photo-evidence workflow.
 
 1. Create an Atlas M0 cluster, a dedicated database user restricted to the
    ApartCheck database, and a TLS URI. Add the service-specific CIDR ranges from
@@ -135,8 +147,11 @@ The public Render service is provisioned and verified at the URL below. New depl
 2. Create a Render service from `render.yaml`.
 3. Set `MONGODB_URI`, a cryptographically random `JWT_SECRET` of at least 32
    bytes, and the final Render origin as `APP_BASE_URL`.
-4. Deploy the committed revision and wait for the health check to pass.
-5. Export the actual origin and verify it:
+4. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+   `CLOUDINARY_API_SECRET`, and `CLOUDINARY_AUTH_TOKEN_KEY` through Render's
+   secret configuration. Never put their values in the repository or browser.
+5. Deploy the committed revision and wait for the health check to pass.
+6. Export the actual origin and verify it:
 
 ```bash
 export APARTCHECK_URL=https://YOUR-SERVICE.onrender.com
@@ -150,17 +165,18 @@ Complete bootstrap, create one asset, scan its printed QR from a phone, and
 confirm resident read-only access at 360 px. Do not record a URL as verified
 until these checks pass.
 
-**Public URL:** https://apartcheck-heykay-47.onrender.com
+**Public URL verification:** external follow-up; no live URL or Cloudinary
+photo delivery is claimed by this task.
 
-## Deployed Ticket workflow
+## Ticket Workflow
 
-The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician, the Technician records work and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history.
+The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician and sets a zero-through-five photo requirement, the Technician records work, uploads completion photos while work is active, and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history; submitted photo sets remain visible as immutable attempts with textual outcomes.
 
-The Phase 2 bundle, health endpoints, and direct Ticket route are verified on the public Render service. Automated local coverage exercises the full Resident → Administrator → Technician → Administrator lifecycle; live role-by-role manual Ticket acceptance is not claimed yet.
+Automated local coverage exercises the full Resident → Administrator → Technician → Administrator lifecycle, including returned and verified photo attempts, with fake image storage. Live role-by-role acceptance, production credentials, and Cloudinary delivery are not claimed yet.
 
 ## Later direction
 
-- Vendors, costs, uploads and richer media evidence
+- Vendors, costs, PDFs, comments, and richer media evidence beyond Ticket completion photos
 - SLA and due-date policy, notifications, analytics, exports, and integrations
 - Multiple societies per owner and cross-property administration
 - Offline scanning, native mobile clients, and production observability

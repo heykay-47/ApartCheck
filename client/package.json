@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "vitest run src",
-    "test:e2e": "playwright test e2e/phase-one.spec.ts",
+    "test:e2e": "playwright test e2e/phase-one.spec.ts e2e/ticket-photo-evidence.spec.ts",
     "test:a11y": "playwright test e2e/accessibility.spec.ts",
     "typecheck": "tsc -b --pretty false"
   },

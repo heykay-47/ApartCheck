@@ -18,13 +18,13 @@ Within the product, a Society has three Member roles:
 
 ## Product Purpose
 
-ApartCheck gives Society operators and existing Members a clear view of a deployed Asset identity foundation and Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, notes-only completion proof, Administrator verification, and immutable history.
+ApartCheck gives Society operators and existing Members a clear view of an Asset identity foundation and Phase 2 maintenance workflow in one residential Society. It establishes trusted Society, Unit, Member, and Asset records; connects physical Assets to protected digital records through printable QR labels; and adds accountable Ticket reporting, internal Technician assignment, textual and photo completion proof, Administrator verification, and immutable history.
 
 The public page offers a static product tour and existing-user sign-in. It does not offer public signup, demo credentials, or a live public workspace.
 
 Success means the shipped workflow is understandable, secure, accessible at desktop and phone widths, verifiable through automated tests, and usable in a live synthetic demonstration without implying capabilities that are not implemented or publicly verified.
 
-The longer-term direction is an evidence-backed accountability workflow connecting Tickets, physical Assets, assignments, vendor work, costs, proof, verification, and history. Vendor identity, costs, uploads/media, SLA/due-date policy, notifications, analytics/exports, integrations, and multiple-Society administration remain future direction.
+The longer-term direction is an evidence-backed accountability workflow connecting Tickets, physical Assets, assignments, vendor work, costs, proof, verification, and history. Vendor identity, costs, richer media beyond Ticket completion photos, PDFs, comments, SLA/due-date policy, notifications, analytics/exports, integrations, and multiple-Society administration remain future direction.
 
 ## Positioning
 
@@ -32,7 +32,7 @@ ApartCheck is an Asset identity and accountability foundation for Society operat
 
 The public landing surface is a static explanation of that mechanism and a route to sign in for existing Members, not a signup funnel or credentialed demo.
 
-The deployed Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual completion proof was submitted, and whether an Administrator verified it. Render bundle, health, and direct-route verification are recorded; live role-by-role manual Ticket acceptance is not claimed yet.
+The Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual and photo completion proof was submitted, which immutable attempt was returned or verified, and whether an Administrator verified it. Local browser coverage uses fake image storage; live role-by-role manual Ticket acceptance and production Cloudinary delivery are not claimed yet.
 
 ## Operating Context
 
@@ -46,8 +46,8 @@ The production demonstration runs as one same-origin web service backed by Mongo
 - Administrators can manage Units, Members, and Assets; Asset records support search, category filtering, editing, archiving, printable identity plates, QR download, and protected QR lookup.
 - Roles are exactly Administrator, Resident, and Technician. Asset categories are exactly Lift, Plumbing, and Electrical. Every resource operation is scoped by the authenticated Society.
 - Unknown, archived, malformed, and cross-Society QR lookups must remain indistinguishable. Browser code never reads session tokens, and temporary passwords must never be persisted, cached, stored, or logged.
-- Phase 2 is deployed: Residents and Administrators report Tickets; Administrators assign active Technicians, verify or return work, cancel/archive terminal records; Technicians submit notes-only completion proof; immutable Ticket history is visible to authorized roles.
-- Vendors, costs, uploads/media, SLAs, notifications, analytics/exports, multiple-Society administration, offline scanning, and native clients remain future direction.
+- Phase 2 includes: Residents and Administrators report Tickets; Administrators assign active Technicians and set photo requirements, verify or return work, cancel/archive terminal records; Technicians upload active completion photos and submit textual proof; immutable Ticket history and evidence attempts are visible to authorized roles.
+- Vendors, costs, PDFs, comments, richer uploads/media, SLAs, notifications, analytics/exports, multiple-Society administration, offline scanning, and native clients remain future direction.
 
 ## Brand Commitments
 
@@ -59,8 +59,8 @@ Public copy addresses Society operators and existing Members first. It must dist
 
 ## Evidence on Hand
 
-- The verified public deployment serves the Phase 2 bundle and direct Ticket route with healthy live/readiness endpoints; data is synthetic and no public demo credentials are provided.
-- Automated browser coverage exercises the complete Ticket lifecycle locally. This is not evidence of live role-by-role manual Ticket acceptance.
+- Local build and browser evidence cover the Phase 2 bundle and direct Ticket route with synthetic data; no public deployment, live readiness, or production Cloudinary delivery is claimed for this photo-evidence task.
+- Automated browser coverage exercises the complete Ticket lifecycle locally, including partial photo readiness, returned attempts, verified attempts, and fake-storage viewing. This is not evidence of live role-by-role manual Ticket acceptance or production Cloudinary delivery.
 - The repository includes an end-to-end browser flow covering bootstrap, Unit and Member creation, Asset and QR creation, forced password change, and role denial.
 - Automated accessibility checks cover representative Administrator screens at 360 by 800 and 1440 by 900, including keyboard behavior and serious or critical axe violations.
 - Integration tests prove Society isolation for Units, Members, Assets, and QR Tokens. CI runs formatting, linting, type checking, unit and integration tests, builds, browser tests, and accessibility checks.

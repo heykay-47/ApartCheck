@@ -429,7 +429,7 @@ describe('Ticket evidence client workflow', () => {
       />,
     )
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Add 2 more photo(s) before submitting.',
+      '2 more photos required.',
     )
     expect(
       screen.getByRole('button', { name: 'Confirm submission' }),

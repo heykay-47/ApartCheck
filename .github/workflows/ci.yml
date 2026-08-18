@@ -20,9 +20,11 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - id: e2e
+      - name: Run E2E suites sequentially on the shared browser ports
+        id: e2e
         run: npm run test:e2e
-      - id: a11y
+      - name: Run accessibility suite after E2E
+        id: a11y
         run: npm run test:a11y
       - name: Upload Playwright report
         if: failure() && (steps.e2e.outcome == 'failure' || steps.a11y.outcome == 'failure')

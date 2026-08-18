@@ -164,7 +164,7 @@ export function EvidenceUploader({
         </div>
         <p className="evidence-readiness" aria-live="polite">
           {remaining > 0
-            ? `Add ${remaining} more photo(s) before submitting.`
+            ? `${remaining} more photo${remaining === 1 ? '' : 's'} required.`
             : requiredPhotoCount === 0
               ? 'No photo required.'
               : 'Photo requirement met.'}
@@ -174,6 +174,7 @@ export function EvidenceUploader({
         Add evidence photos
         <input
           ref={inputRef}
+          aria-label="Completion photos"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           multiple

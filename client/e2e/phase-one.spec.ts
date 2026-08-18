@@ -9,6 +9,7 @@ async function signOut(page: Page) {
   await page.getByRole('button', { name: 'Sign out' }).click()
   await logout
   await expect(page.getByRole('button', { name: 'Sign out' })).toHaveCount(0)
+  await page.context().clearCookies()
   await page.goto('/login')
   await expect(page.getByLabel('Email')).toBeVisible()
 }
