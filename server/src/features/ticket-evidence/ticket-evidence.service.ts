@@ -137,9 +137,9 @@ export class TicketEvidenceService {
       throw storageUnavailable()
     }
 
-    const created: TicketEvidence[] = []
+    let committedIds: Types.ObjectId[]
     try {
-      await mongoose.connection.transaction(async (session) => {
+      committedIds = await mongoose.connection.transaction(async (session) => {
         await guardSocietyMutation(actor.societyId, session)
         const currentTicket = await findVisible(actor, ticketId, session)
         assertEvidenceStatus(currentTicket.status)
@@ -184,7 +184,7 @@ export class TicketEvidenceService {
           })),
           { session, ordered: true },
         )
-        created.push(...documents)
+        return documents.map((document) => document._id)
       })
     } catch (error) {
       await compensate(
@@ -195,7 +195,29 @@ export class TicketEvidenceService {
       throw metadataUnavailable()
     }
 
-    return created.map(metadata)
+    let committed: TicketEvidence[]
+    try {
+      committed = await TicketEvidenceModel.find({
+        societyId: actor.societyId,
+        ticketId: ticket._id,
+        _id: { $in: committedIds },
+      }).sort({ displayOrder: 1, _id: 1 })
+    } catch {
+      await compensate(
+        this.storage,
+        uploaded.map((image) => image.publicId),
+      )
+      throw metadataUnavailable()
+    }
+    if (committed.length !== committedIds.length) {
+      await compensate(
+        this.storage,
+        uploaded.map((image) => image.publicId),
+      )
+      throw metadataUnavailable()
+    }
+
+    return committed.map(metadata)
   }
 
   async remove(actor: Express.Actor, ticketId: string, evidenceId: string) {

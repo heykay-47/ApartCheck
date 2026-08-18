@@ -1,4 +1,5 @@
 import request from 'supertest'
+import mongoose from 'mongoose'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp } from '../../src/app.js'
 import { TicketModel } from '../../src/features/tickets/ticket.model.js'
@@ -395,5 +396,68 @@ describe('Ticket evidence APIs', () => {
 
     expect(second.body.evidence[0].displayOrder).toBe(2)
     expect(third.body.evidence[0].displayOrder).toBe(3)
+  })
+
+  it('returns only metadata from the transaction attempt that commits', async () => {
+    const { society, ticket, technician } = await fixture('assigned')
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const sessionCookie = await login(app, technician.email)
+    let attempts = 0
+    const transactionSpy = vi
+      .spyOn(mongoose.connection, 'transaction')
+      .mockImplementation(async (callback) => {
+        const abortedSession = await mongoose.connection.startSession()
+        try {
+          await abortedSession.withTransaction(async () => {
+            attempts += 1
+            await callback(abortedSession)
+            throw new Error('simulated transient transaction')
+          })
+        } catch {
+          // The first transaction is intentionally aborted to simulate a retry.
+        } finally {
+          await abortedSession.endSession()
+        }
+
+        const committedSession = await mongoose.connection.startSession()
+        try {
+          attempts += 1
+          return await committedSession.withTransaction(() =>
+            callback(committedSession),
+          )
+        } finally {
+          await committedSession.endSession()
+        }
+      })
+
+    try {
+      const response = await request(app)
+        .post(`/api/tickets/${ticket.id}/evidence`)
+        .set('Cookie', sessionCookie)
+        .attach('photos', await createTestImage('png'), {
+          filename: 'retry.png',
+          contentType: 'image/png',
+        })
+
+      expect(attempts).toBe(2)
+      expect(response.status).toBe(201)
+      expect(response.body.evidence).toHaveLength(1)
+      expect(
+        await TicketEvidenceModel.countDocuments({
+          societyId: society._id,
+          ticketId: ticket._id,
+          state: 'active',
+        }),
+      ).toBe(1)
+      const committed = await TicketEvidenceModel.findOne({
+        societyId: society._id,
+        ticketId: ticket._id,
+        state: 'active',
+      })
+      expect(response.body.evidence[0].id).toBe(committed?.id)
+    } finally {
+      transactionSpy.mockRestore()
+    }
   })
 })
