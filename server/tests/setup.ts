@@ -7,6 +7,7 @@ import { UnitModel } from '../src/features/units/unit.model.js'
 import { UserModel } from '../src/features/users/user.model.js'
 import { TicketModel } from '../src/features/tickets/ticket.model.js'
 import { TicketEventModel } from '../src/features/tickets/ticket-event.model.js'
+import { TicketEvidenceModel } from '../src/features/ticket-evidence/ticket-evidence.model.js'
 let replicaSet: MongoMemoryReplSet
 
 beforeAll(async () => {
@@ -19,6 +20,7 @@ beforeAll(async () => {
     AssetModel.init(),
     TicketModel.init(),
     TicketEventModel.init(),
+    TicketEvidenceModel.init(),
   ])
 })
 
@@ -38,6 +40,7 @@ afterEach(async () => {
     UserModel.deleteMany({}),
     TicketModel.deleteMany({}),
     TicketEventModel.deleteMany({}),
+    TicketEvidenceModel.deleteMany({}),
   ])
 })
 

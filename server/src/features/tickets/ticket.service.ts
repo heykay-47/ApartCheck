@@ -79,7 +79,7 @@ function visibleFilter(actor: Express.Actor): Record<string, unknown> {
   return filter
 }
 
-async function findVisible(
+export async function findVisible(
   actor: Express.Actor,
   ticketId: string,
   session?: mongoose.ClientSession,

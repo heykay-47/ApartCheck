@@ -1,0 +1,250 @@
+import { randomUUID } from 'node:crypto'
+import { Types } from 'mongoose'
+import { AppError } from '../../http/app-error.js'
+import type { ImageStorage } from '../../storage/image-storage.js'
+import { findVisible } from '../tickets/ticket.service.js'
+import {
+  TicketEvidenceModel,
+  type TicketEvidence,
+} from './ticket-evidence.model.js'
+import {
+  inspectImage,
+  MAX_ACTIVE_PHOTOS,
+  MAX_TOTAL_PHOTO_BYTES,
+} from './image-validation.js'
+
+const storageUnavailable = () =>
+  new AppError(
+    503,
+    'EVIDENCE_STORAGE_UNAVAILABLE',
+    'Evidence storage is unavailable.',
+  )
+const metadataUnavailable = () =>
+  new AppError(
+    503,
+    'EVIDENCE_METADATA_UNAVAILABLE',
+    'Evidence metadata could not be saved.',
+  )
+const evidenceNotFound = () =>
+  new AppError(404, 'EVIDENCE_NOT_FOUND', 'Evidence not found.')
+const forbidden = () => new AppError(403, 'FORBIDDEN', 'Forbidden.')
+
+function idOf(value: unknown): string {
+  if (value instanceof Types.ObjectId) return value.toString()
+  if (typeof value === 'string') return value
+  return ''
+}
+
+function metadata(evidence: TicketEvidence) {
+  return {
+    id: idOf(evidence._id),
+    format: evidence.format,
+    byteSize: evidence.byteSize,
+    width: evidence.width,
+    height: evidence.height,
+    displayOrder: evidence.displayOrder,
+    state: evidence.state,
+    evidenceSetNumber: evidence.evidenceSetNumber,
+    createdAt: evidence.createdAt,
+    sealedAt: evidence.sealedAt,
+  }
+}
+
+async function compensate(storage: ImageStorage, publicIds: string[]) {
+  await Promise.allSettled(
+    publicIds.map((publicId) => storage.deleteImage(publicId)),
+  )
+}
+
+async function assignedTicket(actor: Express.Actor, ticketId: string) {
+  const ticket = await findVisible(actor, ticketId)
+  if (actor.role !== 'technician' || idOf(ticket.assigneeId) !== actor.userId)
+    throw forbidden()
+  return ticket
+}
+
+export class TicketEvidenceService {
+  constructor(private readonly storage: ImageStorage) {}
+
+  async upload(actor: Express.Actor, ticketId: string, files: Buffer[]) {
+    const ticket = await assignedTicket(actor, ticketId)
+    if (!['assigned', 'in_progress'].includes(ticket.status))
+      throw new AppError(
+        409,
+        'TICKET_INVALID_TRANSITION',
+        'Ticket cannot accept evidence in its current state.',
+      )
+    if (files.length === 0)
+      throw new AppError(
+        400,
+        'EVIDENCE_PHOTOS_REQUIRED',
+        'Add at least one photo.',
+      )
+    if (files.length > MAX_ACTIVE_PHOTOS)
+      throw new AppError(
+        413,
+        'EVIDENCE_LIMIT_EXCEEDED',
+        'Add no more than five photos.',
+      )
+
+    const activeCount = await TicketEvidenceModel.countDocuments({
+      societyId: actor.societyId,
+      ticketId: ticket._id,
+      state: 'active',
+    })
+    if (activeCount + files.length > MAX_ACTIVE_PHOTOS)
+      throw new AppError(
+        409,
+        'EVIDENCE_LIMIT_REACHED',
+        'A Ticket can have no more than five active photos.',
+      )
+
+    const totalBytes = files.reduce((total, file) => total + file.byteLength, 0)
+    if (totalBytes > MAX_TOTAL_PHOTO_BYTES)
+      throw new AppError(
+        413,
+        'EVIDENCE_LIMIT_EXCEEDED',
+        'Photos exceed 40 MiB.',
+      )
+
+    const inspected = await Promise.all(files.map((file) => inspectImage(file)))
+    const publicIds = inspected.map(
+      (_file, index) =>
+        `tickets/${actor.societyId}/${ticket._id}/${randomUUID()}-${index}`,
+    )
+    const uploaded: Array<{
+      publicId: string
+      provider: 'cloudinary'
+      assetId: string
+      format: 'jpeg' | 'png' | 'webp'
+      byteSize: number
+      width: number
+      height: number
+    }> = []
+
+    try {
+      for (const [index, image] of inspected.entries()) {
+        uploaded.push(
+          await this.storage.uploadImage({
+            bytes: image.bytes,
+            format: image.format,
+            width: image.width,
+            height: image.height,
+            publicId: publicIds[index] ?? '',
+          }),
+        )
+      }
+    } catch {
+      await compensate(
+        this.storage,
+        uploaded.map((image) => image.publicId),
+      )
+      throw storageUnavailable()
+    }
+
+    const displayOrderStart = activeCount + 1
+    const created: TicketEvidence[] = []
+    try {
+      for (const [index, image] of uploaded.entries()) {
+        const document = await TicketEvidenceModel.create({
+          societyId: actor.societyId,
+          ticketId: ticket._id,
+          uploaderId: actor.userId,
+          provider: image.provider,
+          assetId: image.assetId,
+          publicId: image.publicId,
+          format: image.format,
+          byteSize: image.byteSize,
+          width: image.width,
+          height: image.height,
+          displayOrder: displayOrderStart + index,
+          state: 'active',
+          evidenceSetNumber: null,
+          sealedAt: null,
+          removedAt: null,
+        })
+        created.push(document)
+      }
+    } catch {
+      if (created.length > 0)
+        await TicketEvidenceModel.deleteMany({
+          societyId: actor.societyId,
+          ticketId: ticket._id,
+          _id: { $in: created.map((document) => document._id) },
+        })
+      await compensate(
+        this.storage,
+        uploaded.map((image) => image.publicId),
+      )
+      throw metadataUnavailable()
+    }
+
+    return created.map(metadata)
+  }
+
+  async remove(actor: Express.Actor, ticketId: string, evidenceId: string) {
+    const ticket = await assignedTicket(actor, ticketId)
+    if (!Types.ObjectId.isValid(evidenceId)) throw evidenceNotFound()
+
+    let evidence = await TicketEvidenceModel.findOneAndUpdate(
+      {
+        societyId: actor.societyId,
+        ticketId: ticket._id,
+        _id: evidenceId,
+        state: 'active',
+        removedAt: null,
+      },
+      { $set: { state: 'pending_cleanup' } },
+      { returnDocument: 'after' },
+    )
+    if (!evidence) {
+      evidence = await TicketEvidenceModel.findOne({
+        societyId: actor.societyId,
+        ticketId: ticket._id,
+        _id: evidenceId,
+        state: 'pending_cleanup',
+        removedAt: null,
+      })
+    }
+    if (!evidence) throw evidenceNotFound()
+
+    try {
+      await this.storage.deleteImage(evidence.publicId)
+    } catch {
+      throw storageUnavailable()
+    }
+
+    await TicketEvidenceModel.updateOne(
+      {
+        societyId: actor.societyId,
+        ticketId: ticket._id,
+        _id: evidence._id,
+        state: 'pending_cleanup',
+      },
+      { $set: { removedAt: new Date() } },
+    )
+  }
+
+  async view(actor: Express.Actor, ticketId: string, evidenceId: string) {
+    const ticket = await findVisible(actor, ticketId)
+    if (!Types.ObjectId.isValid(evidenceId)) throw evidenceNotFound()
+    const evidence = await TicketEvidenceModel.findOne({
+      societyId: actor.societyId,
+      ticketId: ticket._id,
+      _id: evidenceId,
+      state: { $in: ['active', 'sealed'] },
+      removedAt: null,
+    })
+    if (!evidence) throw evidenceNotFound()
+
+    try {
+      return await this.storage.createViewUrl(evidence.publicId)
+    } catch {
+      throw storageUnavailable()
+    }
+  }
+}
+
+export function createTicketEvidenceService(storage: ImageStorage) {
+  return new TicketEvidenceService(storage)
+}

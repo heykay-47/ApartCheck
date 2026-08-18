@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express'
+import { MulterError } from 'multer'
 import { AppError } from './app-error.js'
 
 type MongoError = Error & { code?: number }
@@ -46,6 +47,16 @@ export const errorHandler: ErrorRequestHandler = (
       409,
       'DUPLICATE_RESOURCE',
       'Resource already exists.',
+    )
+  } else if (error instanceof MulterError) {
+    appError = new AppError(
+      error.code === 'LIMIT_FILE_SIZE' ? 413 : 400,
+      error.code === 'LIMIT_FILE_SIZE'
+        ? 'EVIDENCE_LIMIT_EXCEEDED'
+        : 'EVIDENCE_INVALID_MULTIPART',
+      error.code === 'LIMIT_FILE_SIZE'
+        ? 'Photo exceeds 8 MiB'
+        : 'Multipart request could not be read.',
     )
   } else {
     appError = new AppError(

@@ -18,12 +18,19 @@ import { unitRoutes } from './features/units/unit.routes.js'
 import { userRoutes } from './features/users/user.routes.js'
 import { assetRoutes, scanRoutes } from './features/assets/asset.routes.js'
 import { ticketRoutes } from './features/tickets/ticket.routes.js'
-type AppOptions = {
+import { createTicketEvidenceRoutes } from './features/ticket-evidence/ticket-evidence.routes.js'
+import type { ImageStorage } from './storage/image-storage.js'
+import { CloudinaryImageStorage } from './storage/cloudinary-image-storage.js'
+import { cloudinaryConfig } from './config/env.js'
+export type AppOptions = {
   clientDistPath?: string
+  imageStorage?: ImageStorage
 }
 
 export function createApp(options: AppOptions = {}): Express {
   const app = express()
+  const imageStorage =
+    options.imageStorage ?? new CloudinaryImageStorage(cloudinaryConfig())
   app.set(
     'trust proxy',
     env.NODE_ENV === 'production' ? env.TRUST_PROXY_HOPS : 0,
@@ -73,6 +80,7 @@ export function createApp(options: AppOptions = {}): Express {
   app.use('/api/scan', protectedScanRoutes)
   const protectedTicketRoutes = createProtectedApiRouter()
   protectedTicketRoutes.use(ticketRoutes)
+  protectedTicketRoutes.use(createTicketEvidenceRoutes(imageStorage))
   app.use('/api/tickets', protectedTicketRoutes)
   if (env.NODE_ENV === 'test') {
     const testProtectedApiRoutes = createProtectedApiRouter()

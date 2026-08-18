@@ -23,6 +23,10 @@ import {
   TicketEventModel,
   type TicketEvent,
 } from '../../src/features/tickets/ticket-event.model.js'
+import {
+  TicketEvidenceModel,
+  type TicketEvidence,
+} from '../../src/features/ticket-evidence/ticket-evidence.model.js'
 const testPassword = 'apartcheck-test-password'
 
 export async function createSocietyFixture(
@@ -174,5 +178,42 @@ export async function createTicketEventFixture(
     previousRequiredPhotoCount: overrides.previousRequiredPhotoCount ?? null,
     requiredPhotoCount: overrides.requiredPhotoCount ?? null,
     evidenceSetNumber: overrides.evidenceSetNumber ?? null,
+  })
+}
+
+export async function createTicketEvidenceFixture(
+  overrides: Pick<TicketEvidence, 'societyId' | 'ticketId' | 'uploaderId'> &
+    Partial<
+      Pick<
+        TicketEvidence,
+        | 'provider'
+        | 'assetId'
+        | 'publicId'
+        | 'format'
+        | 'byteSize'
+        | 'width'
+        | 'height'
+        | 'displayOrder'
+        | 'state'
+        | 'evidenceSetNumber'
+        | 'sealedAt'
+        | 'removedAt'
+      >
+    >,
+) {
+  return TicketEvidenceModel.create({
+    provider: 'cloudinary',
+    assetId: `asset-${randomUUID()}`,
+    publicId: `test/${randomUUID()}`,
+    format: 'png',
+    byteSize: 100,
+    width: 32,
+    height: 24,
+    displayOrder: 1,
+    state: 'active',
+    evidenceSetNumber: null,
+    sealedAt: null,
+    removedAt: null,
+    ...overrides,
   })
 }
