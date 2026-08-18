@@ -5,6 +5,8 @@ import { Feedback } from '../../components/Feedback'
 import { FormField } from '../../components/FormField'
 import { Modal } from '../../components/Modal'
 import { useCurrentUser } from '../auth/auth-api'
+import { CompletionSubmissionDialog } from './CompletionSubmissionDialog'
+import { TicketEvidenceSection } from './TicketEvidenceSection'
 import {
   useArchiveTicket,
   useAssignTicket,
@@ -247,6 +249,11 @@ export function TicketDetailPage() {
       {linkedUnavailable ? (
         <Feedback message="Reopening requires all linked records to be active." />
       ) : null}
+      <TicketEvidenceSection
+        ticket={item}
+        role={user?.role}
+        isAssignedTechnician={technician}
+      />
       <section className="ticket-history ruled-panel">
         <h2>Immutable history</h2>
         <div className="ticket-events">
@@ -258,7 +265,6 @@ export function TicketDetailPage() {
               <p>
                 {event.fromStatus ? `${statusLabel(event.fromStatus)} → ` : ''}
                 {statusLabel(event.toStatus)}
-                {event.assignee ? ` · ${event.assignee.name}` : ''}
               </p>
               {event.note ? <blockquote>{event.note}</blockquote> : null}
               <time dateTime={event.createdAt}>
@@ -276,11 +282,9 @@ export function TicketDetailPage() {
         />
       ) : null}
       {dialog === 'submit' ? (
-        <TextActionDialog
-          title="Submit completion"
-          label="Completion summary"
+        <CompletionSubmissionDialog
+          ticket={item}
           action={submit}
-          buildInput={(value) => ({ completionSummary: value })}
           onClose={close}
           fallbackFocusRef={statusHeadingRef}
         />
@@ -380,6 +384,9 @@ function AssignmentDialog({
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(ticket.assignee?.id ?? '')
+  const [requiredPhotoCount, setRequiredPhotoCount] = useState(
+    ticket.requiredPhotoCount,
+  )
   const technicians = useEligibleTechnicians({ page, pageSize: 25, search })
   const assign = useAssignTicket(ticket.id)
   const error = assign.error instanceof ApiError ? assign.error : undefined
@@ -434,6 +441,28 @@ function AssignmentDialog({
           </select>
         )}
       </FormField>
+      <FormField
+        label="Required photos"
+        error={error?.fieldErrors.requiredPhotoCount?.[0]}
+      >
+        {(id) => (
+          <select
+            id={id}
+            value={requiredPhotoCount}
+            onChange={(event) =>
+              setRequiredPhotoCount(Number(event.target.value))
+            }
+          >
+            {[0, 1, 2, 3, 4, 5].map((value) => (
+              <option key={value} value={value}>
+                {value === 0
+                  ? 'No photo required'
+                  : `${value} photo${value === 1 ? '' : 's'}`}
+              </option>
+            ))}
+          </select>
+        )}
+      </FormField>
       <Feedback
         message={
           error?.message ??
@@ -451,7 +480,7 @@ function AssignmentDialog({
             assign.mutate(
               {
                 technicianId: selected,
-                requiredPhotoCount: ticket.requiredPhotoCount,
+                requiredPhotoCount,
               },
               { onSuccess: onClose },
             )
@@ -467,7 +496,7 @@ function AssignmentDialog({
   )
 }
 
-type TextActionInput = { reason: string } | { completionSummary: string }
+type TextActionInput = { reason: string }
 function TextActionDialog<TInput extends TextActionInput>({
   title,
   label,
@@ -513,13 +542,7 @@ function TextActionDialog<TInput extends TextActionInput>({
     >
       <form onSubmit={submitForm} noValidate>
         <h2 id="text-action-title">{title}</h2>
-        <FormField
-          label={label}
-          error={
-            error?.fieldErrors.reason?.[0] ??
-            error?.fieldErrors.completionSummary?.[0]
-          }
-        >
+        <FormField label={label} error={error?.fieldErrors.reason?.[0]}>
           {(id) => (
             <textarea
               id={id}

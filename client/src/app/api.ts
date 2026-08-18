@@ -58,7 +58,7 @@ export async function sessionRequest<T>(
   requests.add(request)
   try {
     const headers = new Headers(init.headers)
-    if (!headers.has('Content-Type'))
+    if (!headers.has('Content-Type') && !(init.body instanceof FormData))
       headers.set('Content-Type', 'application/json')
     const response = await fetch(path, {
       ...init,

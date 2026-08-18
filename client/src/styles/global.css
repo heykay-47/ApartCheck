@@ -658,6 +658,180 @@ body {
 .ticket-form .field select {
   width: 100%;
 }
+.ticket-evidence-section {
+  margin: 48px 0;
+  overflow-wrap: anywhere;
+}
+.ticket-evidence-section > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ticket-evidence-section h3 {
+  margin: 18px 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.ticket-evidence-section select,
+.ticket-evidence-section textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-slate);
+  background: var(--color-chalk);
+  color: var(--color-slate);
+  font: inherit;
+}
+.photo-requirement-control {
+  max-width: 520px;
+  padding: 14px 0 24px;
+  border-bottom: 1px solid rgb(32 52 59 / 0.35);
+}
+.photo-requirement-control .field {
+  margin: 12px 0;
+}
+.photo-requirement-control .primary-button,
+.evidence-uploader button,
+.evidence-attempt button,
+.evidence-view-dialog button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-slate);
+  background: var(--color-chalk);
+  color: var(--color-slate);
+  cursor: pointer;
+  font: inherit;
+}
+.photo-requirement-control .primary-button {
+  border-width: 2px;
+  background: var(--color-pump);
+  color: var(--color-chalk);
+}
+.evidence-uploader {
+  padding: 20px 0;
+  border-bottom: 1px solid rgb(32 52 59 / 0.35);
+}
+.evidence-uploader-heading {
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.evidence-uploader-heading h3 {
+  margin-bottom: 4px;
+}
+.evidence-uploader-heading p {
+  margin: 0;
+}
+.evidence-readiness {
+  max-width: 34ch;
+  font-family: var(--font-utility);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.evidence-file-picker {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 10px 14px;
+  border: 2px solid var(--color-slate);
+  background: var(--color-marigold);
+  color: var(--color-slate);
+  cursor: pointer;
+  font-weight: 600;
+}
+.evidence-file-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.evidence-file-list,
+.active-evidence-list,
+.evidence-photo-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.evidence-file-row,
+.active-evidence-list li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(32 52 59 / 0.25);
+}
+.evidence-file-row img {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  object-fit: cover;
+  background: var(--color-slate);
+}
+.evidence-file-row > span:first-of-type,
+.active-evidence-list li > span {
+  min-width: 0;
+  flex: 1 1 160px;
+  overflow-wrap: anywhere;
+}
+.evidence-uploader-note {
+  margin: 18px 0 0;
+  font-size: 0.9rem;
+}
+.evidence-attempts {
+  display: grid;
+}
+.evidence-attempt {
+  padding: 18px 0;
+  border-bottom: 1px solid rgb(32 52 59 / 0.35);
+}
+.evidence-attempt h3 {
+  margin-top: 0;
+}
+.evidence-attempt p {
+  margin: 0;
+}
+.evidence-photo-list {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 16px;
+}
+.evidence-photo {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.evidence-photo-placeholder {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 10px;
+  border: 1px solid rgb(32 52 59 / 0.35);
+  background: rgb(32 52 59 / 0.08);
+  font-family: var(--font-utility);
+  font-size: 0.75rem;
+  text-align: center;
+}
+.evidence-view-dialog {
+  width: min(760px, 100%);
+}
+.evidence-view-dialog img {
+  display: block;
+  width: 100%;
+  max-height: min(70vh, 640px);
+  object-fit: contain;
+  background: var(--color-slate);
+}
+.evidence-view-dialog button {
+  margin-top: 18px;
+}
 @media (max-width: 700px) {
   .ticket-toolbar {
     display: grid;
@@ -712,6 +886,31 @@ body {
   }
   .ticket-detail-page .dialog-actions > * {
     min-height: 44px;
+  }
+  .ticket-evidence-section .section-heading,
+  .evidence-uploader-heading {
+    display: grid;
+    gap: 8px;
+    align-items: start;
+  }
+  .ticket-evidence-section .dialog-actions {
+    display: grid;
+  }
+  .ticket-evidence-section .dialog-actions > * {
+    width: 100%;
+    min-height: 44px;
+  }
+  .evidence-photo-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .evidence-file-row,
+  .active-evidence-list li {
+    align-items: stretch;
+  }
+  .evidence-file-row button,
+  .active-evidence-list button,
+  .evidence-attempt button {
+    width: 100%;
   }
 }
 @media (max-width: 700px) {

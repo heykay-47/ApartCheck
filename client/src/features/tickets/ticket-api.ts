@@ -56,15 +56,36 @@ export type TicketEvent = {
   fromStatus: TicketStatus | null
   toStatus: TicketStatus
   actor: TicketPerson
-  assignee: TicketPerson | null
+  assigneeId: string | null
   note: string | null
   previousRequiredPhotoCount: number | null
   requiredPhotoCount: number | null
   evidenceSetNumber: number | null
   createdAt: string
 }
+export type TicketEvidence = {
+  id: string
+  format: 'jpeg' | 'png' | 'webp'
+  byteSize: number
+  width: number
+  height: number
+  displayOrder: number | null
+  state: 'active' | 'sealed' | 'pending_cleanup'
+  evidenceSetNumber: number | null
+  createdAt: string
+  sealedAt: string | null
+}
+export type TicketEvidenceAttempt = {
+  setNumber: number
+  submittedBy: { id: string; name: string }
+  submittedAt: string
+  outcome: 'awaiting_verification' | 'returned' | 'verified'
+  photos: TicketEvidence[]
+}
 export type Ticket = TicketSummary & {
   description: string
+  activeEvidence: TicketEvidence[]
+  evidenceAttempts: TicketEvidenceAttempt[]
   events: TicketEvent[]
 }
 export type TicketFilters = {
@@ -172,6 +193,18 @@ function useTicketMutation<TInput>(
   })
 }
 
+async function refreshTicketCaches(
+  client: ReturnType<typeof useQueryClient>,
+  id: string,
+) {
+  await client.invalidateQueries({
+    queryKey: ticketKeys.detail(id),
+    exact: true,
+  })
+  await client.invalidateQueries({ queryKey: ticketKeys.all })
+  await client.invalidateQueries({ queryKey: ['asset-tickets'] })
+}
+
 export function useCreateTicket() {
   const client = useQueryClient()
   return useMutation({
@@ -195,6 +228,50 @@ export function useAssignTicket(id: string) {
         method: 'PUT',
         body: JSON.stringify(input),
       }),
+  )
+}
+
+export function useUpdatePhotoRequirement(id: string) {
+  return useTicketMutation((input: { requiredPhotoCount: number }) =>
+    api<{ ticket: Ticket }>(`/api/tickets/${id}/photo-requirement`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  )
+}
+
+export function useUploadTicketEvidence(id: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => {
+      const body = new FormData()
+      body.append('photos', file)
+      return api<{ evidence: TicketEvidence[] }>(
+        `/api/tickets/${id}/evidence`,
+        {
+          method: 'POST',
+          body,
+        },
+      )
+    },
+    onSuccess: async () => refreshTicketCaches(client, id),
+  })
+}
+
+export function useRemoveTicketEvidence(id: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (evidenceId: string) =>
+      api<void>(`/api/tickets/${id}/evidence/${evidenceId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: async () => refreshTicketCaches(client, id),
+  })
+}
+
+export function getTicketEvidenceViewUrl(id: string, evidenceId: string) {
+  return api<{ url: string; expiresAt: string }>(
+    `/api/tickets/${id}/evidence/${evidenceId}/view`,
   )
 }
 

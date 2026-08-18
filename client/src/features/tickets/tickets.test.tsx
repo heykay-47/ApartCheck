@@ -1,6 +1,12 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { readFileSync } from 'node:fs'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -119,6 +125,33 @@ const detailTicket: Ticket = {
   },
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-02T12:30:00.000Z',
+  activeEvidence: [
+    {
+      id: 'active-1',
+      format: 'png',
+      byteSize: 1200,
+      width: 800,
+      height: 600,
+      displayOrder: 1,
+      state: 'active',
+      evidenceSetNumber: null,
+      createdAt: '2026-01-02T10:00:00.000Z',
+      sealedAt: null,
+    },
+    {
+      id: 'active-2',
+      format: 'jpeg',
+      byteSize: 1400,
+      width: 800,
+      height: 600,
+      displayOrder: 2,
+      state: 'active',
+      evidenceSetNumber: null,
+      createdAt: '2026-01-02T10:01:00.000Z',
+      sealedAt: null,
+    },
+  ],
+  evidenceAttempts: [],
   events: [
     {
       id: 'event1',
@@ -126,7 +159,7 @@ const detailTicket: Ticket = {
       fromStatus: null,
       toStatus: 'open',
       actor: { id: 'r1', name: 'Resident One' },
-      assignee: null,
+      assigneeId: null,
       note: null,
       previousRequiredPhotoCount: null,
       requiredPhotoCount: null,
@@ -361,9 +394,11 @@ describe('Ticket client workflow', () => {
       screen.getByLabelText('Completion summary'),
       'Replaced the worn lift guide.',
     )
-    await actor.click(screen.getByRole('button', { name: 'Confirm' }))
+    await actor.click(
+      screen.getByRole('button', { name: 'Confirm submission' }),
+    )
 
-    const saving = await screen.findByRole('button', { name: 'Saving…' })
+    const saving = await screen.findByRole('button', { name: 'Submitting…' })
     expect(saving).toBeDisabled()
     expect(saving).toHaveAttribute('aria-busy', 'true')
   })
@@ -433,7 +468,7 @@ describe('Ticket client workflow', () => {
   })
 
   it('identifies technician search and exposes assignment progress', async () => {
-    mockTicketDetail(administrator, detailTicket, (url) => {
+    const fetchMock = mockTicketDetail(administrator, detailTicket, (url) => {
       if (url.startsWith('/api/tickets/eligible-technicians?'))
         return Promise.resolve(
           new Response(
@@ -467,7 +502,20 @@ describe('Ticket client workflow', () => {
     )
 
     await actor.selectOptions(await screen.findByLabelText('Technician'), 't2')
+    await actor.selectOptions(
+      within(
+        screen.getByRole('dialog', { name: 'Choose technician' }),
+      ).getByLabelText('Required photos'),
+      '3',
+    )
     await actor.click(screen.getByRole('button', { name: 'Save assignment' }))
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/tickets/t1/assignment',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ technicianId: 't2', requiredPhotoCount: 3 }),
+      }),
+    )
     const saving = await screen.findByRole('button', {
       name: 'Saving assignment…',
     })
