@@ -99,6 +99,38 @@ describe('api wrapper', () => {
     })
   })
 
+  it('renders the public login route after an anonymous session check', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('', { status: 401 }))
+    const router = createMemoryRouter(routes, { initialEntries: ['/login'] })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    )
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Sign in to the work record.',
+      }),
+    ).toBeVisible()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves private query data until a new login clears the session cache', async () => {
+    queryClient.setQueryData(['private-cache'], { value: 'private' })
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('', { status: 401 }),
+    )
+
+    await expect(api('/api/auth/me')).rejects.toBeInstanceOf(ApiError)
+
+    expect(queryClient.getQueryData(['private-cache'])).toEqual({
+      value: 'private',
+    })
+  })
+
   it('does not abort login when an anonymous session check returns 401', async () => {
     let resolveSessionCheck: (response: Response) => void = () => undefined
     let resolveLogin: (response: Response) => void = () => undefined

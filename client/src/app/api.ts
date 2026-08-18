@@ -27,12 +27,12 @@ export function getSessionGeneration() {
   return sessionGeneration
 }
 
-export async function advanceSession() {
+export async function advanceSession(options: { clearCaches?: boolean } = {}) {
   sessionGeneration += 1
   for (const request of requests) {
     if (!request.ignoreSessionBoundary) request.controller.abort()
   }
-  await clearSessionCaches()
+  if (options.clearCaches !== false) await clearSessionCaches()
 }
 
 type SessionRequestOptions = {
@@ -100,8 +100,8 @@ export async function api<T>(
       if (!response.ok) {
         const error = (body as ErrorBody | null)?.error
         if (response.status === 401) {
-          await advanceSession()
           queryClient.setQueryData(['current-user'], { user: undefined })
+          await advanceSession({ clearCaches: false })
         }
         throw new ApiError(
           response.status,
