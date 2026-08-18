@@ -16,9 +16,14 @@ const VALID_PNG = Buffer.from(
 
 async function authenticateAdmin(page: Page) {
   await page.goto('/setup')
-  if (
-    await page.getByRole('heading', { name: /set up your society/i }).count()
-  ) {
+  const setupHeading = page.getByRole('heading', {
+    name: /set up your society/i,
+  })
+  const loginHeading = page.getByRole('heading', {
+    name: 'Sign in to the work record.',
+  })
+  await expect(setupHeading.or(loginHeading)).toBeVisible()
+  if (await setupHeading.isVisible()) {
     await page.getByLabel('Society name').fill('A11y Society')
     await page.getByLabel('Address').fill('A11y Address')
     await page.getByLabel('Administrator name').fill('A11y Admin')

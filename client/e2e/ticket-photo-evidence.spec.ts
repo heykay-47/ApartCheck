@@ -91,9 +91,14 @@ test('resident report to verified immutable Ticket photo attempts', async ({
   )
 
   await page.goto('/setup')
-  if (
-    await page.getByRole('heading', { name: /set up your society/i }).count()
-  ) {
+  const setupHeading = page.getByRole('heading', {
+    name: /set up your society/i,
+  })
+  const loginHeading = page.getByRole('heading', {
+    name: 'Sign in to the work record.',
+  })
+  await expect(setupHeading.or(loginHeading)).toBeVisible()
+  if (await setupHeading.isVisible()) {
     await page.getByLabel('Society name').fill('Ticket Photo Evidence Society')
     await page.getByLabel('Address').fill('Ticket Photo Evidence Address')
     await page.getByLabel('Administrator name').fill('Photo Evidence Admin')
