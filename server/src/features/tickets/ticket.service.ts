@@ -458,7 +458,6 @@ export const TicketService = {
         session,
       )
       const previousRequiredPhotoCount = ticket.requiredPhotoCount
-      ticket.requiredPhotoCount = input.requiredPhotoCount
       const current = ticket.assigneeId ? idOf(ticket.assigneeId) : null
       if (current === input.technicianId) throw assignmentUnchanged()
       const legal = ['open', 'assigned', 'in_progress'].includes(ticket.status)
@@ -473,6 +472,7 @@ export const TicketService = {
       if (!legal && !repair) throw invalidTransition()
       const from = ticket.status
       if (repair) {
+        ticket.requiredPhotoCount = input.requiredPhotoCount
         ticket.assigneeId = technician._id
         await ticket.save({ session })
         await appendEvent(
@@ -498,6 +498,7 @@ export const TicketService = {
         )
         return
       }
+      ticket.requiredPhotoCount = input.requiredPhotoCount
       ticket.assigneeId = technician._id
       if (ticket.status === 'open') ticket.status = 'assigned'
       await ticket.save({ session })
