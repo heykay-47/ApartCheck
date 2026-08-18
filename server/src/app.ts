@@ -21,6 +21,7 @@ import { ticketRoutes } from './features/tickets/ticket.routes.js'
 import { createTicketEvidenceRoutes } from './features/ticket-evidence/ticket-evidence.routes.js'
 import type { ImageStorage } from './storage/image-storage.js'
 import { CloudinaryImageStorage } from './storage/cloudinary-image-storage.js'
+import { InMemoryImageStorage } from './storage/in-memory-image-storage.js'
 import { cloudinaryConfig } from './config/env.js'
 export type AppOptions = {
   clientDistPath?: string
@@ -29,8 +30,14 @@ export type AppOptions = {
 
 export function createApp(options: AppOptions = {}): Express {
   const app = express()
-  const imageStorage =
-    options.imageStorage ?? new CloudinaryImageStorage(cloudinaryConfig())
+  const imageStorage = (() => {
+    if (options.imageStorage) return options.imageStorage
+    if (env.NODE_ENV === 'production') {
+      const config = cloudinaryConfig()
+      return new CloudinaryImageStorage(config)
+    }
+    return new InMemoryImageStorage()
+  })()
   app.set(
     'trust proxy',
     env.NODE_ENV === 'production' ? env.TRUST_PROXY_HOPS : 0,

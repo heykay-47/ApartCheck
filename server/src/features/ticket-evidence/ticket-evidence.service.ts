@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import { AppError } from '../../http/app-error.js'
-import type { ImageStorage } from '../../storage/image-storage.js'
+import type { ImageStorage, StoredImage } from '../../storage/image-storage.js'
 import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { findVisible } from '../tickets/ticket.service.js'
 import {
@@ -93,15 +93,7 @@ export class TicketEvidenceService {
       (_file, index) =>
         `tickets/${actor.societyId}/${ticket._id}/${randomUUID()}-${index}`,
     )
-    const uploaded: Array<{
-      publicId: string
-      provider: 'cloudinary'
-      assetId: string
-      format: 'jpeg' | 'png' | 'webp'
-      byteSize: number
-      width: number
-      height: number
-    }> = []
+    const uploaded: StoredImage[] = []
 
     try {
       for (const [index, image] of inspected.entries()) {
@@ -229,15 +221,21 @@ export class TicketEvidenceService {
       throw storageUnavailable()
     }
 
-    await TicketEvidenceModel.updateOne(
-      {
-        societyId: actor.societyId,
-        ticketId: ticket._id,
-        _id: evidence._id,
-        state: 'pending_cleanup',
-      },
-      { $set: { removedAt: new Date() } },
-    )
+    try {
+      const result = await TicketEvidenceModel.updateOne(
+        {
+          societyId: actor.societyId,
+          ticketId: ticket._id,
+          _id: evidence._id,
+          state: 'pending_cleanup',
+        },
+        { $set: { removedAt: new Date() } },
+      )
+      if (result.matchedCount !== 1 || result.modifiedCount !== 1)
+        throw new Error('Evidence cleanup metadata was not finalized.')
+    } catch {
+      throw metadataUnavailable()
+    }
   }
 
   async view(actor: Express.Actor, ticketId: string, evidenceId: string) {

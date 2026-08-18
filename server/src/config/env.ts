@@ -2,6 +2,20 @@ import 'dotenv/config'
 
 import { z } from 'zod'
 
+const optionalString = z.preprocess(
+  (value) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  z.string().min(1).optional(),
+)
+const optionalHexString = z.preprocess(
+  (value) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  z
+    .string()
+    .regex(/^[0-9a-fA-F]+$/, 'Must be a hex-encoded auth-token key')
+    .optional(),
+)
+
 const environmentSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
@@ -11,13 +25,10 @@ const environmentSchema = z.object({
   JWT_SECRET: z.string().min(32),
   APP_BASE_URL: z.string().url(),
   TRUST_PROXY_HOPS: z.coerce.number().int().nonnegative().default(0),
-  CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
-  CLOUDINARY_API_KEY: z.string().min(1).optional(),
-  CLOUDINARY_API_SECRET: z.string().min(1).optional(),
-  CLOUDINARY_AUTH_TOKEN_KEY: z
-    .string()
-    .regex(/^[0-9a-fA-F]+$/, 'Must be a hex-encoded auth-token key')
-    .optional(),
+  CLOUDINARY_CLOUD_NAME: optionalString,
+  CLOUDINARY_API_KEY: optionalString,
+  CLOUDINARY_API_SECRET: optionalString,
+  CLOUDINARY_AUTH_TOKEN_KEY: optionalHexString,
 })
 
 export const env = environmentSchema.parse(process.env)

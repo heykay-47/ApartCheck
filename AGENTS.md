@@ -10,7 +10,7 @@
 
 - Local MongoDB must be a replica set; bootstrap and user/unit invariants use transactions. Tests start their own one-node `MongoMemoryReplSet`.
 - npm workspace scripts run with `server/` as cwd. For normal local development, copy the root template to `server/.env`, not root `.env`: `cp .env.example server/.env`.
-- Required server values: `MONGODB_URI`, `JWT_SECRET` (32+ chars), and `APP_BASE_URL`. Production image storage additionally requires `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, and `CLOUDINARY_AUTH_TOKEN_KEY`; keep them in the deployment secret store. Keep `TRUST_PROXY_HOPS=0` locally; Render sets it to `1`.
+- Required server values: `MONGODB_URI`, `JWT_SECRET` (32+ chars), and `APP_BASE_URL`. Local development uses bounded in-memory image storage when Cloudinary values are blank; production additionally requires `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, and `CLOUDINARY_AUTH_TOKEN_KEY` in the deployment secret store. Keep `TRUST_PROXY_HOPS=0` locally; Render sets it to `1`.
 - Quick manual stack without local Mongo: run `PORT=3301 npm run dev:e2e -w server`, then `VITE_API_TARGET=http://127.0.0.1:3301 npm run dev -w client -- --host 0.0.0.0`. Data is ephemeral.
 
 ## Verification

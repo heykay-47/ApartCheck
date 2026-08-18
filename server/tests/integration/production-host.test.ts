@@ -5,6 +5,7 @@ import request from 'supertest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../../src/app.js'
 import { env } from '../../src/config/env.js'
+import { InMemoryImageStorage } from '../../src/storage/in-memory-image-storage.js'
 
 const fixtures: string[] = []
 
@@ -34,7 +35,9 @@ describe('production SPA host', () => {
     env.NODE_ENV = 'production'
 
     try {
-      const response = await request(createApp()).get('/')
+      const response = await request(
+        createApp({ imageStorage: new InMemoryImageStorage() }),
+      ).get('/')
 
       expect(response.status).toBe(200)
       expect(response.text).toContain('production shell')

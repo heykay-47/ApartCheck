@@ -577,6 +577,8 @@ export const TicketService = {
           active: true,
         }).session(session))
       if (!legal && !repair) throw invalidTransition()
+      if (repair && previousRequiredPhotoCount !== input.requiredPhotoCount)
+        throw invalidTransition()
       const from = ticket.status
       if (repair) {
         ticket.requiredPhotoCount = input.requiredPhotoCount
@@ -650,6 +652,15 @@ export const TicketService = {
       if (
         !['assigned', 'in_progress'].includes(ticket.status) ||
         !ticket.assigneeId
+      )
+        throw invalidTransition()
+      if (
+        !(await UserModel.exists({
+          _id: ticket.assigneeId,
+          societyId: actor.societyId,
+          active: true,
+          role: 'technician',
+        }).session(session))
       )
         throw invalidTransition()
       if (ticket.requiredPhotoCount === input.requiredPhotoCount)

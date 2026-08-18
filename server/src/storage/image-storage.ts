@@ -9,7 +9,7 @@ export type UploadImageInput = {
 }
 
 export type StoredImage = {
-  provider: 'cloudinary'
+  provider: 'cloudinary' | 'development'
   assetId: string
   publicId: string
   format: AcceptedImageFormat

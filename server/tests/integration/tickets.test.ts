@@ -9,6 +9,7 @@ import {
   createUserFixture,
 } from '../helpers/factories.js'
 import { UserModel } from '../../src/features/users/user.model.js'
+import { TicketModel } from '../../src/features/tickets/ticket.model.js'
 import { TicketEvidenceModel } from '../../src/features/ticket-evidence/ticket-evidence.model.js'
 import {
   createTestImage,
@@ -314,7 +315,7 @@ describe('Ticket workflow APIs', () => {
         .set('Cookie', session)
         .send({
           technicianId: replacement.id,
-          requiredPhotoCount: ticket.requiredPhotoCount === 2 ? 3 : 0,
+          requiredPhotoCount: ticket.requiredPhotoCount,
         })
       expect(repaired.status).toBe(200)
       expect(repaired.body.ticket).toMatchObject({
@@ -334,19 +335,149 @@ describe('Ticket workflow APIs', () => {
       })
       if (ticket.requiredPhotoCount === 2) {
         expect(repaired.body.ticket).toMatchObject({
-          requiredPhotoCount: 3,
+          requiredPhotoCount: 2,
         })
         expect(repaired.body.ticket.events.at(-1)).toMatchObject({
           type: 'reassigned',
-          previousRequiredPhotoCount: 2,
-          requiredPhotoCount: 3,
+          previousRequiredPhotoCount: null,
+          requiredPhotoCount: null,
         })
         const persisted = await request(app)
           .get(`/api/tickets/${ticket.id}`)
           .set('Cookie', session)
         expect(persisted.status).toBe(200)
-        expect(persisted.body.ticket.requiredPhotoCount).toBe(3)
+        expect(persisted.body.ticket.requiredPhotoCount).toBe(2)
       }
+    }
+  })
+
+  it('blocks requirement changes through terminal assignment repair', async () => {
+    const society = await createSocietyFixture()
+    const unit = await createUnitFixture({ societyId: society._id })
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const inactive = await createUserFixture({
+      societyId: society._id,
+      role: 'technician',
+      active: false,
+      mustChangePassword: false,
+    })
+    const replacement = await createUserFixture({
+      societyId: society._id,
+      role: 'technician',
+      mustChangePassword: false,
+    })
+    const ticket = await createTicketFixture({
+      societyId: society._id,
+      unitId: unit._id,
+      reporterId: admin._id,
+      status: 'completed',
+      assigneeId: inactive._id,
+      requiredPhotoCount: 2,
+    })
+    const app = createApp()
+    const session = await login(app, admin.email)
+
+    const blocked = await request(app)
+      .put(`/api/tickets/${ticket.id}/assignment`)
+      .set('Cookie', session)
+      .send({ technicianId: replacement.id, requiredPhotoCount: 3 })
+
+    expect(blocked.status).toBe(409)
+    expect(blocked.body.error.code).toBe('TICKET_INVALID_TRANSITION')
+    await expect(TicketModel.findById(ticket._id)).resolves.toMatchObject({
+      requiredPhotoCount: 2,
+      assigneeId: inactive._id,
+    })
+  })
+
+  it.each(['disabled', 'demoted', 'non-Technician'] as const)(
+    'rejects later requirement changes for %s assignees',
+    async (label) => {
+      const society = await createSocietyFixture()
+      const unit = await createUnitFixture({ societyId: society._id })
+      const admin = await createUserFixture({
+        societyId: society._id,
+        role: 'admin',
+        mustChangePassword: false,
+      })
+      const assignee = await createUserFixture({
+        societyId: society._id,
+        role: 'technician',
+        mustChangePassword: false,
+      })
+      if (label === 'demoted') {
+        await UserModel.updateOne(
+          { _id: assignee._id },
+          { $set: { role: 'resident', unitId: unit._id } },
+        )
+      } else if (label === 'non-Technician') {
+        await UserModel.updateOne(
+          { _id: assignee._id },
+          { $set: { role: 'admin', unitId: null } },
+        )
+      } else {
+        await UserModel.updateOne(
+          { _id: assignee._id },
+          { $set: { active: false } },
+        )
+      }
+      const ticket = await createTicketFixture({
+        societyId: society._id,
+        unitId: unit._id,
+        reporterId: admin._id,
+        status: 'in_progress',
+        assigneeId: assignee._id,
+        requiredPhotoCount: 1,
+      })
+      const app = createApp()
+      const session = await login(app, admin.email)
+
+      const response = await request(app)
+        .put(`/api/tickets/${ticket.id}/photo-requirement`)
+        .set('Cookie', session)
+        .send({ requiredPhotoCount: 2 })
+
+      expect(response.status).toBe(409)
+      expect(response.body.error.code).toBe('TICKET_INVALID_TRANSITION')
+    },
+  )
+
+  it('rejects terminal requirement updates through the dedicated route', async () => {
+    for (const status of ['completed', 'cancelled'] as const) {
+      const society = await createSocietyFixture()
+      const unit = await createUnitFixture({ societyId: society._id })
+      const admin = await createUserFixture({
+        societyId: society._id,
+        role: 'admin',
+        mustChangePassword: false,
+      })
+      const technician = await createUserFixture({
+        societyId: society._id,
+        role: 'technician',
+        mustChangePassword: false,
+      })
+      const ticket = await createTicketFixture({
+        societyId: society._id,
+        unitId: unit._id,
+        reporterId: admin._id,
+        status,
+        assigneeId: technician._id,
+        requiredPhotoCount: 1,
+      })
+      const app = createApp()
+      const session = await login(app, admin.email)
+
+      const response = await request(app)
+        .put(`/api/tickets/${ticket.id}/photo-requirement`)
+        .set('Cookie', session)
+        .send({ requiredPhotoCount: 2 })
+
+      expect(response.status).toBe(409)
+      expect(response.body.error.code).toBe('TICKET_INVALID_TRANSITION')
     }
   })
 

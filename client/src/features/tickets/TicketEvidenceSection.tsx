@@ -14,6 +14,8 @@ export function TicketEvidenceSection({
   isAssignedTechnician: boolean
 }) {
   const uploadLegal = ['assigned', 'in_progress'].includes(ticket.status)
+  const hasEligibleAssignee =
+    ticket.assignee?.active === true && ticket.assignee.role === 'technician'
   return (
     <section
       className="ticket-evidence-section ruled-panel"
@@ -26,7 +28,7 @@ export function TicketEvidenceSection({
           {ticket.evidenceAttempts.length === 1 ? '' : 's'}
         </span>
       </div>
-      {role === 'admin' && uploadLegal ? (
+      {role === 'admin' && uploadLegal && hasEligibleAssignee ? (
         <PhotoRequirementControl
           ticketId={ticket.id}
           requiredPhotoCount={ticket.requiredPhotoCount}

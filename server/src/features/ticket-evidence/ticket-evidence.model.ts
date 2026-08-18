@@ -9,7 +9,7 @@ export interface TicketEvidence {
   societyId: Types.ObjectId
   ticketId: Types.ObjectId
   uploaderId: Types.ObjectId
-  provider: 'cloudinary'
+  provider: 'cloudinary' | 'development'
   assetId: string
   publicId: string
   format: AcceptedImageFormat
@@ -60,7 +60,11 @@ const ticketEvidenceSchema = new Schema<TicketEvidence>(
     societyId: { type: Schema.Types.ObjectId, ref: 'Society', required: true },
     ticketId: { type: Schema.Types.ObjectId, ref: 'Ticket', required: true },
     uploaderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    provider: { type: String, enum: ['cloudinary'], required: true },
+    provider: {
+      type: String,
+      enum: ['cloudinary', 'development'],
+      required: true,
+    },
     assetId: { type: String, required: true },
     publicId: { type: String, required: true },
     format: { type: String, enum: ['jpeg', 'png', 'webp'], required: true },

@@ -445,7 +445,7 @@ describe('Ticket client workflow', () => {
       assigneeId: technician.id,
       assignee: { id: technician.id, name: technician.name },
       note: null,
-      previousRequiredPhotoCount: null,
+      previousRequiredPhotoCount: 0,
       requiredPhotoCount: 2,
       evidenceSetNumber: null,
       createdAt: '2026-01-01T01:00:00.000Z',
@@ -467,7 +467,19 @@ describe('Ticket client workflow', () => {
     const item: Ticket = {
       ...detailTicket,
       status: 'assigned',
-      events: [assignmentEvent, requirementEvent],
+      events: [
+        assignmentEvent,
+        {
+          ...assignmentEvent,
+          id: 'event-reassigned',
+          type: 'reassigned',
+          fromStatus: 'assigned',
+          toStatus: 'assigned',
+          previousRequiredPhotoCount: 2,
+          requiredPhotoCount: 4,
+        },
+        requirementEvent,
+      ],
     }
     mockTicketDetail(administrator, item)
     renderTicketDetail(item)
@@ -478,12 +490,18 @@ describe('Ticket client workflow', () => {
     expect(
       within(events[0]!).getByText('open → assigned · Technician One'),
     ).toBeVisible()
-    expect(within(events[1]!).getByText('Administrator One')).toBeVisible()
     expect(
-      within(events[1]!).getByText('changed the photo requirement'),
+      within(events[0]!).getByText('Photo requirement: no photos → 2 photos.'),
     ).toBeVisible()
     expect(
       within(events[1]!).getByText('Photo requirement: 2 photos → 4 photos.'),
+    ).toBeVisible()
+    expect(within(events[1]!).getByText('Administrator One')).toBeVisible()
+    expect(
+      within(events[2]!).getByText('changed the photo requirement'),
+    ).toBeVisible()
+    expect(
+      within(events[2]!).getByText('Photo requirement: 2 photos → 4 photos.'),
     ).toBeVisible()
     expect(screen.queryByText('photo_requirement_changed')).toBeNull()
   })

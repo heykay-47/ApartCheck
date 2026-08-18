@@ -12,10 +12,6 @@ const port = Number(process.env.PORT ?? process.env.E2E_SERVER_PORT ?? 3000)
 process.env.PORT = String(port)
 process.env.JWT_SECRET = 'apartcheck-e2e-secret-at-least-32-bytes'
 process.env.APP_BASE_URL = 'http://127.0.0.1:5173'
-process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud'
-process.env.CLOUDINARY_API_KEY = 'test-api-key'
-process.env.CLOUDINARY_API_SECRET = 'test-api-secret'
-process.env.CLOUDINARY_AUTH_TOKEN_KEY = '0123456789abcdef0123456789abcdef'
 
 const replicaSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } })
 process.env.MONGODB_URI = replicaSet.getUri()

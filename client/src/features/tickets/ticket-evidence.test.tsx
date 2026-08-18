@@ -321,6 +321,35 @@ describe('Ticket evidence client workflow', () => {
     expect(screen.queryByLabelText('Required photos')).toBeNull()
   })
 
+  it('hides Administrator requirement controls for ineligible assignees', () => {
+    const inactive = {
+      ...ticket,
+      assignee: { ...ticket.assignee!, active: false },
+    }
+    renderWithClient(
+      <TicketEvidenceSection
+        ticket={inactive}
+        role="admin"
+        isAssignedTechnician={false}
+      />,
+    )
+    expect(screen.queryByLabelText('Required photos')).toBeNull()
+
+    cleanup()
+    const demoted = {
+      ...ticket,
+      assignee: { ...ticket.assignee!, role: 'resident' as const },
+    }
+    renderWithClient(
+      <TicketEvidenceSection
+        ticket={demoted}
+        role="admin"
+        isAssignedTechnician={false}
+      />,
+    )
+    expect(screen.queryByLabelText('Required photos')).toBeNull()
+  })
+
   it('revokes a queued preview URL when the uploader unmounts', async () => {
     vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => undefined))
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:queued')

@@ -294,6 +294,66 @@ describe('Ticket evidence APIs', () => {
     expect(hidden.body.error.code).toBe('EVIDENCE_NOT_FOUND')
   })
 
+  it('returns stable metadata errors when cleanup finalization does not persist', async () => {
+    const { ticket, technician } = await fixture('assigned')
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const session = await login(app, technician.email)
+    const uploaded = await uploadOne(app, ticket.id, session, storage)
+    const evidenceId = uploaded.body.evidence[0].id
+    const updateSpy = vi
+      .spyOn(TicketEvidenceModel, 'updateOne')
+      .mockResolvedValueOnce({ matchedCount: 0, modifiedCount: 0 } as never)
+
+    try {
+      const response = await request(app)
+        .delete(`/api/tickets/${ticket.id}/evidence/${evidenceId}`)
+        .set('Cookie', session)
+
+      expect(response.status).toBe(503)
+      expect(response.body.error.code).toBe('EVIDENCE_METADATA_UNAVAILABLE')
+      expect(response.body.error.message).not.toContain('test/1')
+      await expect(
+        TicketEvidenceModel.findById(evidenceId),
+      ).resolves.toMatchObject({
+        state: 'pending_cleanup',
+        removedAt: null,
+      })
+    } finally {
+      updateSpy.mockRestore()
+    }
+  })
+
+  it('returns a stable metadata error when cleanup finalization throws', async () => {
+    const { ticket, technician } = await fixture('assigned')
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const session = await login(app, technician.email)
+    const uploaded = await uploadOne(app, ticket.id, session, storage)
+    const evidenceId = uploaded.body.evidence[0].id
+    const updateSpy = vi
+      .spyOn(TicketEvidenceModel, 'updateOne')
+      .mockRejectedValueOnce(new Error('metadata unavailable'))
+
+    try {
+      const response = await request(app)
+        .delete(`/api/tickets/${ticket.id}/evidence/${evidenceId}`)
+        .set('Cookie', session)
+
+      expect(response.status).toBe(503)
+      expect(response.body.error.code).toBe('EVIDENCE_METADATA_UNAVAILABLE')
+      expect(response.body.error.message).not.toContain('metadata unavailable')
+      await expect(
+        TicketEvidenceModel.findById(evidenceId),
+      ).resolves.toMatchObject({
+        state: 'pending_cleanup',
+        removedAt: null,
+      })
+    } finally {
+      updateSpy.mockRestore()
+    }
+  })
+
   it('rejects removal outside the assigned and in-progress status window', async () => {
     for (const status of [
       'awaiting_verification',

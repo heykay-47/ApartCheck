@@ -53,6 +53,10 @@ one society and first admin in a transaction; later bootstrap attempts are
 rejected. Generated credentials from user creation or reset are displayed once
 in the admin handoff and are not persisted as plaintext.
 
+With the template's blank Cloudinary values, local development uses bounded
+in-memory image storage. Local photo data is lost when the server stops. Real
+Cloudinary credentials are required only when `NODE_ENV=production`.
+
 For a production-like process:
 
 ```bash

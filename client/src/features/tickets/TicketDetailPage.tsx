@@ -272,8 +272,7 @@ export function TicketDetailPage() {
                 {statusLabel(event.toStatus)}
                 {event.assignee ? ` · ${event.assignee.name}` : ''}
               </p>
-              {event.type === 'photo_requirement_changed' &&
-              event.previousRequiredPhotoCount !== null &&
+              {event.previousRequiredPhotoCount !== null &&
               event.requiredPhotoCount !== null ? (
                 <p className="ticket-event-detail">
                   Photo requirement:{' '}

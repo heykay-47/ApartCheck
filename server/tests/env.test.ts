@@ -55,4 +55,88 @@ describe('environment loading', () => {
       rmSync(directory, { recursive: true, force: true })
     }
   })
+
+  it('constructs the local app when Cloudinary values are omitted or blank', () => {
+    const configPath = pathToFileURL(
+      join(fileURLToPath(new URL('../src/config/env.ts', import.meta.url))),
+    ).href
+    const appPath = pathToFileURL(
+      join(fileURLToPath(new URL('../src/app.ts', import.meta.url))),
+    ).href
+    const loaderPath = fileURLToPath(
+      new URL('../../node_modules/tsx/dist/loader.mjs', import.meta.url),
+    )
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        '--import',
+        loaderPath,
+        '--input-type=module',
+        '-e',
+        `import '${configPath}'; import { createApp } from '${appPath}'; createApp(); console.log('local-app-ready')`,
+      ],
+      {
+        env: {
+          ...process.env,
+          NODE_ENV: 'development',
+          PORT: '3000',
+          MONGODB_URI: 'mongodb://127.0.0.1:27017/apartcheck',
+          JWT_SECRET: 'local-secret-that-is-at-least-32-characters',
+          APP_BASE_URL: 'http://localhost:5173',
+          TRUST_PROXY_HOPS: '0',
+          CLOUDINARY_CLOUD_NAME: '',
+          CLOUDINARY_API_KEY: '',
+          CLOUDINARY_API_SECRET: '',
+          CLOUDINARY_AUTH_TOKEN_KEY: '',
+        },
+      },
+    )
+
+    expect(output.toString()).toContain('local-app-ready')
+  })
+
+  it('rejects production app construction without Cloudinary values', () => {
+    const appPath = pathToFileURL(
+      join(fileURLToPath(new URL('../src/app.ts', import.meta.url))),
+    ).href
+    const loaderPath = fileURLToPath(
+      new URL('../../node_modules/tsx/dist/loader.mjs', import.meta.url),
+    )
+
+    let error: unknown
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          '--import',
+          loaderPath,
+          '--input-type=module',
+          '-e',
+          `import { createApp } from '${appPath}'; createApp()`,
+        ],
+        {
+          env: {
+            ...process.env,
+            NODE_ENV: 'production',
+            PORT: '3000',
+            MONGODB_URI: 'mongodb://127.0.0.1:27017/apartcheck',
+            JWT_SECRET: 'production-secret-that-is-at-least-32-characters',
+            APP_BASE_URL: 'http://localhost:5173',
+            TRUST_PROXY_HOPS: '0',
+            CLOUDINARY_CLOUD_NAME: '',
+            CLOUDINARY_API_KEY: '',
+            CLOUDINARY_API_SECRET: '',
+            CLOUDINARY_AUTH_TOKEN_KEY: '',
+          },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        },
+      )
+    } catch (caught) {
+      error = caught
+    }
+
+    expect(error).toBeTruthy()
+    expect(String(error)).toContain('CLOUDINARY_CLOUD_NAME')
+  })
 })
