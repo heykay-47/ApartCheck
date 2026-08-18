@@ -203,19 +203,9 @@ export class TicketEvidenceService {
         _id: { $in: committedIds },
       }).sort({ displayOrder: 1, _id: 1 })
     } catch {
-      await compensate(
-        this.storage,
-        uploaded.map((image) => image.publicId),
-      )
       throw metadataUnavailable()
     }
-    if (committed.length !== committedIds.length) {
-      await compensate(
-        this.storage,
-        uploaded.map((image) => image.publicId),
-      )
-      throw metadataUnavailable()
-    }
+    if (committed.length !== committedIds.length) throw metadataUnavailable()
 
     return committed.map(metadata)
   }

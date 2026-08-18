@@ -460,4 +460,37 @@ describe('Ticket evidence APIs', () => {
       transactionSpy.mockRestore()
     }
   })
+
+  it('does not compensate committed provider assets when reread fails', async () => {
+    const { society, ticket, technician } = await fixture('assigned')
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const session = await login(app, technician.email)
+    const findSpy = vi
+      .spyOn(TicketEvidenceModel, 'find')
+      .mockRejectedValueOnce(new Error('post-commit reread unavailable'))
+
+    try {
+      const response = await request(app)
+        .post(`/api/tickets/${ticket.id}/evidence`)
+        .set('Cookie', session)
+        .attach('photos', await createTestImage('png'), {
+          filename: 'reread.png',
+          contentType: 'image/png',
+        })
+
+      expect(response.status).toBe(503)
+      expect(response.body.error.code).toBe('EVIDENCE_METADATA_UNAVAILABLE')
+      expect(storage.deletions).toEqual([])
+      expect(
+        await TicketEvidenceModel.countDocuments({
+          societyId: society._id,
+          ticketId: ticket._id,
+          state: 'active',
+        }),
+      ).toBe(1)
+    } finally {
+      findSpy.mockRestore()
+    }
+  })
 })
