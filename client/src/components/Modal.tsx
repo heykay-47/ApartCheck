@@ -29,9 +29,10 @@ export function Modal({
 
     return () => {
       if (dialog.open && typeof dialog.close === 'function') dialog.close()
-      const focusTarget = previousFocus?.isConnected
-        ? previousFocus
-        : fallbackFocusRef?.current
+      const focusTarget =
+        previousFocus?.isConnected && previousFocus !== document.body
+          ? previousFocus
+          : fallbackFocusRef?.current
       focusTarget?.focus()
     }
   }, [fallbackFocusRef])

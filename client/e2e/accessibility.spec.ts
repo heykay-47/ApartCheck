@@ -133,6 +133,19 @@ async function assertVisibleFocusWithin(
     .not.toBe('none')
 }
 
+async function assertMinimumTarget(page: Page, selector: string) {
+  const control = page.locator(selector)
+  await expect(control).toBeVisible()
+  await expect
+    .poll(() =>
+      control.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return Math.min(rect.width, rect.height)
+      }),
+    )
+    .toBeGreaterThanOrEqual(44)
+}
+
 async function assertNoHorizontalOverflow(page: Page) {
   await expect
     .poll(() =>
@@ -443,6 +456,7 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
       'input[aria-label="Completion photos"]',
       '.evidence-file-picker',
     )
+    await assertMinimumTarget(page, '.evidence-file-picker')
     if (index === 0) {
       await fileInput.setInputFiles({
         name: 'a11y-repair-proof.png',
@@ -457,6 +471,10 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
       name: 'Remove evidence photo 1',
     })
     await expect(remove).toBeVisible()
+    await assertMinimumTarget(
+      page,
+      'button:has-text("Remove evidence photo 1")',
+    )
     await remove.focus()
     await assertVisibleFocus(page, 'button:has-text("Remove evidence photo 1")')
 
@@ -500,6 +518,7 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
       name: 'View evidence photo 1 from submission attempt 1',
     })
     await expect(view).toBeVisible()
+    await assertMinimumTarget(page, 'button:has-text("View evidence photo 1")')
     await view.focus()
     await assertVisibleFocus(page, 'button:has-text("View evidence photo 1")')
     await view.press('Enter')
@@ -513,7 +532,7 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
     ).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toHaveCount(0)
-    await expect(view).toBeVisible()
+    await expect(view).toBeFocused()
   }
 
   await page.getByRole('button', { name: 'Verify work' }).press('Enter')

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ApiError, getSessionGeneration } from '../../app/api'
 import { Feedback } from '../../components/Feedback'
 import { Modal } from '../../components/Modal'
@@ -29,6 +29,7 @@ export function EvidenceAttemptGallery({
   ticketId: string
   attempts: TicketEvidenceAttempt[]
 }) {
+  const fallbackFocusRef = useRef<HTMLElement | null>(null)
   const [view, setView] = useState<{
     photo: TicketEvidence
     url?: string
@@ -92,7 +93,10 @@ export function EvidenceAttemptGallery({
                   )}
                   <button
                     type="button"
-                    onClick={() => void load(photo)}
+                    onClick={(event) => {
+                      fallbackFocusRef.current = event.currentTarget
+                      void load(photo)
+                    }}
                     disabled={current?.pending}
                   >
                     {current?.pending ? 'Loading evidence…' : `View ${label}`}
@@ -110,6 +114,7 @@ export function EvidenceAttemptGallery({
                       labelledBy={`evidence-view-${photo.id}`}
                       className="credential-dialog evidence-view-dialog"
                       onClose={() => setView(null)}
+                      fallbackFocusRef={fallbackFocusRef}
                     >
                       <h2 id={`evidence-view-${photo.id}`}>
                         Evidence photo {photoNumber}
