@@ -2,6 +2,11 @@ import mongoose, { Types } from 'mongoose'
 import { AppError } from '../../http/app-error.js'
 import { AssetModel } from '../assets/asset.model.js'
 import { guardSocietyMutation } from '../societies/society-transaction.js'
+import {
+  TicketEvidenceModel,
+  toTicketEvidenceDto,
+  type TicketEvidence,
+} from '../ticket-evidence/ticket-evidence.model.js'
 import { UnitModel } from '../units/unit.model.js'
 import { UserModel } from '../users/user.model.js'
 import {
@@ -52,6 +57,18 @@ const linkUnavailable = () =>
     'TICKET_LINK_UNAVAILABLE',
     'Reopening requires all linked records to be active.',
   )
+const evidenceRequirementUnmet = (remaining: number) =>
+  new AppError(
+    409,
+    'EVIDENCE_REQUIREMENT_UNMET',
+    `Add ${remaining} more photo(s)`,
+  )
+const evidenceSetConflict = () =>
+  new AppError(
+    409,
+    'EVIDENCE_SUBMISSION_CONFLICT',
+    'Evidence changed while submitting. Try again.',
+  )
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -68,6 +85,34 @@ function idOf(value: unknown): string {
   if (value && typeof value === 'object' && '_id' in value)
     return idOf(value._id)
   return ''
+}
+
+async function nextEvidenceSetNumber(
+  societyId: string,
+  ticketId: Types.ObjectId,
+  session: mongoose.ClientSession,
+) {
+  const latestEvidence = await TicketEvidenceModel.findOne({
+    societyId,
+    ticketId,
+    evidenceSetNumber: { $ne: null },
+  })
+    .sort({ evidenceSetNumber: -1, _id: -1 })
+    .session(session)
+  const latestSubmission = await TicketEventModel.findOne({
+    societyId,
+    ticketId,
+    type: 'submitted_for_verification',
+    evidenceSetNumber: { $ne: null },
+  })
+    .sort({ evidenceSetNumber: -1, _id: -1 })
+    .session(session)
+  return (
+    Math.max(
+      latestEvidence?.evidenceSetNumber ?? 0,
+      latestSubmission?.evidenceSetNumber ?? 0,
+    ) + 1
+  )
 }
 function visibleFilter(actor: Express.Actor): Record<string, unknown> {
   const filter: Record<string, unknown> = {
@@ -231,11 +276,29 @@ async function summary(ticket: Ticket) {
   }
 }
 
-async function detail(ticket: Ticket) {
-  const events = await TicketEventModel.find({
-    societyId: ticket.societyId,
-    ticketId: ticket._id,
-  }).sort({ createdAt: 1, _id: 1 })
+async function detail(actor: Express.Actor, ticket: Ticket) {
+  const [events, activeEvidence, sealedEvidence] = await Promise.all([
+    TicketEventModel.find({
+      societyId: ticket.societyId,
+      ticketId: ticket._id,
+    }).sort({ createdAt: 1, _id: 1 }),
+    actor.role === 'technician' &&
+    idOf(ticket.assigneeId) === actor.userId &&
+    ['assigned', 'in_progress'].includes(ticket.status)
+      ? TicketEvidenceModel.find({
+          societyId: ticket.societyId,
+          ticketId: ticket._id,
+          state: 'active',
+          removedAt: null,
+        }).sort({ displayOrder: 1, createdAt: 1, _id: 1 })
+      : Promise.resolve([] as TicketEvidence[]),
+    TicketEvidenceModel.find({
+      societyId: ticket.societyId,
+      ticketId: ticket._id,
+      state: 'sealed',
+      removedAt: null,
+    }).sort({ evidenceSetNumber: 1, displayOrder: 1, _id: 1 }),
+  ])
   const userIds = new Set<string>()
   for (const event of events) {
     userIds.add(idOf(event.actorId))
@@ -246,9 +309,53 @@ async function detail(ticket: Ticket) {
     _id: { $in: [...userIds] },
   })
   const byId = new Map(users.map((user) => [idOf(user._id), user]))
+  const submissions = events
+    .map((event, index) => ({ event, index }))
+    .filter(
+      ({ event }) =>
+        event.type === 'submitted_for_verification' &&
+        event.evidenceSetNumber !== null,
+    )
+  const evidenceAttempts = submissions.map(
+    ({ event, index }, submissionIndex) => {
+      const nextSubmissionIndex =
+        submissions[submissionIndex + 1]?.index ?? events.length
+      const outcomeEvent = events
+        .slice(index + 1, nextSubmissionIndex)
+        .find((candidate) => ['returned', 'verified'].includes(candidate.type))
+      const photos = sealedEvidence
+        .filter(
+          (evidence) => evidence.evidenceSetNumber === event.evidenceSetNumber,
+        )
+        .sort(
+          (left, right) =>
+            (left.displayOrder ?? Number.MAX_SAFE_INTEGER) -
+              (right.displayOrder ?? Number.MAX_SAFE_INTEGER) ||
+            idOf(left._id).localeCompare(idOf(right._id)),
+        )
+        .map(toTicketEvidenceDto)
+      return {
+        setNumber: event.evidenceSetNumber as number,
+        submittedBy: {
+          id: idOf(event.actorId),
+          name: byId.get(idOf(event.actorId))?.name ?? 'Unavailable',
+        },
+        submittedAt: event.createdAt,
+        outcome:
+          outcomeEvent?.type === 'returned'
+            ? ('returned' as const)
+            : outcomeEvent?.type === 'verified'
+              ? ('verified' as const)
+              : ('awaiting_verification' as const),
+        photos,
+      }
+    },
+  )
   return {
     ...(await summary(ticket)),
     description: ticket.description,
+    activeEvidence: activeEvidence.map(toTicketEvidenceDto),
+    evidenceAttempts,
     events: events.map((event) => ({
       id: idOf(event._id),
       type: event.type,
@@ -310,7 +417,7 @@ async function replaceAndEvent(
       session,
     )
   })
-  return detail(await findVisible(actor, ticketId))
+  return detail(actor, await findVisible(actor, ticketId))
 }
 
 export const TicketService = {
@@ -336,7 +443,7 @@ export const TicketService = {
   },
 
   async get(actor: Express.Actor, ticketId: string) {
-    return detail(await findVisible(actor, ticketId))
+    return detail(actor, await findVisible(actor, ticketId))
   },
 
   async listActiveForAsset(
@@ -439,7 +546,7 @@ export const TicketService = {
         session,
       )
     })
-    return detail(await findVisible(actor, createdId))
+    return detail(actor, await findVisible(actor, createdId))
   },
 
   async assign(
@@ -527,7 +634,7 @@ export const TicketService = {
         session,
       )
     })
-    return detail(await findVisible(actor, ticketId))
+    return detail(actor, await findVisible(actor, ticketId))
   },
 
   async updatePhotoRequirement(
@@ -570,7 +677,7 @@ export const TicketService = {
         session,
       )
     })
-    return detail(await findVisible(actor, ticketId))
+    return detail(actor, await findVisible(actor, ticketId))
   },
 
   async startWork(actor: Express.Actor, ticketId: string) {
@@ -607,29 +714,86 @@ export const TicketService = {
   ) {
     if (actor.role !== 'technician')
       throw new AppError(403, 'FORBIDDEN', 'Forbidden.')
-    return replaceAndEvent(
-      actor,
-      ticketId,
-      {
-        allowed: ['in_progress'],
-        toStatus: 'awaiting_verification',
-        type: 'submitted_for_verification',
-        assignee: new Types.ObjectId(actor.userId),
-        note: input.completionSummary,
-      },
-      async (ticket, session) => {
-        if (
-          idOf(ticket.assigneeId) !== actor.userId ||
-          !(await UserModel.exists({
-            _id: actor.userId,
-            societyId: actor.societyId,
-            active: true,
-            role: 'technician',
-          }).session(session))
+    await mongoose.connection.transaction(async (session) => {
+      await guardSocietyMutation(actor.societyId, session)
+      const ticket = await findVisible(actor, ticketId, session)
+      if (ticket.status !== 'in_progress') throw invalidTransition()
+      if (
+        idOf(ticket.assigneeId) !== actor.userId ||
+        !(await UserModel.exists({
+          _id: actor.userId,
+          societyId: actor.societyId,
+          active: true,
+          role: 'technician',
+        }).session(session))
+      )
+        throw invalidTransition()
+
+      const active = await TicketEvidenceModel.find({
+        societyId: actor.societyId,
+        ticketId: ticket._id,
+        state: 'active',
+        removedAt: null,
+      })
+        .sort({ createdAt: 1, _id: 1 })
+        .session(session)
+      if (active.length < ticket.requiredPhotoCount)
+        throw evidenceRequirementUnmet(
+          ticket.requiredPhotoCount - active.length,
         )
-          throw invalidTransition()
-      },
-    )
+
+      const setNumber = await nextEvidenceSetNumber(
+        actor.societyId,
+        ticket._id,
+        session,
+      )
+      const sealedAt = new Date()
+      if (active.length > 0) {
+        const result = await TicketEvidenceModel.bulkWrite(
+          active.map((evidence, index) => ({
+            updateOne: {
+              filter: {
+                societyId: actor.societyId,
+                ticketId: ticket._id,
+                _id: evidence._id,
+                state: 'active',
+                removedAt: null,
+              },
+              update: {
+                $set: {
+                  state: 'sealed' as const,
+                  evidenceSetNumber: setNumber,
+                  displayOrder: index + 1,
+                  sealedAt,
+                },
+              },
+            },
+          })),
+          { session, ordered: true },
+        )
+        if (result.modifiedCount !== active.length) throw evidenceSetConflict()
+      }
+
+      const from = ticket.status
+      ticket.status = 'awaiting_verification'
+      ticket.assigneeId = new Types.ObjectId(actor.userId)
+      await ticket.save({ session })
+      await appendEvent(
+        actor.societyId,
+        actor.userId,
+        ticket._id,
+        {
+          type: 'submitted_for_verification',
+          fromStatus: from,
+          toStatus: ticket.status,
+          assigneeId: ticket.assigneeId,
+          note: input.completionSummary,
+          evidenceSetNumber: setNumber,
+        },
+        session,
+      )
+    })
+    return detail(actor, await findVisible(actor, ticketId))
   },
   async returnForRework(
     actor: Express.Actor,

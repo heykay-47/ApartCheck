@@ -6,6 +6,7 @@ import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { findVisible } from '../tickets/ticket.service.js'
 import {
   TicketEvidenceModel,
+  toTicketEvidenceDto,
   type TicketEvidence,
 } from './ticket-evidence.model.js'
 import {
@@ -40,21 +41,6 @@ function idOf(value: unknown): string {
   if (value instanceof Types.ObjectId) return value.toString()
   if (typeof value === 'string') return value
   return ''
-}
-
-function metadata(evidence: TicketEvidence) {
-  return {
-    id: idOf(evidence._id),
-    format: evidence.format,
-    byteSize: evidence.byteSize,
-    width: evidence.width,
-    height: evidence.height,
-    displayOrder: evidence.displayOrder,
-    state: evidence.state,
-    evidenceSetNumber: evidence.evidenceSetNumber,
-    createdAt: evidence.createdAt,
-    sealedAt: evidence.sealedAt,
-  }
 }
 
 async function compensate(storage: ImageStorage, publicIds: string[]) {
@@ -207,7 +193,7 @@ export class TicketEvidenceService {
     }
     if (committed.length !== committedIds.length) throw metadataUnavailable()
 
-    return committed.map(metadata)
+    return committed.map(toTicketEvidenceDto)
   }
 
   async remove(actor: Express.Actor, ticketId: string, evidenceId: string) {

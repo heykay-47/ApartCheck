@@ -5,11 +5,13 @@ import { AssetModel } from '../../src/features/assets/asset.model.js'
 import {
   createAssetFixture,
   createTicketEventFixture,
+  createTicketEvidenceFixture,
   createTicketFixture,
   createSocietyFixture,
   createUnitFixture,
   createUserFixture,
 } from '../helpers/factories.js'
+import { FakeImageStorage } from '../helpers/fake-image-storage.js'
 const password = 'apartcheck-test-password'
 
 function cookie(response: { headers: { 'set-cookie'?: string[] } }): string {
@@ -187,5 +189,86 @@ describe('society isolation', () => {
       tickets: [],
       pagination: { page: 1, pageSize: 25, total: 0, pages: 0 },
     })
+  })
+
+  it('keeps malformed, cross-Society, and wrong-Ticket evidence access non-disclosing', async () => {
+    const societyA = await createSocietyFixture({ name: 'Evidence Society A' })
+    const societyB = await createSocietyFixture({
+      name: 'Evidence Society B secret',
+    })
+    const unitA = await createUnitFixture({ societyId: societyA._id })
+    const unitB = await createUnitFixture({ societyId: societyB._id })
+    const adminA = await createUserFixture({
+      societyId: societyA._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const reporterB = await createUserFixture({
+      societyId: societyB._id,
+      role: 'resident',
+      unitId: unitB._id,
+      mustChangePassword: false,
+    })
+    const technicianB = await createUserFixture({
+      societyId: societyB._id,
+      role: 'technician',
+      mustChangePassword: false,
+    })
+    const ticketA = await createTicketFixture({
+      societyId: societyA._id,
+      unitId: unitA._id,
+      reporterId: adminA._id,
+    })
+    const otherTicketA = await createTicketFixture({
+      societyId: societyA._id,
+      unitId: unitA._id,
+      reporterId: adminA._id,
+    })
+    const ticketB = await createTicketFixture({
+      societyId: societyB._id,
+      unitId: unitB._id,
+      reporterId: reporterB._id,
+      status: 'in_progress',
+      assigneeId: technicianB._id,
+    })
+    const evidenceA = await createTicketEvidenceFixture({
+      societyId: societyA._id,
+      ticketId: otherTicketA._id,
+      uploaderId: adminA._id,
+    })
+    const evidenceB = await createTicketEvidenceFixture({
+      societyId: societyB._id,
+      ticketId: ticketB._id,
+      uploaderId: technicianB._id,
+    })
+    const app = createApp({ imageStorage: new FakeImageStorage() })
+    const session = cookie(
+      await request(app)
+        .post('/api/auth/login')
+        .send({ email: adminA.email, password }),
+    )
+
+    const responses = [
+      await request(app)
+        .get(`/api/tickets/${ticketB.id}/evidence/${evidenceB.id}/view`)
+        .set('Cookie', session),
+      await request(app)
+        .get(`/api/tickets/${ticketA.id}/evidence/not-an-id/view`)
+        .set('Cookie', session),
+      await request(app)
+        .get(`/api/tickets/${ticketA.id}/evidence/${evidenceA.id}/view`)
+        .set('Cookie', session),
+    ]
+
+    expect(responses.map((response) => response.status)).toEqual([
+      404, 404, 404,
+    ])
+    expect(responses[0]?.body.error.code).toBe('TICKET_NOT_FOUND')
+    expect(responses[1]?.body.error.code).toBe('EVIDENCE_NOT_FOUND')
+    expect(responses[2]?.body.error.code).toBe('EVIDENCE_NOT_FOUND')
+    for (const response of responses) {
+      expect(JSON.stringify(response.body)).not.toContain('Evidence Society B')
+      expect(JSON.stringify(response.body)).not.toContain(evidenceB.publicId)
+    }
   })
 })

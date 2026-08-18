@@ -25,6 +25,36 @@ export interface TicketEvidence {
   removedAt: Date | null
 }
 
+export type TicketEvidenceDto = {
+  id: string
+  format: TicketEvidence['format']
+  byteSize: number
+  width: number
+  height: number
+  displayOrder: number | null
+  state: EvidenceState
+  evidenceSetNumber: number | null
+  createdAt: Date
+  sealedAt: Date | null
+}
+
+export function toTicketEvidenceDto(
+  evidence: TicketEvidence,
+): TicketEvidenceDto {
+  return {
+    id: evidence._id.toString(),
+    format: evidence.format,
+    byteSize: evidence.byteSize,
+    width: evidence.width,
+    height: evidence.height,
+    displayOrder: evidence.displayOrder,
+    state: evidence.state,
+    evidenceSetNumber: evidence.evidenceSetNumber,
+    createdAt: evidence.createdAt,
+    sealedAt: evidence.sealedAt,
+  }
+}
+
 const ticketEvidenceSchema = new Schema<TicketEvidence>(
   {
     societyId: { type: Schema.Types.ObjectId, ref: 'Society', required: true },
@@ -71,6 +101,13 @@ const ticketEvidenceSchema = new Schema<TicketEvidence>(
 )
 
 ticketEvidenceSchema.index({ societyId: 1, ticketId: 1, state: 1 })
+ticketEvidenceSchema.index({
+  societyId: 1,
+  ticketId: 1,
+  state: 1,
+  createdAt: 1,
+  _id: 1,
+})
 ticketEvidenceSchema.index({
   societyId: 1,
   ticketId: 1,

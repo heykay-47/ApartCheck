@@ -9,6 +9,11 @@ import {
   createUserFixture,
 } from '../helpers/factories.js'
 import { UserModel } from '../../src/features/users/user.model.js'
+import { TicketEvidenceModel } from '../../src/features/ticket-evidence/ticket-evidence.model.js'
+import {
+  createTestImage,
+  FakeImageStorage,
+} from '../helpers/fake-image-storage.js'
 const password = 'apartcheck-test-password'
 function cookie(response: { headers: { 'set-cookie'?: string[] } }): string {
   const value = response.headers['set-cookie']?.[0]
@@ -96,6 +101,17 @@ describe('Ticket workflow APIs', () => {
     expect(submitted.body.ticket.events.at(-1)).toMatchObject({
       type: 'submitted_for_verification',
       note: 'Replaced guide and tested two cycles.',
+      evidenceSetNumber: 1,
+    })
+    expect(submitted.body.ticket).toMatchObject({
+      activeEvidence: [],
+      evidenceAttempts: [
+        {
+          setNumber: 1,
+          outcome: 'awaiting_verification',
+          photos: [],
+        },
+      ],
     })
 
     const verified = await request(app)
@@ -104,6 +120,7 @@ describe('Ticket workflow APIs', () => {
       .send({})
     expect(verified.status).toBe(200)
     expect(verified.body.ticket.status).toBe('completed')
+    expect(verified.body.ticket.evidenceAttempts[0].outcome).toBe('verified')
     expect(
       verified.body.ticket.events.map((event: { type: string }) => event.type),
     ).toEqual([
@@ -178,6 +195,12 @@ describe('Ticket workflow APIs', () => {
       .send({ requiredPhotoCount: 4 })
     expect(inProgress.status).toBe(200)
     expect(inProgress.body.ticket.requiredPhotoCount).toBe(4)
+
+    await request(app)
+      .put(`/api/tickets/${ticket.id}/photo-requirement`)
+      .set('Cookie', adminCookie)
+      .send({ requiredPhotoCount: 0 })
+      .expect(200)
 
     await request(app)
       .post(`/api/tickets/${ticket.id}/submit`)
@@ -325,5 +348,240 @@ describe('Ticket workflow APIs', () => {
         expect(persisted.body.ticket.requiredPhotoCount).toBe(3)
       }
     }
+  })
+
+  it('seals the exact active evidence set atomically and exposes provider-safe detail fields', async () => {
+    const society = await createSocietyFixture()
+    const unit = await createUnitFixture({ societyId: society._id })
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const technician = await createUserFixture({
+      societyId: society._id,
+      role: 'technician',
+      mustChangePassword: false,
+    })
+    const ticket = await createTicketFixture({
+      societyId: society._id,
+      unitId: unit._id,
+      reporterId: admin._id,
+      status: 'in_progress',
+      assigneeId: technician._id,
+      requiredPhotoCount: 2,
+    })
+    const app = createApp({ imageStorage: new FakeImageStorage() })
+    const technicianCookie = await login(app, technician.email)
+
+    const rejected = await request(app)
+      .post(`/api/tickets/${ticket.id}/submit`)
+      .set('Cookie', technicianCookie)
+      .send({ completionSummary: 'Completed repair and tested operation.' })
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error.code).toBe('EVIDENCE_REQUIREMENT_UNMET')
+
+    const storage = new FakeImageStorage()
+    const uploadApp = createApp({ imageStorage: storage })
+    const uploadCookie = await login(uploadApp, technician.email)
+    const uploaded = await request(uploadApp)
+      .post(`/api/tickets/${ticket.id}/evidence`)
+      .set('Cookie', uploadCookie)
+      .attach('photos', await createTestImage('png'), {
+        filename: 'first.png',
+        contentType: 'image/png',
+      })
+      .attach('photos', await createTestImage('webp'), {
+        filename: 'second.webp',
+        contentType: 'image/webp',
+      })
+      .expect(201)
+    const activeIds = uploaded.body.evidence.map(
+      (evidence: { id: string }) => evidence.id,
+    )
+
+    const activeDetail = await request(uploadApp)
+      .get(`/api/tickets/${ticket.id}`)
+      .set('Cookie', uploadCookie)
+      .expect(200)
+    expect(activeDetail.body.ticket.activeEvidence).toHaveLength(2)
+    expect(activeDetail.body.ticket.activeEvidence).not.toContainEqual(
+      expect.objectContaining({
+        provider: expect.anything(),
+        publicId: expect.anything(),
+      }),
+    )
+    const hiddenActiveDetail = await request(uploadApp)
+      .get(`/api/tickets/${ticket.id}`)
+      .set('Cookie', await login(uploadApp, admin.email))
+      .expect(200)
+    expect(hiddenActiveDetail.body.ticket.activeEvidence).toEqual([])
+
+    const submitted = await request(uploadApp)
+      .post(`/api/tickets/${ticket.id}/submit`)
+      .set('Cookie', uploadCookie)
+      .send({ completionSummary: 'Completed repair and tested operation.' })
+      .expect(200)
+    expect(submitted.body.ticket.events.at(-1)).toMatchObject({
+      type: 'submitted_for_verification',
+      evidenceSetNumber: 1,
+    })
+    expect(submitted.body.ticket.evidenceAttempts[0]).toMatchObject({
+      setNumber: 1,
+      outcome: 'awaiting_verification',
+      photos: [
+        { id: activeIds[0], displayOrder: 1, state: 'sealed' },
+        { id: activeIds[1], displayOrder: 2, state: 'sealed' },
+      ],
+    })
+    expect(
+      submitted.body.ticket.evidenceAttempts[0].photos[0],
+    ).not.toHaveProperty('assetId')
+    expect(
+      submitted.body.ticket.evidenceAttempts[0].photos[0],
+    ).not.toHaveProperty('publicId')
+
+    await expect(
+      TicketEvidenceModel.find({
+        societyId: society._id,
+        ticketId: ticket._id,
+      }).sort({ displayOrder: 1 }),
+    ).resolves.toMatchObject([
+      { state: 'sealed', evidenceSetNumber: 1, displayOrder: 1 },
+      { state: 'sealed', evidenceSetNumber: 1, displayOrder: 2 },
+    ])
+  })
+
+  it('preserves a returned evidence set and allocates a second set', async () => {
+    const society = await createSocietyFixture()
+    const unit = await createUnitFixture({ societyId: society._id })
+    const admin = await createUserFixture({
+      societyId: society._id,
+      role: 'admin',
+      mustChangePassword: false,
+    })
+    const technician = await createUserFixture({
+      societyId: society._id,
+      role: 'technician',
+      mustChangePassword: false,
+    })
+    const ticket = await createTicketFixture({
+      societyId: society._id,
+      unitId: unit._id,
+      reporterId: admin._id,
+      status: 'in_progress',
+      assigneeId: technician._id,
+      requiredPhotoCount: 1,
+    })
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const technicianCookie = await login(app, technician.email)
+    const adminCookie = await login(app, admin.email)
+
+    const firstUpload = await request(app)
+      .post(`/api/tickets/${ticket.id}/evidence`)
+      .set('Cookie', technicianCookie)
+      .attach('photos', await createTestImage('png'), {
+        filename: 'first.png',
+        contentType: 'image/png',
+      })
+      .expect(201)
+    const firstId = firstUpload.body.evidence[0].id
+    await request(app)
+      .post(`/api/tickets/${ticket.id}/submit`)
+      .set('Cookie', technicianCookie)
+      .send({ completionSummary: 'First completion attempt.' })
+      .expect(200)
+    const firstSealed = await TicketEvidenceModel.findById(firstId).lean()
+
+    await request(app)
+      .post(`/api/tickets/${ticket.id}/return`)
+      .set('Cookie', adminCookie)
+      .send({ reason: 'Add a clearer completion photo.' })
+      .expect(200)
+
+    const secondUpload = await request(app)
+      .post(`/api/tickets/${ticket.id}/evidence`)
+      .set('Cookie', technicianCookie)
+      .attach('photos', await createTestImage('webp'), {
+        filename: 'second.webp',
+        contentType: 'image/webp',
+      })
+      .expect(201)
+    const secondId = secondUpload.body.evidence[0].id
+    const second = await request(app)
+      .post(`/api/tickets/${ticket.id}/submit`)
+      .set('Cookie', technicianCookie)
+      .send({ completionSummary: 'Second completion attempt.' })
+      .expect(200)
+
+    expect(second.body.ticket.evidenceAttempts).toMatchObject([
+      {
+        setNumber: 1,
+        outcome: 'returned',
+        photos: [{ id: firstId, state: 'sealed', displayOrder: 1 }],
+      },
+      {
+        setNumber: 2,
+        outcome: 'awaiting_verification',
+        photos: [{ id: secondId, state: 'sealed', displayOrder: 1 }],
+      },
+    ])
+    await expect(
+      TicketEvidenceModel.findById(firstId).lean(),
+    ).resolves.toMatchObject({
+      state: firstSealed?.state,
+      evidenceSetNumber: firstSealed?.evidenceSetNumber,
+      displayOrder: firstSealed?.displayOrder,
+      sealedAt: firstSealed?.sealedAt,
+    })
+  })
+
+  it('allows only one concurrent submission to seal a Ticket', async () => {
+    const { ticket, technician } = await (async () => {
+      const society = await createSocietyFixture()
+      const unit = await createUnitFixture({ societyId: society._id })
+      const admin = await createUserFixture({
+        societyId: society._id,
+        role: 'admin',
+        mustChangePassword: false,
+      })
+      const technician = await createUserFixture({
+        societyId: society._id,
+        role: 'technician',
+        mustChangePassword: false,
+      })
+      const ticket = await createTicketFixture({
+        societyId: society._id,
+        unitId: unit._id,
+        reporterId: admin._id,
+        status: 'in_progress',
+        assigneeId: technician._id,
+      })
+      return { ticket, technician }
+    })()
+    const app = createApp()
+    const technicianCookie = await login(app, technician.email)
+    const submit = () =>
+      request(app)
+        .post(`/api/tickets/${ticket.id}/submit`)
+        .set('Cookie', technicianCookie)
+        .send({ completionSummary: 'Completed repair and tested operation.' })
+    const responses = await Promise.all([submit(), submit()])
+
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      200, 409,
+    ])
+    const successful = responses.find((response) => response.status === 200)
+    expect(successful?.body.ticket.events.at(-1)).toMatchObject({
+      type: 'submitted_for_verification',
+      evidenceSetNumber: 1,
+    })
+    expect(
+      await TicketEvidenceModel.countDocuments({
+        ticketId: ticket._id,
+        state: 'sealed',
+      }),
+    ).toBe(0)
   })
 })

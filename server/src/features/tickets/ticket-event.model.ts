@@ -71,6 +71,12 @@ const ticketEventSchema = new Schema<TicketEvent>(
 )
 
 ticketEventSchema.index({ societyId: 1, ticketId: 1, createdAt: 1, _id: 1 })
+ticketEventSchema.index({
+  societyId: 1,
+  ticketId: 1,
+  type: 1,
+  evidenceSetNumber: -1,
+})
 
 export const TicketEventModel = model<TicketEvent>(
   'TicketEvent',
