@@ -1,8 +1,10 @@
 import request from 'supertest'
 import { describe, expect, it, vi } from 'vitest'
 import { createApp } from '../../src/app.js'
+import { TicketModel } from '../../src/features/tickets/ticket.model.js'
 import { TicketEvidenceModel } from '../../src/features/ticket-evidence/ticket-evidence.model.js'
 import {
+  createTicketEvidenceFixture,
   createSocietyFixture,
   createTicketFixture,
   createUnitFixture,
@@ -29,7 +31,14 @@ async function login(app: ReturnType<typeof createApp>, email: string) {
   return cookie(response)
 }
 
-async function fixture(status: 'assigned' | 'in_progress' = 'assigned') {
+async function fixture(
+  status = 'assigned' as
+    | 'assigned'
+    | 'in_progress'
+    | 'awaiting_verification'
+    | 'completed'
+    | 'cancelled',
+) {
   const society = await createSocietyFixture()
   const unit = await createUnitFixture({ societyId: society._id })
   const admin = await createUserFixture({
@@ -282,5 +291,109 @@ describe('Ticket evidence APIs', () => {
       .set('Cookie', adminSession)
     expect(hidden.status).toBe(404)
     expect(hidden.body.error.code).toBe('EVIDENCE_NOT_FOUND')
+  })
+
+  it('rejects removal outside the assigned and in-progress status window', async () => {
+    for (const status of [
+      'awaiting_verification',
+      'completed',
+      'cancelled',
+    ] as const) {
+      const { society, ticket, technician } = await fixture('assigned')
+      await TicketModel.updateOne({ _id: ticket._id }, { $set: { status } })
+      const evidence = await createTicketEvidenceFixture({
+        societyId: society._id,
+        ticketId: ticket._id,
+        uploaderId: technician._id,
+      })
+      const storage = new FakeImageStorage()
+      const app = createApp({ imageStorage: storage })
+      const session = await login(app, technician.email)
+
+      const response = await request(app)
+        .delete(`/api/tickets/${ticket.id}/evidence/${evidence.id}`)
+        .set('Cookie', session)
+
+      expect(response.status).toBe(409)
+      expect(response.body.error.code).toBe('TICKET_INVALID_TRANSITION')
+      expect(storage.deletions).toEqual([])
+      await expect(
+        TicketEvidenceModel.findById(evidence._id),
+      ).resolves.toMatchObject({
+        state: 'active',
+        removedAt: null,
+      })
+    }
+  })
+
+  it('serializes concurrent persistence at the five-photo cap', async () => {
+    const { society, ticket, technician } = await fixture('assigned')
+    await Promise.all(
+      Array.from({ length: 4 }, (_, index) =>
+        createTicketEvidenceFixture({
+          societyId: society._id,
+          ticketId: ticket._id,
+          uploaderId: technician._id,
+          publicId: `test/existing/${index + 1}`,
+          displayOrder: index + 1,
+        }),
+      ),
+    )
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const session = await login(app, technician.email)
+    const image = await createTestImage('png')
+    const upload = () =>
+      request(app)
+        .post(`/api/tickets/${ticket.id}/evidence`)
+        .set('Cookie', session)
+        .attach('photos', image, {
+          filename: 'concurrent.png',
+          contentType: 'image/png',
+        })
+
+    const responses = await Promise.all([upload(), upload()])
+
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      201, 409,
+    ])
+    expect(
+      await TicketEvidenceModel.countDocuments({
+        societyId: society._id,
+        ticketId: ticket._id,
+        state: 'active',
+      }),
+    ).toBe(5)
+    expect(storage.deletions).toHaveLength(1)
+    expect(
+      responses.find((response) => response.status === 409)?.body.error.code,
+    ).toBe('EVIDENCE_LIMIT_REACHED')
+  })
+
+  it('allocates the next display order above removed evidence', async () => {
+    const { ticket, technician } = await fixture('assigned')
+    const storage = new FakeImageStorage()
+    const app = createApp({ imageStorage: storage })
+    const session = await login(app, technician.email)
+    const image = await createTestImage('png')
+    const upload = () =>
+      request(app)
+        .post(`/api/tickets/${ticket.id}/evidence`)
+        .set('Cookie', session)
+        .attach('photos', image, {
+          filename: 'ordered.png',
+          contentType: 'image/png',
+        })
+
+    const first = await upload()
+    const second = await upload()
+    await request(app)
+      .delete(`/api/tickets/${ticket.id}/evidence/${first.body.evidence[0].id}`)
+      .set('Cookie', session)
+      .expect(204)
+    const third = await upload()
+
+    expect(second.body.evidence[0].displayOrder).toBe(2)
+    expect(third.body.evidence[0].displayOrder).toBe(3)
   })
 })

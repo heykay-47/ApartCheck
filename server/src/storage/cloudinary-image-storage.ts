@@ -26,15 +26,13 @@ type CloudinaryClient = {
     ): Promise<unknown>
   }
   url(publicId: string, options: Record<string, unknown>): string
-  utils: {
-    generate_auth_token(options: Record<string, unknown>): string
-  }
 }
 
 export type CloudinaryImageStorageConfig = {
   cloudName: string
   apiKey: string
   apiSecret: string
+  authTokenKey: string
 }
 
 export class CloudinaryImageStorage implements ImageStorage {
@@ -51,6 +49,7 @@ export class CloudinaryImageStorage implements ImageStorage {
       cloud_name: config.cloudName,
       api_key: config.apiKey,
       api_secret: config.apiSecret,
+      auth_token: { key: config.authTokenKey },
       secure: true,
     })
   }
@@ -108,15 +107,11 @@ export class CloudinaryImageStorage implements ImageStorage {
       type: 'authenticated',
       secure: true,
       sign_url: true,
-    })
-    const token = this.client.utils.generate_auth_token({
-      key: this.config.apiSecret,
-      acl: new URL(url).pathname,
-      duration: VIEW_URL_SECONDS,
+      auth_token: { duration: VIEW_URL_SECONDS },
     })
 
     return {
-      url: `${url}${url.includes('?') ? '&' : '?'}${token}`,
+      url,
       expiresAt,
     }
   }

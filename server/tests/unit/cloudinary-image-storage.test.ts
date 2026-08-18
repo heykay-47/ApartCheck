@@ -47,13 +47,16 @@ describe('Cloudinary image storage', () => {
         destroy: vi.fn().mockResolvedValue({ result: 'ok' }),
       },
       utils: {
-        private_download_url: vi
-          .fn()
-          .mockReturnValue('https://signed.example.test/photo'),
+        private_download_url: vi.fn(),
       },
     }
     const storage = new CloudinaryImageStorage(
-      { cloudName: 'cloud', apiKey: 'key', apiSecret: 'secret' },
+      {
+        cloudName: 'cloud',
+        apiKey: 'key',
+        apiSecret: 'api-secret',
+        authTokenKey: '0123456789abcdef0123456789abcdef',
+      },
       client as never,
     )
 
@@ -62,7 +65,8 @@ describe('Cloudinary image storage', () => {
     expect(client.config).toHaveBeenCalledWith({
       cloud_name: 'cloud',
       api_key: 'key',
-      api_secret: 'secret',
+      api_secret: 'api-secret',
+      auth_token: { key: '0123456789abcdef0123456789abcdef' },
       secure: true,
     })
     expect(uploadStream).toHaveBeenCalledOnce()
@@ -87,7 +91,12 @@ describe('Cloudinary image storage', () => {
       utils: { private_download_url: vi.fn() },
     }
     const storage = new CloudinaryImageStorage(
-      { cloudName: 'cloud', apiKey: 'key', apiSecret: 'secret' },
+      {
+        cloudName: 'cloud',
+        apiKey: 'key',
+        apiSecret: 'api-secret',
+        authTokenKey: '0123456789abcdef0123456789abcdef',
+      },
       client as never,
     )
 
@@ -104,12 +113,14 @@ describe('Cloudinary image storage', () => {
       config: vi.fn(),
       uploader: { upload_stream: vi.fn(), destroy: vi.fn() },
       url: vi.fn().mockReturnValue('https://signed.example.test/photo'),
-      utils: {
-        generate_auth_token: vi.fn().mockReturnValue('__cld_token__=token'),
-      },
     }
     const storage = new CloudinaryImageStorage(
-      { cloudName: 'cloud', apiKey: 'key', apiSecret: 'secret' },
+      {
+        cloudName: 'cloud',
+        apiKey: 'key',
+        apiSecret: 'api-secret',
+        authTokenKey: '0123456789abcdef0123456789abcdef',
+      },
       client as never,
     )
     const before = Date.now()
@@ -123,21 +134,29 @@ describe('Cloudinary image storage', () => {
         type: 'authenticated',
         secure: true,
         sign_url: true,
-      }),
-    )
-    expect(client.utils.generate_auth_token).toHaveBeenCalledWith(
-      expect.objectContaining({
-        key: 'secret',
-        duration: 300,
-        acl: expect.any(String),
+        auth_token: { duration: 300 },
       }),
     )
     const expiresAt = Math.floor(result.expiresAt.getTime() / 1000)
     expect(expiresAt).toBeGreaterThanOrEqual(Math.floor(before / 1000) + 299)
     expect(expiresAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 300)
-    expect(result.url).toBe(
-      'https://signed.example.test/photo?__cld_token__=token',
-    )
+    expect(result.url).toBe('https://signed.example.test/photo')
     expect(result.expiresAt.getTime()).toBe(expiresAt * 1000)
+  })
+
+  it('maps the separately provisioned auth-token key through the real SDK contract without network access', async () => {
+    const storage = new CloudinaryImageStorage({
+      cloudName: 'demo',
+      apiKey: 'api-key',
+      apiSecret: 'api-secret',
+      authTokenKey: '0123456789abcdef0123456789abcdef',
+    })
+
+    const result = await storage.createViewUrl('tickets/society/ticket/photo')
+
+    expect(result.url).toMatch(
+      /^https:\/\/res\.cloudinary\.com\/demo\/image\/authenticated\/v1\/tickets\/society\/ticket\/photo\?__cld_token__=exp=.*~hmac=.*&_a=/,
+    )
+    expect(result.url).toContain('~hmac=')
   })
 })

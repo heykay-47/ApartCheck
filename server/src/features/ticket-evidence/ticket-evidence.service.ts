@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { Types } from 'mongoose'
+import mongoose, { Types } from 'mongoose'
 import { AppError } from '../../http/app-error.js'
 import type { ImageStorage } from '../../storage/image-storage.js'
+import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { findVisible } from '../tickets/ticket.service.js'
 import {
   TicketEvidenceModel,
@@ -28,6 +29,12 @@ const metadataUnavailable = () =>
 const evidenceNotFound = () =>
   new AppError(404, 'EVIDENCE_NOT_FOUND', 'Evidence not found.')
 const forbidden = () => new AppError(403, 'FORBIDDEN', 'Forbidden.')
+const invalidEvidenceState = () =>
+  new AppError(
+    409,
+    'TICKET_INVALID_TRANSITION',
+    'Ticket cannot accept evidence in its current state.',
+  )
 
 function idOf(value: unknown): string {
   if (value instanceof Types.ObjectId) return value.toString()
@@ -63,17 +70,17 @@ async function assignedTicket(actor: Express.Actor, ticketId: string) {
   return ticket
 }
 
+function assertEvidenceStatus(status: string) {
+  if (!['assigned', 'in_progress'].includes(status))
+    throw invalidEvidenceState()
+}
+
 export class TicketEvidenceService {
   constructor(private readonly storage: ImageStorage) {}
 
   async upload(actor: Express.Actor, ticketId: string, files: Buffer[]) {
     const ticket = await assignedTicket(actor, ticketId)
-    if (!['assigned', 'in_progress'].includes(ticket.status))
-      throw new AppError(
-        409,
-        'TICKET_INVALID_TRANSITION',
-        'Ticket cannot accept evidence in its current state.',
-      )
+    assertEvidenceStatus(ticket.status)
     if (files.length === 0)
       throw new AppError(
         400,
@@ -85,18 +92,6 @@ export class TicketEvidenceService {
         413,
         'EVIDENCE_LIMIT_EXCEEDED',
         'Add no more than five photos.',
-      )
-
-    const activeCount = await TicketEvidenceModel.countDocuments({
-      societyId: actor.societyId,
-      ticketId: ticket._id,
-      state: 'active',
-    })
-    if (activeCount + files.length > MAX_ACTIVE_PHOTOS)
-      throw new AppError(
-        409,
-        'EVIDENCE_LIMIT_REACHED',
-        'A Ticket can have no more than five active photos.',
       )
 
     const totalBytes = files.reduce((total, file) => total + file.byteLength, 0)
@@ -142,40 +137,61 @@ export class TicketEvidenceService {
       throw storageUnavailable()
     }
 
-    const displayOrderStart = activeCount + 1
     const created: TicketEvidence[] = []
     try {
-      for (const [index, image] of uploaded.entries()) {
-        const document = await TicketEvidenceModel.create({
+      await mongoose.connection.transaction(async (session) => {
+        await guardSocietyMutation(actor.societyId, session)
+        const currentTicket = await findVisible(actor, ticketId, session)
+        assertEvidenceStatus(currentTicket.status)
+
+        const activeCount = await TicketEvidenceModel.countDocuments({
           societyId: actor.societyId,
-          ticketId: ticket._id,
-          uploaderId: actor.userId,
-          provider: image.provider,
-          assetId: image.assetId,
-          publicId: image.publicId,
-          format: image.format,
-          byteSize: image.byteSize,
-          width: image.width,
-          height: image.height,
-          displayOrder: displayOrderStart + index,
+          ticketId: currentTicket._id,
           state: 'active',
-          evidenceSetNumber: null,
-          sealedAt: null,
-          removedAt: null,
-        })
-        created.push(document)
-      }
-    } catch {
-      if (created.length > 0)
-        await TicketEvidenceModel.deleteMany({
+        }).session(session)
+        if (activeCount + uploaded.length > MAX_ACTIVE_PHOTOS)
+          throw new AppError(
+            409,
+            'EVIDENCE_LIMIT_REACHED',
+            'A Ticket can have no more than five active photos.',
+          )
+
+        const latest = await TicketEvidenceModel.findOne({
           societyId: actor.societyId,
-          ticketId: ticket._id,
-          _id: { $in: created.map((document) => document._id) },
+          ticketId: currentTicket._id,
+          displayOrder: { $ne: null },
         })
+          .sort({ displayOrder: -1, _id: -1 })
+          .session(session)
+        const displayOrderStart = (latest?.displayOrder ?? 0) + 1
+        const documents = await TicketEvidenceModel.create(
+          uploaded.map((image, index) => ({
+            societyId: actor.societyId,
+            ticketId: currentTicket._id,
+            uploaderId: actor.userId,
+            provider: image.provider,
+            assetId: image.assetId,
+            publicId: image.publicId,
+            format: image.format,
+            byteSize: image.byteSize,
+            width: image.width,
+            height: image.height,
+            displayOrder: displayOrderStart + index,
+            state: 'active' as const,
+            evidenceSetNumber: null,
+            sealedAt: null,
+            removedAt: null,
+          })),
+          { session, ordered: true },
+        )
+        created.push(...documents)
+      })
+    } catch (error) {
       await compensate(
         this.storage,
         uploaded.map((image) => image.publicId),
       )
+      if (error instanceof AppError) throw error
       throw metadataUnavailable()
     }
 
@@ -184,6 +200,7 @@ export class TicketEvidenceService {
 
   async remove(actor: Express.Actor, ticketId: string, evidenceId: string) {
     const ticket = await assignedTicket(actor, ticketId)
+    assertEvidenceStatus(ticket.status)
     if (!Types.ObjectId.isValid(evidenceId)) throw evidenceNotFound()
 
     let evidence = await TicketEvidenceModel.findOneAndUpdate(
