@@ -265,6 +265,7 @@ describe('Ticket workflow APIs', () => {
         unitId: unit._id,
         reporterId: admin._id,
         status: 'completed',
+        requiredPhotoCount: 2,
       }),
       createTicketFixture({
         societyId: society._id,
@@ -288,7 +289,10 @@ describe('Ticket workflow APIs', () => {
       const repaired = await request(app)
         .put(`/api/tickets/${ticket.id}/assignment`)
         .set('Cookie', session)
-        .send({ technicianId: replacement.id, requiredPhotoCount: 0 })
+        .send({
+          technicianId: replacement.id,
+          requiredPhotoCount: ticket.requiredPhotoCount === 2 ? 3 : 0,
+        })
       expect(repaired.status).toBe(200)
       expect(repaired.body.ticket).toMatchObject({
         id: ticket.id,
@@ -305,6 +309,21 @@ describe('Ticket workflow APIs', () => {
         toStatus: 'completed',
         assigneeId: replacement.id,
       })
+      if (ticket.requiredPhotoCount === 2) {
+        expect(repaired.body.ticket).toMatchObject({
+          requiredPhotoCount: 3,
+        })
+        expect(repaired.body.ticket.events.at(-1)).toMatchObject({
+          type: 'reassigned',
+          previousRequiredPhotoCount: 2,
+          requiredPhotoCount: 3,
+        })
+        const persisted = await request(app)
+          .get(`/api/tickets/${ticket.id}`)
+          .set('Cookie', session)
+        expect(persisted.status).toBe(200)
+        expect(persisted.body.ticket.requiredPhotoCount).toBe(3)
+      }
     }
   })
 })
