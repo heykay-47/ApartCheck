@@ -303,10 +303,6 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
   page,
 }) => {
   await authenticateAdmin(page)
-  await page.route('https://images.example.test/**', (route) =>
-    route.fulfill({ contentType: 'image/png', body: VALID_PNG }),
-  )
-
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/dashboard')
   const utilityWordmarkColors = await page

@@ -83,13 +83,10 @@ test('resident report to verified immutable Ticket photo attempts', async ({
 }) => {
   const cloudinaryRequests: string[] = []
   page.on('request', (request) => {
-    if (request.url().includes('cloudinary'))
+    const hostname = new URL(request.url()).hostname
+    if (hostname === 'cloudinary.com' || hostname.endsWith('.cloudinary.com'))
       cloudinaryRequests.push(request.url())
   })
-  await page.route('https://images.example.test/**', (route) =>
-    route.fulfill({ contentType: 'image/png', body: VALID_PNG }),
-  )
-
   await page.goto('/setup')
   const setupHeading = page.getByRole('heading', {
     name: /set up your society/i,

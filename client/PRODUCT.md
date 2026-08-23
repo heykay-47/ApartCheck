@@ -32,7 +32,7 @@ ApartCheck is an Asset identity and accountability foundation for Society operat
 
 The public landing surface is a static explanation of that mechanism and a route to sign in for existing Members, not a signup funnel or credentialed demo.
 
-The Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual and photo completion proof was submitted, which immutable attempt was returned or verified, and whether an Administrator verified it. Local browser coverage uses fake image storage; live role-by-role manual Ticket acceptance and production Cloudinary delivery are not claimed yet.
+The Phase 2 slice answers who reported a maintenance Ticket, who is assigned, what textual and photo completion proof was submitted, which immutable attempt was returned or verified, and whether an Administrator verified it. Production uses three Cloudinary server credentials for authenticated, server-mediated uploads. ApartCheck authorizes evidence reads and streams same-origin image bytes with `private, no-store`; Cloudinary signed URLs are internal adapter details and never enter Ticket or browser cache state. Live Cloudinary delivery and role-by-role manual Ticket acceptance remain unverified until Task 5 succeeds.
 
 ## Operating Context
 
@@ -46,7 +46,7 @@ The production demonstration runs as one same-origin web service backed by Mongo
 - Administrators can manage Units, Members, and Assets; Asset records support search, category filtering, editing, archiving, printable identity plates, QR download, and protected QR lookup.
 - Roles are exactly Administrator, Resident, and Technician. Asset categories are exactly Lift, Plumbing, and Electrical. Every resource operation is scoped by the authenticated Society.
 - Unknown, archived, malformed, and cross-Society QR lookups must remain indistinguishable. Browser code never reads session tokens, and temporary passwords must never be persisted, cached, stored, or logged.
-- Phase 2 includes: Residents and Administrators report Tickets; Administrators assign active Technicians and set photo requirements, verify or return work, cancel/archive terminal records; Technicians upload active completion photos and submit textual proof; immutable Ticket history and evidence attempts are visible to authorized roles.
+- Phase 2 includes: Residents and Administrators report Tickets; Administrators assign active Technicians and set photo requirements, verify or return work, cancel/archive terminal records; Technicians upload active completion photos and submit textual proof; immutable Ticket history and evidence attempts are visible to authorized roles. Evidence uploads are limited to 8 MiB per photo, five photos per request, and 40 MiB total per request.
 - Vendors, costs, PDFs, comments, richer uploads/media, SLAs, notifications, analytics/exports, multiple-Society administration, offline scanning, and native clients remain future direction.
 
 ## Brand Commitments
@@ -59,8 +59,8 @@ Public copy addresses Society operators and existing Members first. It must dist
 
 ## Evidence on Hand
 
-- Local build and browser evidence cover the Phase 2 bundle and direct Ticket route with synthetic data; no public deployment, live readiness, or production Cloudinary delivery is claimed for this photo-evidence task.
-- Automated browser coverage exercises the complete Ticket lifecycle locally, including partial photo readiness, returned attempts, verified attempts, and fake-storage viewing. This is not evidence of live role-by-role manual Ticket acceptance or production Cloudinary delivery.
+- Local build and browser evidence cover the Phase 2 bundle and direct Ticket route with synthetic data; the browser reads evidence through the authorized same-origin binary endpoint, not a direct provider URL. No public deployment, live readiness, or production Cloudinary delivery is claimed for this photo-evidence task.
+- Automated browser coverage exercises the complete Ticket lifecycle locally, including partial photo readiness, returned attempts, verified attempts, and fake-storage viewing. This is not evidence of live role-by-role manual Ticket acceptance or production Cloudinary delivery; both remain unverified until Task 5 succeeds.
 - The repository includes an end-to-end browser flow covering bootstrap, Unit and Member creation, Asset and QR creation, forced password change, and role denial.
 - Automated accessibility checks cover representative Administrator screens at 360 by 800 and 1440 by 900, including keyboard behavior and serious or critical axe violations.
 - Integration tests prove Society isolation for Units, Members, Assets, and QR Tokens. CI runs formatting, linting, type checking, unit and integration tests, builds, browser tests, and accessibility checks.

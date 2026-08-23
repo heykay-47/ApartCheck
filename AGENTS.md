@@ -10,7 +10,7 @@
 
 - Local MongoDB must be a replica set; bootstrap and user/unit invariants use transactions. Tests start their own one-node `MongoMemoryReplSet`.
 - npm workspace scripts run with `server/` as cwd. For normal local development, copy the root template to `server/.env`, not root `.env`: `cp .env.example server/.env`.
-- Required server values: `MONGODB_URI`, `JWT_SECRET` (32+ chars), and `APP_BASE_URL`. Local development uses bounded in-memory image storage when Cloudinary values are blank; production additionally requires `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, and `CLOUDINARY_AUTH_TOKEN_KEY` in the deployment secret store. Keep `TRUST_PROXY_HOPS=0` locally; Render sets it to `1`.
+- Required server values: `MONGODB_URI`, `JWT_SECRET` (32+ chars), and `APP_BASE_URL`. Local development uses bounded in-memory image storage when Cloudinary values are blank; production requires the three Cloudinary server credentials `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in the deployment secret store. Ticket Evidence uploads remain authenticated and server-mediated. Keep `TRUST_PROXY_HOPS=0` locally; Render sets it to `1`.
 - Quick manual stack without local Mongo: run `PORT=3301 npm run dev:e2e -w server`, then `VITE_API_TARGET=http://127.0.0.1:3301 npm run dev -w client -- --host 0.0.0.0`. Data is ephemeral.
 
 ## Verification
@@ -28,7 +28,7 @@
 - API collections use `{ assets|units|users, pagination }`; single resources use named envelopes. Errors use `{ error: { code, message, fieldErrors?, requestId } }`.
 - Temporary passwords may appear only in creation/reset/recovery responses and one UI handoff; never persist them in query/mutation cache, storage, logs, or models.
 - Unknown, archived, malformed-ID, and cross-society QR lookups must remain indistinguishable `404` responses.
-- Ticket Evidence queries must include authenticated `societyId` and `ticketId`; provider IDs never authorize access. Only the assigned Technician can upload or remove active evidence during assigned/in-progress work. Submission seals an immutable evidence set; sealed photos have no ordinary deletion path and signed view URLs never enter Ticket cache or persisted DTOs.
+- Ticket Evidence queries must include authenticated `societyId` and `ticketId`; provider IDs never authorize access. Only the assigned Technician can upload or remove active evidence during assigned/in-progress work. Submission seals an immutable evidence set; sealed photos have no ordinary deletion path. Authorized evidence reads stream same-origin image bytes with `private, no-store`; Cloudinary signed URLs remain internal adapter details and never enter Ticket/browser cache state or persisted DTOs. Each photo is limited to 8 MiB, each request to five photos, and each request to 40 MiB total.
 
 ## Scope And Operations
 

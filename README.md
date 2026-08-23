@@ -54,8 +54,8 @@ rejected. Generated credentials from user creation or reset are displayed once
 in the admin handoff and are not persisted as plaintext.
 
 With the template's blank Cloudinary values, local development uses bounded
-in-memory image storage. Local photo data is lost when the server stops. Real
-Cloudinary credentials are required only when `NODE_ENV=production`.
+in-memory image storage. Local photo data is lost when the server stops. Production
+requires the three Cloudinary server credentials listed below.
 
 For a production-like process:
 
@@ -66,23 +66,28 @@ npm run start -w server
 
 ## Environment Contract
 
-| Variable                    | Required   | Meaning                                                                       |
-| --------------------------- | ---------- | ----------------------------------------------------------------------------- |
-| `NODE_ENV`                  | No         | `development`, `test`, or `production`; defaults to development               |
-| `PORT`                      | No         | HTTP port; Render sets this, local default is `3000`                          |
-| `MONGODB_URI`               | Yes        | MongoDB connection URI                                                        |
-| `JWT_SECRET`                | Yes        | Session signing secret, minimum 32 characters; use random production material |
-| `APP_BASE_URL`              | Yes        | Browser origin used by origin guard and QR URLs                               |
-| `TRUST_PROXY_HOPS`          | No         | Trusted proxy count; use `0` locally and `1` behind Render                    |
-| `VITE_API_TARGET`           | E2E only   | API target for the Vite dev proxy                                             |
-| `E2E_SERVER_PORT`           | E2E only   | Ephemeral API port used by Playwright setup                                   |
-| `CLOUDINARY_CLOUD_NAME`     | Production | Cloudinary cloud name for authenticated Ticket Evidence storage               |
-| `CLOUDINARY_API_KEY`        | Production | Cloudinary API key for authenticated Ticket Evidence storage                  |
-| `CLOUDINARY_API_SECRET`     | Production | Cloudinary API secret; keep it in the deployment secret store                 |
-| `CLOUDINARY_AUTH_TOKEN_KEY` | Production | Hex-encoded Cloudinary authenticated-delivery token key                       |
+| Variable                | Required   | Meaning                                                                       |
+| ----------------------- | ---------- | ----------------------------------------------------------------------------- |
+| `NODE_ENV`              | No         | `development`, `test`, or `production`; defaults to development               |
+| `PORT`                  | No         | HTTP port; Render sets this, local default is `3000`                          |
+| `MONGODB_URI`           | Yes        | MongoDB connection URI                                                        |
+| `JWT_SECRET`            | Yes        | Session signing secret, minimum 32 characters; use random production material |
+| `APP_BASE_URL`          | Yes        | Browser origin used by origin guard and QR URLs                               |
+| `TRUST_PROXY_HOPS`      | No         | Trusted proxy count; use `0` locally and `1` behind Render                    |
+| `VITE_API_TARGET`       | E2E only   | API target for the Vite dev proxy                                             |
+| `E2E_SERVER_PORT`       | E2E only   | Ephemeral API port used by Playwright setup                                   |
+| `CLOUDINARY_CLOUD_NAME` | Production | Cloudinary cloud name for authenticated Ticket Evidence storage               |
+| `CLOUDINARY_API_KEY`    | Production | Cloudinary API key for authenticated Ticket Evidence storage                  |
+| `CLOUDINARY_API_SECRET` | Production | Cloudinary API secret; keep it in the deployment secret store                 |
 
 Never commit `.env`, Atlas URIs, passwords, Cloudinary credentials, or JWT secrets. Render values
 marked `sync: false` are entered in the service dashboard.
+
+Ticket Evidence uploads are authenticated and server-mediated. ApartCheck authorizes
+evidence reads and streams image bytes through the same-origin endpoint with
+`Cache-Control: private, no-store`; Cloudinary signed URLs are internal storage-adapter
+details and never enter Ticket or browser cache state. Each photo is limited to 8 MiB,
+each upload request to five photos, and each request to 40 MiB total.
 
 The checked-in `render.yaml` sets `TRUST_PROXY_HOPS=1` for Render's single
 trusted proxy, so rate limiting uses the client IP rather than the proxy IP.
@@ -113,7 +118,8 @@ npm run test:a11y
 Playwright invocation. Run `test:a11y` afterward, not concurrently: both suites
 own frontend port `5173`. E2E and accessibility server setup injects ephemeral
 MongoDB and fake image storage, so these browser checks do not contact
-Cloudinary or require Cloudinary credentials.
+Cloudinary or require Cloudinary credentials. The Ticket flow verifies that the browser
+uses the same-origin binary endpoint rather than a direct provider URL.
 
 GitHub Actions runs this sequence on pushes and pull requests. It uploads the
 Playwright report only when E2E or accessibility checks fail.
@@ -151,9 +157,11 @@ delivery or deployment verification for the photo-evidence workflow.
 2. Create a Render service from `render.yaml`.
 3. Set `MONGODB_URI`, a cryptographically random `JWT_SECRET` of at least 32
    bytes, and the final Render origin as `APP_BASE_URL`.
-4. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
-   `CLOUDINARY_API_SECRET`, and `CLOUDINARY_AUTH_TOKEN_KEY` through Render's
-   secret configuration. Never put their values in the repository or browser.
+4. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and
+   `CLOUDINARY_API_SECRET` through Render's secret configuration. Never put their
+   values in the repository or browser. Uploads are authenticated and server-mediated;
+   authorized image reads return same-origin `private, no-store` bytes while any
+   Cloudinary signed URL remains internal to the server adapter.
 5. Deploy the committed revision and wait for the health check to pass.
 6. Export the actual origin and verify it:
 
@@ -174,9 +182,9 @@ photo delivery is claimed by this task.
 
 ## Ticket Workflow
 
-The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician and sets a zero-through-five photo requirement, the Technician records work, uploads completion photos while work is active, and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history; submitted photo sets remain visible as immutable attempts with textual outcomes.
+The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician and sets a zero-through-five photo requirement, the Technician records work, uploads completion photos while work is active, and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history; submitted photo sets remain visible as immutable attempts with textual outcomes. Evidence uploads enforce an 8 MiB per-photo limit, a five-photo limit, and a 40 MiB total request limit.
 
-Automated local coverage exercises the full Resident → Administrator → Technician → Administrator lifecycle, including returned and verified photo attempts, with fake image storage. Live role-by-role acceptance, production credentials, and Cloudinary delivery are not claimed yet.
+Automated local coverage exercises the full Resident → Administrator → Technician → Administrator lifecycle, including returned and verified photo attempts, with fake image storage through the same-origin binary endpoint. Live Cloudinary delivery and role-by-role acceptance remain unverified until Task 5 succeeds.
 
 ## Later direction
 
