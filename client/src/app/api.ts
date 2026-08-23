@@ -14,6 +14,7 @@ export class ApiError extends Error {
 }
 
 let sessionGeneration = 0
+const sessionGenerationListeners = new Set<() => void>()
 const requests = new Set<{
   controller: AbortController
   ignoreSessionBoundary: boolean
@@ -27,8 +28,16 @@ export function getSessionGeneration() {
   return sessionGeneration
 }
 
+export function subscribeSessionGeneration(listener: () => void): () => void {
+  sessionGenerationListeners.add(listener)
+  return () => {
+    sessionGenerationListeners.delete(listener)
+  }
+}
+
 export async function advanceSession(options: { clearCaches?: boolean } = {}) {
   sessionGeneration += 1
+  for (const listener of [...sessionGenerationListeners]) listener()
   for (const request of requests) {
     if (!request.ignoreSessionBoundary) request.controller.abort()
   }
@@ -85,6 +94,22 @@ type ErrorBody = {
   }
 }
 
+async function throwApiError(response: Response): Promise<never> {
+  const body = (await response.json().catch(() => null)) as ErrorBody | null
+  const error = body?.error
+  if (response.status === 401) {
+    queryClient.setQueryData(['current-user'], { user: undefined })
+    await advanceSession({ clearCaches: false })
+  }
+  throw new ApiError(
+    response.status,
+    error?.code ?? 'REQUEST_FAILED',
+    error?.message ?? 'Request failed.',
+    error?.fieldErrors ?? {},
+    error?.requestId,
+  )
+}
+
 export async function api<T>(
   path: string,
   init: RequestInit = {},
@@ -95,23 +120,25 @@ export async function api<T>(
     init,
     async (response) => {
       if (response.status === 204) return undefined as T
-      const body = (await response.json().catch(() => null)) as
-        ErrorBody | T | null
-      if (!response.ok) {
-        const error = (body as ErrorBody | null)?.error
-        if (response.status === 401) {
-          queryClient.setQueryData(['current-user'], { user: undefined })
-          await advanceSession({ clearCaches: false })
-        }
-        throw new ApiError(
-          response.status,
-          error?.code ?? 'REQUEST_FAILED',
-          error?.message ?? 'Request failed.',
-          error?.fieldErrors ?? {},
-          error?.requestId,
-        )
-      }
+      if (!response.ok) await throwApiError(response)
+      const body = await response.json().catch(() => null)
       return body as T
+    },
+    options,
+  )
+}
+
+export async function apiBlob(
+  path: string,
+  init: RequestInit = {},
+  options: SessionRequestOptions = {},
+): Promise<Blob> {
+  return sessionRequest(
+    path,
+    init,
+    async (response) => {
+      if (!response.ok) await throwApiError(response)
+      return response.blob()
     },
     options,
   )

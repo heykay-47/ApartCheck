@@ -10,7 +10,7 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, sessionRequest } from '../../app/api'
+import { advanceSession, ApiError, sessionRequest } from '../../app/api'
 import { queryClient } from '../../app/query-client'
 import { FormField } from '../../components/FormField'
 import { CompletionSubmissionDialog } from './CompletionSubmissionDialog'
@@ -374,6 +374,11 @@ describe('Ticket evidence client workflow', () => {
 
   it('renders immutable attempt outcomes and refreshes failed secure views', async () => {
     let views = 0
+    const createObjectUrl = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValueOnce('blob:evidence-1')
+      .mockReturnValueOnce('blob:evidence-2')
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL')
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       if (String(input) === '/api/tickets/t1/evidence/sealed-1/view') {
         views += 1
@@ -384,12 +389,10 @@ describe('Ticket evidence client workflow', () => {
               }),
               { status: 503 },
             )
-          : new Response(
-              JSON.stringify({
-                url: 'https://image.example/proof',
-                expiresAt: '2026-01-02T12:10:00.000Z',
-              }),
-            )
+          : new Response(new Blob(['proof-bytes'], { type: 'image/png' }), {
+              status: 200,
+              headers: { 'Content-Type': 'image/png' },
+            })
       }
       return new Response('{}')
     })
@@ -422,23 +425,105 @@ describe('Ticket evidence client workflow', () => {
     const image = await screen.findByAltText(
       'Evidence photo 1 from submission attempt 1',
     )
-    expect(image).toHaveAttribute('src', 'https://image.example/proof')
+    expect(image).toHaveAttribute('src', 'blob:evidence-1')
     fireEvent.error(image)
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Evidence image could not be displayed. Try again.',
     )
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:evidence-1')
     await actor.click(
       screen.getByRole('button', {
         name: 'Retry viewing evidence photo 1 from submission attempt 1',
       }),
     )
+    const retriedImage = await screen.findByAltText(
+      'Evidence photo 1 from submission attempt 1',
+    )
+    expect(retriedImage).toHaveAttribute('src', 'blob:evidence-2')
+    await actor.click(screen.getByRole('button', { name: 'Close photo' }))
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:evidence-2')
+    expect(
+      screen.getByRole('button', {
+        name: 'View evidence photo 1 from submission attempt 1',
+      }),
+    ).toHaveFocus()
+    expect(views).toBe(3)
+    expect(createObjectUrl).toHaveBeenCalledTimes(2)
+    expect(queryClient.getQueryData(['ticket', 't1'])).not.toEqual(
+      expect.objectContaining({ url: expect.anything() }),
+    )
+  })
+
+  it('aborts a pending evidence view and ignores its late response on unmount', async () => {
+    let resolveResponse: (response: Response) => void = () => undefined
+    let fetchFinished = false
+    const pendingResponse = new Promise<Response>((resolve) => {
+      resolveResponse = resolve
+    })
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL')
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => {
+        const response = await pendingResponse
+        fetchFinished = true
+        return response
+      })
+    const actor = userEvent.setup()
+    const view = renderWithClient(
+      <EvidenceAttemptGallery ticketId="t1" attempts={[attempt]} />,
+    )
+
+    const opener = screen.getByRole('button', {
+      name: 'View evidence photo 1 from submission attempt 1',
+    })
+    await actor.click(opener)
+    const signal = fetchMock.mock.calls[0]?.[1]?.signal
+    expect(signal).toBeInstanceOf(AbortSignal)
+
+    view.unmount()
+    expect(signal).toHaveProperty('aborted', true)
+
+    resolveResponse(
+      new Response(new Blob(['proof-bytes'], { type: 'image/png' }), {
+        status: 200,
+        headers: { 'Content-Type': 'image/png' },
+      }),
+    )
+    await waitFor(() => expect(fetchFinished).toBe(true))
+    expect(createObjectUrl).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('revokes an open evidence object URL when the session changes', async () => {
+    const createObjectUrl = vi
+      .spyOn(URL, 'createObjectURL')
+      .mockReturnValue('blob:session-evidence')
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(new Blob(['proof-bytes'], { type: 'image/png' }), {
+        status: 200,
+        headers: { 'Content-Type': 'image/png' },
+      }),
+    )
+    const actor = userEvent.setup()
+    renderWithClient(
+      <EvidenceAttemptGallery ticketId="t1" attempts={[attempt]} />,
+    )
+
+    await actor.click(
+      screen.getByRole('button', {
+        name: 'View evidence photo 1 from submission attempt 1',
+      }),
+    )
     expect(
       await screen.findByAltText('Evidence photo 1 from submission attempt 1'),
-    ).toHaveAttribute('src', 'https://image.example/proof')
-    expect(views).toBe(3)
-    expect(queryClient.getQueryData(['ticket', 't1'])).not.toEqual(
-      expect.objectContaining({ url: 'https://image.example/proof' }),
-    )
+    ).toHaveAttribute('src', 'blob:session-evidence')
+
+    await advanceSession({ clearCaches: false })
+
+    expect(createObjectUrl).toHaveBeenCalledTimes(1)
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:session-evidence')
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
   it('keeps completion notes-only compatibility at zero and blocks unmet requirements', async () => {

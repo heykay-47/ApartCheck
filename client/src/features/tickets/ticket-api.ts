@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../app/api'
+import { api, apiBlob } from '../../app/api'
 import type { Role } from '../auth/auth-api'
 import type { Pagination } from '../assets/asset-api'
 import type { Unit } from '../units/unit-api'
@@ -270,10 +270,14 @@ export function useRemoveTicketEvidence(id: string) {
   })
 }
 
-export function getTicketEvidenceViewUrl(id: string, evidenceId: string) {
-  return api<{ url: string; expiresAt: string }>(
-    `/api/tickets/${id}/evidence/${evidenceId}/view`,
-  )
+export function getTicketEvidenceImage(
+  id: string,
+  evidenceId: string,
+  signal?: AbortSignal,
+) {
+  return apiBlob(`/api/tickets/${id}/evidence/${evidenceId}/view`, {
+    ...(signal ? { signal } : {}),
+  })
 }
 
 export function useStartTicketWork(id: string) {

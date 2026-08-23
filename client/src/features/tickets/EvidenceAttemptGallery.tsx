@@ -1,9 +1,13 @@
-import { useRef, useState } from 'react'
-import { ApiError, getSessionGeneration } from '../../app/api'
+import { useEffect, useRef, useState } from 'react'
+import {
+  ApiError,
+  getSessionGeneration,
+  subscribeSessionGeneration,
+} from '../../app/api'
 import { Feedback } from '../../components/Feedback'
 import { Modal } from '../../components/Modal'
 import {
-  getTicketEvidenceViewUrl,
+  getTicketEvidenceImage,
   type TicketEvidence,
   type TicketEvidenceAttempt,
 } from './ticket-api'
@@ -22,6 +26,19 @@ function viewError(error: unknown) {
     : 'Evidence image is unavailable. Try again.'
 }
 
+function releaseEvidenceResources(
+  requestRef: { current: AbortController | null },
+  objectUrlRef: { current: string | null },
+) {
+  const request = requestRef.current
+  requestRef.current = null
+  request?.abort()
+
+  const objectUrl = objectUrlRef.current
+  objectUrlRef.current = null
+  if (objectUrl) URL.revokeObjectURL(objectUrl)
+}
+
 export function EvidenceAttemptGallery({
   ticketId,
   attempts,
@@ -30,6 +47,8 @@ export function EvidenceAttemptGallery({
   attempts: TicketEvidenceAttempt[]
 }) {
   const fallbackFocusRef = useRef<HTMLElement | null>(null)
+  const requestRef = useRef<AbortController | null>(null)
+  const objectUrlRef = useRef<string | null>(null)
   const [view, setView] = useState<{
     photo: TicketEvidence
     url?: string
@@ -37,25 +56,64 @@ export function EvidenceAttemptGallery({
     pending: boolean
   } | null>(null)
 
+  useEffect(() => {
+    const unsubscribe = subscribeSessionGeneration(() => {
+      releaseEvidenceResources(requestRef, objectUrlRef)
+      setView(null)
+    })
+    return () => {
+      unsubscribe()
+      releaseEvidenceResources(requestRef, objectUrlRef)
+    }
+  }, [])
+
   async function load(photo: TicketEvidence) {
+    releaseEvidenceResources(requestRef, objectUrlRef)
     const generation = getSessionGeneration()
+    const controller = new AbortController()
+    requestRef.current = controller
     setView({ photo, pending: true })
     try {
-      const response = await getTicketEvidenceViewUrl(ticketId, photo.id)
-      if (generation !== getSessionGeneration()) return
-      setView({ photo, url: response.url, pending: false })
+      const blob = await getTicketEvidenceImage(
+        ticketId,
+        photo.id,
+        controller.signal,
+      )
+      if (
+        controller.signal.aborted ||
+        requestRef.current !== controller ||
+        generation !== getSessionGeneration()
+      )
+        return
+      const objectUrl = URL.createObjectURL(blob)
+      objectUrlRef.current = objectUrl
+      setView({ photo, url: objectUrl, pending: false })
     } catch (error) {
-      if (generation !== getSessionGeneration()) return
+      if (
+        controller.signal.aborted ||
+        requestRef.current !== controller ||
+        generation !== getSessionGeneration() ||
+        (error instanceof DOMException && error.name === 'AbortError')
+      )
+        return
       setView({ photo, error: viewError(error), pending: false })
+    } finally {
+      if (requestRef.current === controller) requestRef.current = null
     }
   }
 
   function imageLoadFailed(photo: TicketEvidence) {
+    releaseEvidenceResources(requestRef, objectUrlRef)
     setView({
       photo,
       error: 'Evidence image could not be displayed. Try again.',
       pending: false,
     })
+  }
+
+  function closeView() {
+    releaseEvidenceResources(requestRef, objectUrlRef)
+    setView(null)
   }
 
   return (
@@ -113,7 +171,7 @@ export function EvidenceAttemptGallery({
                     <Modal
                       labelledBy={`evidence-view-${photo.id}`}
                       className="credential-dialog evidence-view-dialog"
-                      onClose={() => setView(null)}
+                      onClose={closeView}
                       fallbackFocusRef={fallbackFocusRef}
                     >
                       <h2 id={`evidence-view-${photo.id}`}>
@@ -124,7 +182,7 @@ export function EvidenceAttemptGallery({
                         alt={`Evidence photo ${photoNumber} from submission attempt ${attempt.setNumber}`}
                         onError={() => imageLoadFailed(photo)}
                       />
-                      <button type="button" onClick={() => setView(null)}>
+                      <button type="button" onClick={closeView}>
                         Close photo
                       </button>
                     </Modal>
