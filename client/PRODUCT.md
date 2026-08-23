@@ -46,7 +46,7 @@ The production demonstration runs as one same-origin web service backed by Mongo
 - Administrators can manage Units, Members, and Assets; Asset records support search, category filtering, editing, archiving, printable identity plates, QR download, and protected QR lookup.
 - Roles are exactly Administrator, Resident, and Technician. Asset categories are exactly Lift, Plumbing, and Electrical. Every resource operation is scoped by the authenticated Society.
 - Unknown, archived, malformed, and cross-Society QR lookups must remain indistinguishable. Browser code never reads session tokens, and temporary passwords must never be persisted, cached, stored, or logged.
-- Phase 2 includes: Residents and Administrators report Tickets; Administrators assign active Technicians and set photo requirements, verify or return work, cancel/archive terminal records; Technicians upload active completion photos and submit textual proof; immutable Ticket history and evidence attempts are visible to authorized roles. Evidence uploads are limited to 8 MiB per photo, five photos per request, and 40 MiB total per request.
+- Phase 2 includes: Residents and Administrators report Tickets; Administrators assign active Technicians and set photo requirements, verify or return work, cancel/archive terminal records; Technicians upload active completion photos and submit textual proof; immutable Ticket history and evidence attempts are visible to authorized roles. Evidence uploads are limited to 8 MiB per photo, five active photos per Ticket, and 40 MiB per request.
 - Vendors, costs, PDFs, comments, richer uploads/media, SLAs, notifications, analytics/exports, multiple-Society administration, offline scanning, and native clients remain future direction.
 
 ## Brand Commitments

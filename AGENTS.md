@@ -28,7 +28,7 @@
 - API collections use `{ assets|units|users, pagination }`; single resources use named envelopes. Errors use `{ error: { code, message, fieldErrors?, requestId } }`.
 - Temporary passwords may appear only in creation/reset/recovery responses and one UI handoff; never persist them in query/mutation cache, storage, logs, or models.
 - Unknown, archived, malformed-ID, and cross-society QR lookups must remain indistinguishable `404` responses.
-- Ticket Evidence queries must include authenticated `societyId` and `ticketId`; provider IDs never authorize access. Only the assigned Technician can upload or remove active evidence during assigned/in-progress work. Submission seals an immutable evidence set; sealed photos have no ordinary deletion path. Authorized evidence reads stream same-origin image bytes with `private, no-store`; Cloudinary signed URLs remain internal adapter details and never enter Ticket/browser cache state or persisted DTOs. Each photo is limited to 8 MiB, each request to five photos, and each request to 40 MiB total.
+- Ticket Evidence queries must include authenticated `societyId` and `ticketId`; provider IDs never authorize access. Only the assigned Technician can upload or remove active evidence during assigned/in-progress work. Submission seals an immutable evidence set; sealed photos have no ordinary deletion path. Authorized evidence reads stream same-origin image bytes with `private, no-store`; Cloudinary signed URLs remain internal adapter details and never enter Ticket/browser cache state or persisted DTOs. Limits are 8 MiB per photo, five active photos per Ticket, and 40 MiB per request.
 
 ## Scope And Operations
 

@@ -87,7 +87,7 @@ Ticket Evidence uploads are authenticated and server-mediated. ApartCheck author
 evidence reads and streams image bytes through the same-origin endpoint with
 `Cache-Control: private, no-store`; Cloudinary signed URLs are internal storage-adapter
 details and never enter Ticket or browser cache state. Each photo is limited to 8 MiB,
-each upload request to five photos, and each request to 40 MiB total.
+with five active photos per Ticket and 40 MiB per request.
 
 The checked-in `render.yaml` sets `TRUST_PROXY_HOPS=1` for Render's single
 trusted proxy, so rate limiting uses the client IP rather than the proxy IP.
@@ -182,7 +182,7 @@ photo delivery is claimed by this task.
 
 ## Ticket Workflow
 
-The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician and sets a zero-through-five photo requirement, the Technician records work, uploads completion photos while work is active, and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history; submitted photo sets remain visible as immutable attempts with textual outcomes. Evidence uploads enforce an 8 MiB per-photo limit, a five-photo limit, and a 40 MiB total request limit.
+The Phase 2 client and API implement a complete Society-scoped maintenance Ticket path: a Resident or Administrator reports a Unit issue, an Administrator assigns one Technician and sets a zero-through-five photo requirement, the Technician records work, uploads completion photos while work is active, and submits a textual completion summary, and an Administrator verifies or returns the work. Each lifecycle mutation appends immutable Ticket history; submitted photo sets remain visible as immutable attempts with textual outcomes. Evidence uploads enforce 8 MiB per photo, five active photos per Ticket, and 40 MiB per request.
 
 Automated local coverage exercises the full Resident → Administrator → Technician → Administrator lifecycle, including returned and verified photo attempts, with fake image storage through the same-origin binary endpoint. Live Cloudinary delivery and role-by-role acceptance remain unverified until Task 5 succeeds.
 
