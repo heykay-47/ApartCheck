@@ -1,12 +1,9 @@
 import { v2 as cloudinary } from 'cloudinary'
 import type {
-  AcceptedImageFormat,
   ImageStorage,
   StoredImage,
   UploadImageInput,
 } from './image-storage.js'
-
-const VIEW_URL_SECONDS = 5 * 60
 
 type CloudinaryUploadResult = {
   asset_id?: string
@@ -32,24 +29,27 @@ export type CloudinaryImageStorageConfig = {
   cloudName: string
   apiKey: string
   apiSecret: string
-  authTokenKey: string
 }
+
+type FetchImage = (url: string) => Promise<Response>
 
 export class CloudinaryImageStorage implements ImageStorage {
   private readonly client: CloudinaryClient
   private readonly config: CloudinaryImageStorageConfig
+  private readonly fetchImage: FetchImage
 
   constructor(
     config: CloudinaryImageStorageConfig,
     client: CloudinaryClient = cloudinary as unknown as CloudinaryClient,
+    fetchImage: FetchImage = (url) => fetch(url),
   ) {
     this.config = config
     this.client = client
+    this.fetchImage = fetchImage
     this.client.config({
       cloud_name: config.cloudName,
       api_key: config.apiKey,
       api_secret: config.apiSecret,
-      auth_token: { key: config.authTokenKey },
       secure: true,
     })
   }
@@ -98,23 +98,15 @@ export class CloudinaryImageStorage implements ImageStorage {
     })
   }
 
-  async createViewUrl(publicId: string) {
-    const expiresAt = new Date(
-      (Math.floor(Date.now() / 1000) + VIEW_URL_SECONDS) * 1000,
-    )
+  async readImage(publicId: string): Promise<Buffer> {
     const url = this.client.url(publicId, {
       resource_type: 'image',
       type: 'authenticated',
       secure: true,
       sign_url: true,
-      auth_token: { duration: VIEW_URL_SECONDS },
     })
-
-    return {
-      url,
-      expiresAt,
-    }
+    const response = await this.fetchImage(url)
+    if (!response.ok) throw new Error('Cloudinary image is unavailable.')
+    return Buffer.from(await response.arrayBuffer())
   }
 }
-
-export type { AcceptedImageFormat }

@@ -55,7 +55,6 @@ describe('Cloudinary image storage', () => {
         cloudName: 'cloud',
         apiKey: 'key',
         apiSecret: 'api-secret',
-        authTokenKey: '0123456789abcdef0123456789abcdef',
       },
       client as never,
     )
@@ -66,7 +65,6 @@ describe('Cloudinary image storage', () => {
       cloud_name: 'cloud',
       api_key: 'key',
       api_secret: 'api-secret',
-      auth_token: { key: '0123456789abcdef0123456789abcdef' },
       secure: true,
     })
     expect(uploadStream).toHaveBeenCalledOnce()
@@ -95,7 +93,6 @@ describe('Cloudinary image storage', () => {
         cloudName: 'cloud',
         apiKey: 'key',
         apiSecret: 'api-secret',
-        authTokenKey: '0123456789abcdef0123456789abcdef',
       },
       client as never,
     )
@@ -108,55 +105,71 @@ describe('Cloudinary image storage', () => {
     )
   })
 
-  it('creates a five-minute authenticated view URL', async () => {
+  it('fetches bytes through an internally signed authenticated URL', async () => {
     const client = {
       config: vi.fn(),
       uploader: { upload_stream: vi.fn(), destroy: vi.fn() },
-      url: vi.fn().mockReturnValue('https://signed.example.test/photo'),
+      url: vi.fn().mockReturnValue('https://signed.cloudinary.test/internal'),
     }
+    const fetchImage = vi.fn().mockResolvedValue(
+      new Response(Buffer.from('cloudinary-image'), {
+        status: 200,
+        headers: { 'Content-Type': 'image/png' },
+      }),
+    )
     const storage = new CloudinaryImageStorage(
       {
         cloudName: 'cloud',
         apiKey: 'key',
         apiSecret: 'api-secret',
-        authTokenKey: '0123456789abcdef0123456789abcdef',
       },
       client as never,
+      fetchImage,
     )
-    const before = Date.now()
 
-    const result = await storage.createViewUrl('tickets/society/ticket/photo')
+    await expect(
+      storage.readImage('tickets/society/ticket/photo'),
+    ).resolves.toEqual(Buffer.from('cloudinary-image'))
 
-    expect(client.url).toHaveBeenCalledWith(
-      'tickets/society/ticket/photo',
-      expect.objectContaining({
-        resource_type: 'image',
-        type: 'authenticated',
-        secure: true,
-        sign_url: true,
-        auth_token: { duration: 300 },
-      }),
+    expect(client.url).toHaveBeenCalledWith('tickets/society/ticket/photo', {
+      resource_type: 'image',
+      type: 'authenticated',
+      secure: true,
+      sign_url: true,
+    })
+    expect(fetchImage).toHaveBeenCalledWith(
+      'https://signed.cloudinary.test/internal',
     )
-    const expiresAt = Math.floor(result.expiresAt.getTime() / 1000)
-    expect(expiresAt).toBeGreaterThanOrEqual(Math.floor(before / 1000) + 299)
-    expect(expiresAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 300)
-    expect(result.url).toBe('https://signed.example.test/photo')
-    expect(result.expiresAt.getTime()).toBe(expiresAt * 1000)
   })
 
-  it('maps the separately provisioned auth-token key through the real SDK contract without network access', async () => {
-    const storage = new CloudinaryImageStorage({
-      cloudName: 'demo',
-      apiKey: 'api-key',
-      apiSecret: 'api-secret',
-      authTokenKey: '0123456789abcdef0123456789abcdef',
-    })
-
-    const result = await storage.createViewUrl('tickets/society/ticket/photo')
-
-    expect(result.url).toMatch(
-      /^https:\/\/res\.cloudinary\.com\/demo\/image\/authenticated\/v1\/tickets\/society\/ticket\/photo\?__cld_token__=exp=.*~hmac=.*&_a=/,
+  it('rejects non-successful provider responses without returning provider content', async () => {
+    const client = {
+      config: vi.fn(),
+      uploader: { upload_stream: vi.fn(), destroy: vi.fn() },
+      url: vi.fn().mockReturnValue('https://signed.cloudinary.test/internal'),
+    }
+    const fetchImage = vi
+      .fn()
+      .mockResolvedValue(
+        new Response('provider failure details', { status: 404 }),
+      )
+    const storage = new CloudinaryImageStorage(
+      {
+        cloudName: 'cloud',
+        apiKey: 'key',
+        apiSecret: 'api-secret',
+      },
+      client as never,
+      fetchImage,
     )
-    expect(result.url).toContain('~hmac=')
+
+    const error = await storage
+      .readImage('tickets/society/ticket/photo')
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(Error)
+    expect((error as Error).message).toBe('Cloudinary image is unavailable.')
+    expect((error as Error).message).not.toContain('provider failure details')
+    expect(fetchImage).toHaveBeenCalledOnce()
   })
 })

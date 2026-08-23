@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import mongoose, { Types } from 'mongoose'
 import { AppError } from '../../http/app-error.js'
-import type { ImageStorage, StoredImage } from '../../storage/image-storage.js'
+import type {
+  AcceptedImageFormat,
+  ImageStorage,
+  StoredImage,
+} from '../../storage/image-storage.js'
 import { guardSocietyMutation } from '../societies/society-transaction.js'
 import { findVisible } from '../tickets/ticket.service.js'
 import {
@@ -238,7 +242,11 @@ export class TicketEvidenceService {
     }
   }
 
-  async view(actor: Express.Actor, ticketId: string, evidenceId: string) {
+  async view(
+    actor: Express.Actor,
+    ticketId: string,
+    evidenceId: string,
+  ): Promise<{ bytes: Buffer; format: AcceptedImageFormat }> {
     const ticket = await findVisible(actor, ticketId)
     if (!Types.ObjectId.isValid(evidenceId)) throw evidenceNotFound()
     const evidence = await TicketEvidenceModel.findOne({
@@ -251,7 +259,10 @@ export class TicketEvidenceService {
     if (!evidence) throw evidenceNotFound()
 
     try {
-      return await this.storage.createViewUrl(evidence.publicId)
+      return {
+        bytes: await this.storage.readImage(evidence.publicId),
+        format: evidence.format,
+      }
     } catch {
       throw storageUnavailable()
     }

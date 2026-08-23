@@ -17,12 +17,12 @@ describe('in-memory development image storage', () => {
       publicId: input.publicId,
       format: 'png',
     })
-    await expect(storage.createViewUrl(input.publicId)).resolves.toMatchObject({
-      url: 'data:image/png;base64,bG9jYWwtaW1hZ2U=',
-    })
+    await expect(storage.readImage(input.publicId)).resolves.toEqual(
+      input.bytes,
+    )
 
     await storage.deleteImage(input.publicId)
-    await expect(storage.createViewUrl(input.publicId)).rejects.toThrow(
+    await expect(storage.readImage(input.publicId)).rejects.toThrow(
       'Image is unavailable.',
     )
   })

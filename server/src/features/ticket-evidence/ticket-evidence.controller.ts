@@ -6,6 +6,10 @@ function param(request: Parameters<RequestHandler>[0], key: string): string {
   return typeof value === 'string' ? value : ''
 }
 
+function imageContentType(format: 'jpeg' | 'png' | 'webp') {
+  return format === 'jpeg' ? 'image/jpeg' : `image/${format}`
+}
+
 export function createTicketEvidenceController(service: TicketEvidenceService) {
   const upload: RequestHandler = async (request, response, next) => {
     try {
@@ -37,13 +41,19 @@ export function createTicketEvidenceController(service: TicketEvidenceService) {
 
   const view: RequestHandler = async (request, response, next) => {
     try {
-      response.json(
-        await service.view(
-          request.actor,
-          param(request, 'id'),
-          param(request, 'evidenceId'),
-        ),
+      const image = await service.view(
+        request.actor,
+        param(request, 'id'),
+        param(request, 'evidenceId'),
       )
+      response
+        .status(200)
+        .set({
+          'Cache-Control': 'private, no-store',
+          'Content-Type': imageContentType(image.format),
+          'Content-Length': String(image.bytes.byteLength),
+        })
+        .send(image.bytes)
     } catch (error) {
       next(error)
     }

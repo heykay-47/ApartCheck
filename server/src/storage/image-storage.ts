@@ -21,5 +21,5 @@ export type StoredImage = {
 export interface ImageStorage {
   uploadImage(input: UploadImageInput): Promise<StoredImage>
   deleteImage(publicId: string): Promise<void>
-  createViewUrl(publicId: string): Promise<{ url: string; expiresAt: Date }>
+  readImage(publicId: string): Promise<Buffer>
 }

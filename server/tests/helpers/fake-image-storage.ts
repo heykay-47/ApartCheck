@@ -8,17 +8,20 @@ import type {
 export class FakeImageStorage implements ImageStorage {
   uploads: UploadImageInput[] = []
   deletions: string[] = []
+  reads: Array<{ publicId: string; bytes: Buffer }> = []
   failUpload = false
   failDelete = false
-  failView = false
+  failRead = false
 
   async uploadImage(input: UploadImageInput): Promise<StoredImage> {
     if (this.failUpload) throw new Error('storage unavailable')
     this.uploads.push(input)
+    const publicId = `test/${this.uploads.length}`
+    this.images.set(publicId, Buffer.from(input.bytes))
     return {
       provider: 'cloudinary',
       assetId: `asset-${this.uploads.length}`,
-      publicId: `test/${this.uploads.length}`,
+      publicId,
       format: input.format,
       byteSize: input.bytes.byteLength,
       width: input.width,
@@ -29,15 +32,19 @@ export class FakeImageStorage implements ImageStorage {
   async deleteImage(publicId: string): Promise<void> {
     if (this.failDelete) throw new Error('storage unavailable')
     this.deletions.push(publicId)
+    this.images.delete(publicId)
   }
 
-  async createViewUrl(publicId: string) {
-    if (this.failView) throw new Error('storage unavailable')
-    return {
-      url: `https://images.example.test/${publicId}`,
-      expiresAt: new Date('2026-08-18T00:05:00.000Z'),
-    }
+  async readImage(publicId: string): Promise<Buffer> {
+    if (this.failRead) throw new Error('storage unavailable')
+    const bytes = this.images.get(publicId)
+    if (!bytes) throw new Error('storage unavailable')
+    const copy = Buffer.from(bytes)
+    this.reads.push({ publicId, bytes: copy })
+    return copy
   }
+
+  private readonly images = new Map<string, Buffer>()
 }
 
 export async function createTestImage(

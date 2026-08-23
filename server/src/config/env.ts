@@ -7,14 +7,6 @@ const optionalString = z.preprocess(
     typeof value === 'string' && value.trim() === '' ? undefined : value,
   z.string().min(1).optional(),
 )
-const optionalHexString = z.preprocess(
-  (value) =>
-    typeof value === 'string' && value.trim() === '' ? undefined : value,
-  z
-    .string()
-    .regex(/^[0-9a-fA-F]+$/, 'Must be a hex-encoded auth-token key')
-    .optional(),
-)
 
 const environmentSchema = z.object({
   NODE_ENV: z
@@ -28,7 +20,6 @@ const environmentSchema = z.object({
   CLOUDINARY_CLOUD_NAME: optionalString,
   CLOUDINARY_API_KEY: optionalString,
   CLOUDINARY_API_SECRET: optionalString,
-  CLOUDINARY_AUTH_TOKEN_KEY: optionalHexString,
 })
 
 export const env = environmentSchema.parse(process.env)
@@ -39,17 +30,15 @@ export function cloudinaryConfig() {
   if (
     !env.CLOUDINARY_CLOUD_NAME ||
     !env.CLOUDINARY_API_KEY ||
-    !env.CLOUDINARY_API_SECRET ||
-    !env.CLOUDINARY_AUTH_TOKEN_KEY
+    !env.CLOUDINARY_API_SECRET
   )
     throw new Error(
-      'CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, and CLOUDINARY_AUTH_TOKEN_KEY are required.',
+      'CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are required.',
     )
 
   return {
     cloudName: env.CLOUDINARY_CLOUD_NAME,
     apiKey: env.CLOUDINARY_API_KEY,
     apiSecret: env.CLOUDINARY_API_SECRET,
-    authTokenKey: env.CLOUDINARY_AUTH_TOKEN_KEY,
   }
 }

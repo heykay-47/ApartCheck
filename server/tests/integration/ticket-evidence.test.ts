@@ -246,7 +246,7 @@ describe('Ticket evidence APIs', () => {
     expect(storage.deletions).toEqual(['test/1'])
   })
 
-  it('removes evidence with retryable provider cleanup and returns secure view URLs', async () => {
+  it('removes evidence with retryable provider cleanup and returns binary views', async () => {
     const { ticket, technician, admin } = await fixture('assigned')
     const storage = new FakeImageStorage()
     const app = createApp({ imageStorage: storage })
@@ -267,11 +267,19 @@ describe('Ticket evidence APIs', () => {
       .get(`/api/tickets/${ticket.id}/evidence/${evidenceId}/view`)
       .set('Cookie', adminSession)
     expect(view.status).toBe(200)
-    expect(view.body).toMatchObject({
-      url: `https://images.example.test/test/1`,
-      expiresAt: '2026-08-18T00:05:00.000Z',
-    })
-    expect(Object.keys(view.body)).toEqual(['url', 'expiresAt'])
+    expect(view.headers['content-type']).toBe('image/webp')
+    expect(view.headers['cache-control']).toBe('private, no-store')
+    expect(Buffer.isBuffer(view.body)).toBe(true)
+    expect(view.body).toEqual(storage.reads[0]?.bytes)
+    expect(JSON.stringify(view.headers)).not.toContain('cloudinary')
+
+    storage.failRead = true
+    const failedView = await request(app)
+      .get(`/api/tickets/${ticket.id}/evidence/${evidenceId}/view`)
+      .set('Cookie', adminSession)
+    expect(failedView.status).toBe(503)
+    expect(failedView.body.error.code).toBe('EVIDENCE_STORAGE_UNAVAILABLE')
+    storage.failRead = false
 
     storage.failDelete = true
     const failedRemoval = await request(app)

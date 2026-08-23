@@ -88,12 +88,47 @@ describe('environment loading', () => {
           CLOUDINARY_CLOUD_NAME: '',
           CLOUDINARY_API_KEY: '',
           CLOUDINARY_API_SECRET: '',
-          CLOUDINARY_AUTH_TOKEN_KEY: '',
         },
       },
     )
 
     expect(output.toString()).toContain('local-app-ready')
+  })
+
+  it('constructs the production app with the three Cloudinary values', () => {
+    const appPath = pathToFileURL(
+      join(fileURLToPath(new URL('../src/app.ts', import.meta.url))),
+    ).href
+    const loaderPath = fileURLToPath(
+      new URL('../../node_modules/tsx/dist/loader.mjs', import.meta.url),
+    )
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        '--import',
+        loaderPath,
+        '--input-type=module',
+        '-e',
+        `import { createApp } from '${appPath}'; createApp(); console.log('production-app-ready')`,
+      ],
+      {
+        env: {
+          ...process.env,
+          NODE_ENV: 'production',
+          PORT: '3000',
+          MONGODB_URI: 'mongodb://127.0.0.1:27017/apartcheck',
+          JWT_SECRET: 'production-secret-that-is-at-least-32-characters',
+          APP_BASE_URL: 'http://localhost:5173',
+          TRUST_PROXY_HOPS: '0',
+          CLOUDINARY_CLOUD_NAME: 'apartcheck',
+          CLOUDINARY_API_KEY: 'server-key',
+          CLOUDINARY_API_SECRET: 'server-secret',
+        },
+      },
+    )
+
+    expect(output.toString()).toContain('production-app-ready')
   })
 
   it('rejects production app construction without Cloudinary values', () => {
@@ -127,7 +162,6 @@ describe('environment loading', () => {
             CLOUDINARY_CLOUD_NAME: '',
             CLOUDINARY_API_KEY: '',
             CLOUDINARY_API_SECRET: '',
-            CLOUDINARY_AUTH_TOKEN_KEY: '',
           },
           stdio: ['ignore', 'pipe', 'pipe'],
         },
@@ -138,5 +172,7 @@ describe('environment loading', () => {
 
     expect(error).toBeTruthy()
     expect(String(error)).toContain('CLOUDINARY_CLOUD_NAME')
+    expect(String(error)).toContain('CLOUDINARY_API_KEY')
+    expect(String(error)).toContain('CLOUDINARY_API_SECRET')
   })
 })
