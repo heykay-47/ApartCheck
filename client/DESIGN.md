@@ -304,6 +304,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Error / Destructive:** Record error marks error copy and destructive actions, always accompanied by text.
 - **Archived / Active:** State is written as canonical text on the identity plate and in records.
 - **Overlays:** Confirmation and credential surfaces use chalk, a 2px slate border, a solid slate offset, and a 72% slate backdrop.
+- **Operate motion:** Shared dialogs scale from 96% while fading in; the mobile navigation scales from its top-right trigger edge. Both use the 250ms smooth-out motion token, preserve native focus and disclosure behavior, and become immediate under reduced motion.
 
 ## Do's and Don'ts
 

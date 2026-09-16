@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useCurrentUser, useLogout } from '../features/auth/auth-api'
 
 export function AppShell() {
   const { data: user } = useCurrentUser()
   const logout = useLogout()
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const links: [string, string][] =
     user?.role === 'admin'
       ? [
@@ -46,9 +48,15 @@ export function AppShell() {
         <span className="brand-mark">
           APART<span>CHECK</span>
         </span>
-        <details className="mobile-nav">
+        <details
+          className="mobile-nav"
+          onToggle={(event) => setMobileNavOpen(event.currentTarget.open)}
+        >
           <summary>Menu</summary>
-          <nav>
+          <nav
+            className={`t-dropdown${mobileNavOpen ? ' is-open' : ''}`}
+            data-origin="top-right"
+          >
             {links.map(([to, label]) => (
               <NavLink key={to} to={to}>
                 {label}
