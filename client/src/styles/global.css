@@ -188,6 +188,51 @@ body {
   font-family: var(--font-utility);
   text-transform: uppercase;
 }
+.t-dropdown {
+  transform-origin: top left;
+  transform: scale(var(--dropdown-pre-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-open-dur) var(--dropdown-ease),
+    opacity var(--dropdown-open-dur) var(--dropdown-ease);
+  will-change: transform, opacity;
+}
+.t-dropdown[data-origin='top-right'] {
+  transform-origin: top right;
+}
+.t-dropdown[data-origin='top-center'] {
+  transform-origin: top center;
+}
+.t-dropdown[data-origin='bottom-left'] {
+  transform-origin: bottom left;
+}
+.t-dropdown[data-origin='bottom-center'] {
+  transform-origin: bottom center;
+}
+.t-dropdown[data-origin='bottom-right'] {
+  transform-origin: bottom right;
+}
+
+.t-dropdown.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-dropdown.is-closing {
+  transform: scale(var(--dropdown-closing-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-close-dur) var(--dropdown-ease),
+    opacity var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-dropdown {
+    transition: none !important;
+  }
+}
 .placeholder-page code {
   font-family: var(--font-utility);
 }
@@ -294,8 +339,8 @@ body {
   opacity: 0;
   transform: translateY(8px);
   transition:
-    opacity 250ms ease,
-    transform 250ms ease;
+    opacity var(--duration-fast) var(--ease-smooth-out),
+    transform var(--duration-fast) var(--ease-smooth-out);
 }
 .scan-result[data-revealed='true'] {
   opacity: 1;
@@ -455,6 +500,35 @@ body {
   background: var(--color-chalk);
   border: 2px solid var(--color-slate);
   box-shadow: 10px 10px 0 var(--color-slate);
+}
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-open-dur) var(--modal-ease),
+    opacity var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.t-modal.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-modal.is-closing {
+  transform: scale(var(--modal-scale-close));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-close-dur) var(--modal-ease),
+    opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-modal {
+    transition: none !important;
+  }
 }
 .credential-dialog::backdrop,
 .confirm-panel::backdrop {
@@ -818,7 +892,9 @@ body {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0s !important;
+    transition-delay: 0s !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
   }
 }

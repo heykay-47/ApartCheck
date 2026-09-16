@@ -23,11 +23,16 @@ export function Modal({
     if (typeof dialog.showModal === 'function') dialog.showModal()
     else dialog.setAttribute('open', '')
 
+    dialog.classList.remove('is-closing')
+    void dialog.offsetWidth
+    dialog.classList.add('is-open')
+
     dialog
       .querySelector<HTMLElement>('input, select, textarea, button, a[href]')
       ?.focus()
 
     return () => {
+      dialog.classList.remove('is-open')
       if (dialog.open && typeof dialog.close === 'function') dialog.close()
       const focusTarget = previousFocus?.isConnected
         ? previousFocus
@@ -39,7 +44,7 @@ export function Modal({
   return (
     <dialog
       ref={dialogRef}
-      className={className}
+      className={`${className} t-modal`}
       aria-labelledby={labelledBy}
       onCancel={(event) => {
         event.preventDefault()

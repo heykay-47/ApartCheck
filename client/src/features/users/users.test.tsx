@@ -134,6 +134,7 @@ describe('user management interfaces', () => {
     const dialog = screen.getByRole('dialog', { name: 'Create account' })
     expect(screen.getByLabelText('Name')).toHaveFocus()
     expect(dialog).toHaveAttribute('open')
+    expect(dialog).toHaveClass('t-modal', 'is-open')
 
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog', { name: 'Create account' })).toBeNull()

@@ -481,6 +481,40 @@ describe('auth routes', () => {
     expect(getComputedStyle(accent).color).toBe('rgb(242, 177, 52)')
   })
 
+  it('opens the mobile navigation from its trigger origin', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: '1',
+            role: 'admin',
+            mustChangePassword: false,
+            name: 'Admin',
+          },
+        }),
+        { status: 200 },
+      ),
+    )
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AppShell />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await screen.findAllByRole('link', { name: 'Asset ledger' })
+
+    const summary = screen.getByText('Menu')
+    const dropdown = summary.parentElement?.querySelector('nav')
+    expect(dropdown).toHaveClass('t-dropdown')
+    expect(dropdown).toHaveAttribute('data-origin', 'top-right')
+
+    await user.click(summary)
+
+    await waitFor(() => expect(dropdown).toHaveClass('is-open'))
+  })
+
   it('renders protected placeholders with route parameters', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
