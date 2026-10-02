@@ -1,5 +1,7 @@
 import {
+  act,
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -12,13 +14,174 @@ import {
   MemoryRouter,
   RouterProvider,
 } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { queryClient } from '../../app/query-client'
 import { routes } from '../../app/router'
 import { LandingPage } from './LandingPage'
 
+function mockViewport() {
+  const observers = new Map<Element, Set<IntersectionObserverCallback>>()
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(private callback: IntersectionObserverCallback) {}
+      observe(target: Element) {
+        const callbacks = observers.get(target) ?? new Set()
+        callbacks.add(this.callback)
+        observers.set(target, callbacks)
+      }
+      unobserve(target: Element) {
+        observers.get(target)?.delete(this.callback)
+      }
+      disconnect() {
+        observers.forEach((callbacks) => callbacks.delete(this.callback))
+      }
+    },
+  )
+  return (target: Element, isIntersecting: boolean, intersectionRatio = 1) => {
+    act(() => {
+      observers.get(target)?.forEach((callback) =>
+        callback(
+          [
+            {
+              target,
+              isIntersecting,
+              intersectionRatio,
+            } as IntersectionObserverEntry,
+          ],
+          {} as IntersectionObserver,
+        ),
+      )
+    })
+  }
+}
+
 describe('landing page', () => {
   beforeEach(() => cleanup())
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('does not play from a viewport-edge sliver before the sequence enters', () => {
+    vi.useFakeTimers()
+    const setVisible = mockViewport()
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+    const workflow = screen.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    const tabs = within(workflow).getByRole('tablist')
+    setVisible(tabs, true, 0.05)
+    setVisible(within(workflow).getByRole('tabpanel'), true, 0.05)
+    act(() => vi.advanceTimersByTime(6000))
+    expect(
+      within(workflow).getByRole('tab', { selected: true }),
+    ).toHaveAccessibleName('Report')
+    setVisible(tabs, true, 0.3)
+    act(() => vi.advanceTimersByTime(1400))
+    expect(
+      within(workflow).getByRole('tab', { selected: true }),
+    ).toHaveAccessibleName('Assign')
+  })
+
+  it('plays the workflow once on entry without moving keyboard focus', () => {
+    vi.useFakeTimers()
+    const setVisible = mockViewport()
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+    const workflow = screen.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    const sequence = within(workflow).getByRole('tablist')
+    const selected = () => within(workflow).getByRole('tab', { selected: true })
+    const signIn = screen.getAllByRole('link', { name: 'Sign in' })[0]!
+    signIn.focus()
+
+    act(() => vi.advanceTimersByTime(6000))
+    expect(selected()).toHaveAccessibleName('Report')
+    setVisible(sequence, true)
+    for (const label of ['Assign', 'Complete', 'Verify']) {
+      act(() => vi.advanceTimersByTime(1400))
+      expect(selected()).toHaveAccessibleName(label)
+      expect(signIn).toHaveFocus()
+    }
+    setVisible(sequence, false)
+    setVisible(sequence, true)
+    act(() => vi.advanceTimersByTime(6000))
+    expect(selected()).toHaveAccessibleName('Verify')
+  })
+
+  it('pauses the workflow offscreen and stops playback when a tab receives focus', () => {
+    vi.useFakeTimers()
+    const setVisible = mockViewport()
+    render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+    const workflow = screen.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    const sequence = within(workflow).getByRole('tablist')
+    const report = within(workflow).getByRole('tab', { name: 'Report' })
+    const assign = within(workflow).getByRole('tab', { name: 'Assign' })
+    setVisible(sequence, true)
+    act(() => vi.advanceTimersByTime(700))
+    setVisible(sequence, false)
+    act(() => vi.advanceTimersByTime(6000))
+    expect(report).toHaveAttribute('aria-selected', 'true')
+    setVisible(sequence, true)
+    act(() => vi.advanceTimersByTime(1400))
+    expect(assign).toHaveAttribute('aria-selected', 'true')
+
+    act(() => report.focus())
+    setVisible(sequence, false)
+    setVisible(sequence, true)
+    act(() => vi.advanceTimersByTime(6000))
+    expect(assign).toHaveAttribute('aria-selected', 'true')
+    expect(report).toHaveFocus()
+    fireEvent.click(report)
+    act(() => vi.advanceTimersByTime(6000))
+    expect(report).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('pauses in a hidden document and clears scheduled playback on unmount', () => {
+    vi.useFakeTimers()
+    const setVisible = mockViewport()
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false)
+    const { unmount } = render(
+      <MemoryRouter>
+        <LandingPage />
+      </MemoryRouter>,
+    )
+    const workflow = screen.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    setVisible(within(workflow).getByRole('tablist'), true)
+    hidden.mockReturnValue(true)
+    fireEvent(document, new Event('visibilitychange'))
+    act(() => vi.advanceTimersByTime(6000))
+    expect(
+      within(workflow).getByRole('tab', { selected: true }),
+    ).toHaveAccessibleName('Report')
+    hidden.mockReturnValue(false)
+    fireEvent(document, new Event('visibilitychange'))
+    act(() => vi.advanceTimersByTime(1400))
+    expect(
+      within(workflow).getByRole('tab', { selected: true }),
+    ).toHaveAccessibleName('Assign')
+    unmount()
+    expect(vi.getTimerCount()).toBe(0)
+    hidden.mockRestore()
+  })
 
   it('presents ApartCheck as a customer-first maintenance product', () => {
     render(

@@ -19,12 +19,6 @@ export function ScanAssetPage() {
   )
   useEffect(() => {
     if (!scan.data) return
-    const reduce =
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    if (reduce) {
-      setRevealed(true)
-      return
-    }
     const timer = window.setTimeout(() => setRevealed(true), 250)
     return () => window.clearTimeout(timer)
   }, [scan.data])
