@@ -15,7 +15,7 @@ Society operators evaluating an accountable maintenance workflow and existing Me
 
 ## Proof and Constraints
 
-Demonstrate the shipped Ticket lifecycle from physical Asset context through report, assignment, completion proof, and Administrator verification. Use static synthetic proof only, explicitly separate future direction, and never imply public signup or demo credentials. Static, dependency-free, responsive from 360px, and accessible with reduced motion.
+Demonstrate the shipped Ticket lifecycle from physical Asset context through report, assignment, completion proof, and Administrator verification. Use static synthetic proof only, explicitly separate future direction, and never imply public signup or demo credentials. Static, dependency-free, responsive from 360px, and keyboard operable. Animations play at their defined timings across device settings.
 
 ## Chosen Direction
 

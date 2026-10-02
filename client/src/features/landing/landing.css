@@ -11,6 +11,8 @@
   --landing-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --landing-fast: 180ms;
   --landing-reveal: 700ms;
+  --landing-stagger: 70ms;
+  --workflow-step-duration: 1400ms;
   position: relative;
   min-width: 0;
   color: var(--landing-ink);
@@ -61,6 +63,26 @@
   align-items: stretch;
   border-bottom: 1px solid var(--landing-line);
   background: var(--landing-panel);
+}
+
+@supports (animation-timeline: scroll()) {
+  .landing-page .landing-masthead {
+    animation: landing-masthead-solid linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 120px;
+  }
+}
+
+@keyframes landing-masthead-solid {
+  from {
+    background-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  to {
+    background-color: var(--landing-panel);
+    border-bottom-color: var(--landing-line);
+  }
 }
 
 .landing-page .brand-mark {
@@ -633,14 +655,22 @@
   gap: clamp(2rem, 6vw, 6rem);
 }
 
-.landing-page .workflow-tour::before {
+.landing-page .workflow-tour::before,
+.landing-page .workflow-tour::after {
   position: absolute;
-  top: 1.15rem;
+  top: -1.25rem;
   right: 0;
   left: 0;
   height: 2px;
   content: '';
+  background: var(--landing-line);
+}
+
+.landing-page .workflow-tour::after {
   background: var(--landing-accent);
+  transform: scaleX(var(--workflow-progress));
+  transform-origin: left;
+  transition: transform var(--landing-fast) var(--landing-ease);
 }
 
 .landing-page .workflow-tabs {
@@ -819,7 +849,64 @@
   transition:
     opacity var(--landing-reveal) var(--landing-ease),
     transform var(--landing-reveal) var(--landing-ease);
-  transition-delay: calc(var(--reveal-order, 0) * 70ms);
+  transition-delay: calc(var(--reveal-order, 0) * var(--landing-stagger));
+}
+
+.landing-page .landing-hero > [data-reveal]:last-child {
+  --reveal-order: 2;
+}
+
+.landing-page .evidence-strip .proof-row:nth-child(2) {
+  --reveal-order: 1;
+}
+
+.landing-page .evidence-strip .proof-row:nth-child(3) {
+  --reveal-order: 2;
+}
+
+.landing-page .evidence-strip .proof-row:nth-child(4) {
+  --reveal-order: 3;
+}
+
+.landing-page .benefit-section > div:first-child > p,
+.landing-page .workflow-tabs,
+.landing-page .scope-boundary > div:first-of-type,
+.landing-page .product-tour > .section-intro {
+  --reveal-order: 1;
+}
+
+.landing-page .benefit-section > [data-reveal]:last-child,
+.landing-page .workflow-panel,
+.landing-page .scope-boundary > div:last-child {
+  --reveal-order: 2;
+}
+
+.landing-page.is-reveal-ready
+  [data-reveal]:not(.is-visible)
+  > .product-preview
+  :is(.preview-title-block, .preview-facts, .preview-history) {
+  animation-name: none;
+}
+
+.landing-page.is-reveal-ready
+  [data-reveal]:not(.workflow-panel).is-visible
+  > .product-preview
+  .preview-title-block {
+  animation-delay: calc((var(--reveal-order, 0) + 2) * var(--landing-stagger));
+}
+
+.landing-page.is-reveal-ready
+  [data-reveal]:not(.workflow-panel).is-visible
+  > .product-preview
+  .preview-facts {
+  animation-delay: calc((var(--reveal-order, 0) + 3) * var(--landing-stagger));
+}
+
+.landing-page.is-reveal-ready
+  [data-reveal]:not(.workflow-panel).is-visible
+  > .product-preview
+  .preview-history {
+  animation-delay: calc((var(--reveal-order, 0) + 4) * var(--landing-stagger));
 }
 
 @media (max-width: 1099px) {
@@ -962,6 +1049,29 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .landing-page .workflow-tour::before,
+  .landing-page .workflow-tour::after {
+    display: none;
+  }
+
+  .landing-page .workflow-tabs::before,
+  .landing-page .workflow-tabs::after {
+    position: absolute;
+    top: 0;
+    left: -0.6rem;
+    width: 2px;
+    height: 100%;
+    content: '';
+    background: var(--landing-line);
+  }
+
+  .landing-page .workflow-tabs::after {
+    background: var(--landing-accent);
+    transform: scaleY(var(--workflow-progress));
+    transform-origin: top;
+    transition: transform var(--landing-fast) var(--landing-ease);
+  }
+
   .landing-page .workflow-panel {
     padding-top: 0;
   }
@@ -1076,15 +1186,6 @@
     border-top: 1px solid var(--landing-line);
   }
 
-  .landing-page .workflow-tour::before {
-    top: 0;
-    bottom: 0;
-    left: 0.7rem;
-    width: 2px;
-    height: auto;
-    right: auto;
-  }
-
   .landing-page .workflow-tabs {
     gap: 0.5rem;
   }
@@ -1124,26 +1225,5 @@
 
   .landing-page .landing-close .landing-actions {
     width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-page {
-    scroll-behavior: auto;
-  }
-
-  .landing-page *,
-  .landing-page *::before,
-  .landing-page *::after {
-    animation-duration: 0.01ms !important;
-    animation-delay: 0ms !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0ms !important;
-  }
-
-  .landing-page [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
   }
 }

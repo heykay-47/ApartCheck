@@ -57,12 +57,7 @@ export function LandingPage(): JSX.Element {
   useEffect(() => {
     const landingRoot = landingRootRef.current
 
-    if (
-      !landingRoot ||
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return
-    }
+    if (!landingRoot) return
 
     const revealTargets =
       landingRoot.querySelectorAll<HTMLElement>('[data-reveal]')
@@ -146,18 +141,20 @@ export function LandingPage(): JSX.Element {
           className="product-tour"
           aria-labelledby="product-tour-title"
         >
-          <h2 id="product-tour-title">
+          <h2 id="product-tour-title" data-reveal>
             Maintenance work, without the missing middle.
           </h2>
-          <p className="section-intro">
+          <p className="section-intro" data-reveal>
             The product keeps the physical Asset, the Ticket, and the
             accountable history in the same readable record.
           </p>
           <div className="benefit-sections">
             <section className="benefit-section" aria-labelledby="asset-title">
-              <div data-reveal>
-                <h3 id="asset-title">Know the Asset before work begins.</h3>
-                <p>
+              <div>
+                <h3 id="asset-title" data-reveal>
+                  Know the Asset before work begins.
+                </h3>
+                <p data-reveal>
                   Start with the Unit and Asset identity, not a vague message
                   thread. The record gives the person doing the work the place,
                   equipment, and context before the first visit.
@@ -172,9 +169,11 @@ export function LandingPage(): JSX.Element {
               className="benefit-section"
               aria-labelledby="responsibility-title"
             >
-              <div data-reveal>
-                <h3 id="responsibility-title">Keep responsibility visible.</h3>
-                <p>
+              <div>
+                <h3 id="responsibility-title" data-reveal>
+                  Keep responsibility visible.
+                </h3>
+                <p data-reveal>
                   Assignment is a recorded step. Administrators can see who owns
                   the inspection, while Technicians can see the work that is
                   waiting for them.
@@ -189,9 +188,11 @@ export function LandingPage(): JSX.Element {
               className="benefit-section"
               aria-labelledby="history-title"
             >
-              <div data-reveal>
-                <h3 id="history-title">Preserve what happened.</h3>
-                <p>
+              <div>
+                <h3 id="history-title" data-reveal>
+                  Preserve what happened.
+                </h3>
+                <p data-reveal>
                   Completion notes and verification stay attached to the Ticket.
                   The next person gets the sequence, not a reconstructed story.
                 </p>
@@ -208,12 +209,10 @@ export function LandingPage(): JSX.Element {
           className="mechanism-sequence"
           aria-labelledby="workflow-title"
         >
-          <h2 id="workflow-title">
+          <h2 id="workflow-title" data-reveal>
             Follow the Ticket from report to verification.
           </h2>
-          <div data-reveal>
-            <WorkflowTour />
-          </div>
+          <WorkflowTour />
         </section>
 
         <section
@@ -221,7 +220,7 @@ export function LandingPage(): JSX.Element {
           className="scope-boundary"
           aria-labelledby="security-title"
         >
-          <h2 id="security-title">
+          <h2 id="security-title" data-reveal>
             Accountability only works when the boundaries hold.
           </h2>
           <div data-reveal>

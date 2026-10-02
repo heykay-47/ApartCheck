@@ -203,9 +203,9 @@ The public landing adds a warmer paper/graphite subset so the product tour reads
 
 The authenticated shell uses a fixed 248px slate utility spine and a flexible work surface. Operational pages are centered to 1080px with 48px horizontal padding and 64px vertical padding. Asset and Ticket ledgers use strong top rules, lighter row separators, explicit columns, and content-aligned density rather than floating cards. Ticket detail pages keep the current status, linked record definition, role-valid actions, and immutable history in that reading order.
 
-The public landing boundary uses a fluid `landing-gutter` and `landing-section` rhythm. Its sticky masthead is a solid paper surface with divided mono navigation and safe `8rem` anchor offsets. The desktop hero uses an asymmetric copy/preview split; the layered synthetic Ticket workspace is the visual anchor, not a generic illustration.
+The public landing boundary uses a fluid `landing-gutter` and `landing-section` rhythm. Its sticky masthead becomes solid over the first 120px of scrolling using a CSS scroll timeline, with a solid paper fallback for unsupported browsers, divided mono navigation, and safe `8rem` anchor offsets. The desktop hero uses an asymmetric copy/preview split; the layered synthetic Ticket workspace is the visual anchor, not a generic illustration.
 
-At 1099px and below, the landing hero becomes one column. At 760px and below, the landing masthead navigation becomes a full second row and the hero/benefit/workflow compositions stack; at 600px the gutter is 18px, preview definitions and history rows expose labels, workflow tabs become vertical, and offsets stay within the viewport. The authenticated shell still replaces its spine with the mobile bar at 700px.
+At 1099px and below, the landing hero becomes one column. At 760px and below, the landing masthead navigation becomes a full second row and the hero/benefit/workflow compositions stack; the workflow trace switches from horizontal to vertical alongside its tabs. At 600px the gutter is 18px, preview definitions and history rows expose labels, and offsets stay within the viewport. The authenticated shell still replaces its spine with the mobile bar at 700px.
 
 The minimum supported viewport is 360px. At 360px, no content may force horizontal scrolling, both hero actions remain visible before the preview, preview rows remain legible, and all navigation and control targets remain at least 44px.
 
@@ -248,7 +248,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 ### Navigation
 
 - **Authenticated:** Slate spine with chalk text; hover and active states add a 2px marigold left rule and a restrained translucent white field. At 700px it becomes a slate mobile bar with a native disclosure menu.
-- **Landing:** Paper masthead with a solid background, divided mono uppercase links, sticky positioning, and a full-width second row below 760px. Hash targets clear the masthead, and all controls retain 44px targets.
+- **Landing:** Sticky masthead with a scroll-driven transparent-to-paper background (solid fallback), divided mono uppercase links, and a full-width second row below 760px. Hash targets clear the masthead, and all controls retain 44px targets.
 - **Focus:** The same global marigold focus outline applies; skip links move into view only on keyboard focus.
 
 ### Inputs / Fields
@@ -288,8 +288,9 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 ### Workflow Tour
 
 - **Pattern:** Four visible Report, Assign, Complete, and Verify tabs synchronize one preview inside a labeled tablist and tabpanel.
-- **Interaction:** Pointer selection and ArrowLeft/ArrowRight/Home/End movement select and focus the same step; only one tab is in the tab order.
-- **Motion:** Progressive page reveals use opacity and vertical translation only; reduced motion reveals every `[data-reveal]` target immediately.
+- **Interaction:** Pointer selection and ArrowLeft/ArrowRight/ArrowUp/ArrowDown/Home/End movement select and focus the same step; only one tab is in the tab order.
+- **Playback:** The preview advances once from Report to Verify when the steps enter the viewport, with a 1400ms dwell per step read from `--workflow-step-duration`. Playback watches the steps alongside the trace, including on stacked mobile layouts; it pauses offscreen or in a hidden document and stops permanently on pointer or focus interaction. It never moves keyboard focus; browsers without IntersectionObserver retain manual controls.
+- **Motion:** An amber trace advances with the selected workflow state. Page reveals use opacity and vertical translation on entry, with 70ms reading-order offsets. Hero copy precedes the preview frame; its title, facts, and history enter in sequence. Static preview layers start on entry rather than animating while offscreen.
 
 ### State and Feedback
 
@@ -297,7 +298,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Error / Destructive:** Record error marks error copy and destructive actions, always accompanied by text.
 - **Archived / Active:** State is written as canonical text on the identity plate and in records.
 - **Overlays:** Confirmation and credential surfaces use chalk, a 2px slate border, a solid slate offset, and a 72% slate backdrop.
-- **Operate motion:** Shared dialogs scale from 96% while fading in; the mobile navigation scales from its top-right trigger edge. Both use the 250ms smooth-out motion token, preserve native focus and disclosure behavior, and become immediate under reduced motion.
+- **Operate motion:** Shared dialogs scale from 96% while fading in; the mobile navigation scales from its top-right trigger edge. Both use the 250ms smooth-out motion token and preserve native focus and disclosure behavior.
 
 ## Do's and Don'ts
 
@@ -307,7 +308,7 @@ All documented surfaces and controls use square corners. One- and two-pixel slat
 - **Do** preserve canonical terms including Society, Member, Administrator, Resident, Technician, Unit, Asset, Asset Code, QR Token, and Archive.
 - **Do** keep controls keyboard operable, expose a visible `:focus-visible` treatment, and maintain 44px minimum targets on narrow screens.
 - **Do** stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.
-- **Do** honor `prefers-reduced-motion`: remove transitions, reduce animation duration to 0.01ms globally, and reveal every landing content target without transform.
+- **Do** play the defined animation timings consistently across device settings.
 - **Do** keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record.
 - **Do** present Ticket status, assignment, actions, and immutable history as one accountable record with a stable reading order.
 

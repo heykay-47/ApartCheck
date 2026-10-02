@@ -228,11 +228,6 @@ body {
     opacity var(--dropdown-close-dur) var(--dropdown-ease);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .t-dropdown {
-    transition: none !important;
-  }
-}
 .placeholder-page code {
   font-family: var(--font-utility);
 }
@@ -525,11 +520,6 @@ body {
     opacity var(--modal-close-dur) var(--modal-ease);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .t-modal {
-    transition: none !important;
-  }
-}
 .credential-dialog::backdrop,
 .confirm-panel::backdrop {
   background: rgb(32 52 59 / 0.72);
@@ -884,17 +874,5 @@ body {
     right: 14px;
     bottom: 14px;
     left: 14px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0s !important;
-    transition-delay: 0s !important;
-    animation-duration: 0.01ms !important;
-    animation-delay: 0s !important;
-    animation-iteration-count: 1 !important;
   }
 }

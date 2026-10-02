@@ -76,6 +76,6 @@ Public copy addresses Society operators and existing Members first. It must dist
 
 ## Accessibility & Inclusion
 
-ApartCheck must remain keyboard operable, responsive at widths of 360 pixels and above, understandable without color alone, and respectful of reduced-motion preferences. Forms expose labels and programmatic error relationships; dialogs preserve expected focus and Escape behavior; protected pages provide a skip link and one main landmark.
+ApartCheck must remain keyboard operable, responsive at widths of 360 pixels and above, and understandable without color alone. Animations use their defined timings regardless of device motion settings. Forms expose labels and programmatic error relationships; dialogs preserve expected focus and Escape behavior; protected pages provide a skip link and one main landmark.
 
 Current automated coverage is evidence for representative routes and states, not a formal WCAG conformance claim. The interface is currently English-only and uses `en-US` date formatting; localization and additional assistive-technology validation remain open decisions.

@@ -171,32 +171,115 @@ test('public landing page passes responsive and keyboard quality gates', async (
 
   const revealTarget = page.locator('[data-reveal]').first()
   await expect(revealTarget).toHaveClass(/is-visible/)
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  const reducedDuration = await revealTarget.evaluate((element) => {
+  const revealDuration = await revealTarget.evaluate((element) => {
     const duration = getComputedStyle(element).transitionDuration
     return duration.endsWith('ms')
       ? Number.parseFloat(duration)
       : Number.parseFloat(duration) * 1000
   })
-  expect(reducedDuration).toBe(0.01)
+  expect(revealDuration).toBe(700)
 
   const revealCount = await page.locator('[data-reveal]').count()
   expect(revealCount).toBeGreaterThan(0)
+  for (let index = 0; index < revealCount; index += 1) {
+    await page.locator('[data-reveal]').nth(index).scrollIntoViewIfNeeded()
+    await expect(page.locator('[data-reveal]').nth(index)).toHaveClass(
+      /is-visible/,
+    )
+  }
   await expect
     .poll(() =>
       page.locator('[data-reveal]').evaluateAll((elements) =>
         elements.map((element) => {
           const style = getComputedStyle(element)
-          return { opacity: style.opacity, transform: style.transform }
+          return {
+            opacity: style.opacity,
+            settled: new DOMMatrixReadOnly(style.transform).isIdentity,
+          }
         }),
       ),
     )
     .toEqual(
       Array.from({ length: revealCount }, () => ({
         opacity: '1',
-        transform: 'none',
+        settled: true,
       })),
     )
+})
+
+test('landing motion stages entrances, scroll chrome, and the workflow trace', async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 360, height: 800 },
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+    const hero = page.locator('.landing-hero > [data-reveal]')
+    await expect(hero.first()).toHaveClass(/is-visible/)
+    await hero.last().scrollIntoViewIfNeeded()
+    await expect(hero.last()).toHaveClass(/is-visible/)
+    expect(
+      await hero.evaluateAll((elements) =>
+        elements.map((element) => getComputedStyle(element).transitionDelay),
+      ),
+    ).toEqual(['0s', '0.14s'])
+    expect(
+      await page
+        .locator(
+          '.landing-hero .preview-title-block, .landing-hero .preview-facts, .landing-hero .preview-history',
+        )
+        .evaluateAll((elements) =>
+          elements.map((element) => getComputedStyle(element).animationDelay),
+        ),
+    ).toEqual(['0.28s', '0.35s', '0.42s'])
+
+    const header = page.locator('.landing-masthead')
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    const supportsScrollTimeline = await page.evaluate(() =>
+      CSS.supports('animation-timeline: scroll()'),
+    )
+    await expect(header).toHaveCSS(
+      'background-color',
+      supportsScrollTimeline ? 'rgba(0, 0, 0, 0)' : 'rgb(255, 255, 255)',
+    )
+    await page.evaluate(() =>
+      window.scrollTo({ top: 160, behavior: 'instant' }),
+    )
+    await expect(header).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+
+    const workflow = page.getByRole('region', {
+      name: 'From report to verified repair',
+    })
+    await workflow.getByRole('tablist').scrollIntoViewIfNeeded()
+    const verify = workflow.getByRole('tab', { name: 'Verify' })
+    await expect(verify).toHaveAttribute('aria-selected', 'true', {
+      timeout: 7000,
+    })
+    const trace = viewport.width > 760 ? '.workflow-tour' : '.workflow-tabs'
+    await expect
+      .poll(() =>
+        page.locator(trace).evaluate((element) => {
+          const style = getComputedStyle(element, '::after')
+          const matrix = new DOMMatrixReadOnly(style.transform)
+          return { color: style.backgroundColor, scale: matrix.isIdentity }
+        }),
+      )
+      .toEqual({ color: 'rgb(240, 165, 26)', scale: true })
+    await workflow.getByRole('tab', { name: 'Report' }).click()
+    await expect
+      .poll(() =>
+        page.locator(trace).evaluate((element) => {
+          const matrix = new DOMMatrixReadOnly(
+            getComputedStyle(element, '::after').transform,
+          )
+          return window.innerWidth > 760 ? matrix.a : matrix.d
+        }),
+      )
+      .toBe(0.25)
+    await assertNoHorizontalOverflow(page)
+  }
 })
 
 test('admin screens pass axe and keyboard quality gates at both viewports', async ({
@@ -247,18 +330,6 @@ test('admin screens pass axe and keyboard quality gates at both viewports', asyn
   await page.goto(`/assets/${createdAsset.asset.id}`)
   await expect(page.getByTestId('identity-plate')).toBeVisible()
   await assertA11y(page)
-
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  const transition = await page
-    .getByTestId('identity-plate')
-    .evaluate((element) => {
-      const style = getComputedStyle(element)
-      return {
-        duration: style.transitionDuration,
-        testId: element.dataset.testid,
-      }
-    })
-  expect(transition).toEqual({ duration: '0s', testId: 'identity-plate' })
 
   await page.goto(`/tickets/new?assetId=${createdAsset.asset.id}`)
   await page

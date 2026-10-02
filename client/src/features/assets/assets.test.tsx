@@ -254,28 +254,19 @@ describe('asset identity experience', () => {
     ).toBeVisible()
   })
 
-  it('reveals resolved scan and suppresses reveal under reduced motion', async () => {
+  it('animates the resolved scan into view', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ asset }), { status: 200 }),
     )
-    Object.defineProperty(window, 'matchMedia', {
-      value: vi.fn().mockReturnValue({
-        matches: true,
-        media: '(prefers-reduced-motion: reduce)',
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }),
-      configurable: true,
-    })
     renderWithClient(
       <Routes>
         <Route path="/scan/:qrToken" element={<ScanAssetPage />} />
       </Routes>,
       ['/scan/token'],
+    )
+    expect(await screen.findByTestId('scan-result')).toHaveAttribute(
+      'data-revealed',
+      'false',
     )
     await waitFor(() =>
       expect(screen.getByTestId('scan-result')).toHaveAttribute(

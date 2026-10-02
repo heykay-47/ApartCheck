@@ -296,11 +296,6 @@
         "name": "operate-surface",
         "value": "250ms cubic-bezier(0.22, 1, 0.36, 1)",
         "purpose": "Shared dialog and mobile-navigation entrances using opacity and restrained scale from their interaction origin."
-      },
-      {
-        "name": "reduced-motion",
-        "value": "0s transitions; 0.01ms animations; 1 iteration",
-        "purpose": "Global reduced-motion contract with delays cleared; every [data-reveal] target renders fully revealed and untransformed."
       }
     ],
     "breakpoints": [
@@ -447,7 +442,7 @@
       "Do preserve canonical terms including Society, Member, Administrator, Resident, Technician, Unit, Asset, Asset Code, QR Token, and Archive.",
       "Do keep controls keyboard operable, expose a visible :focus-visible treatment, and maintain 44px minimum targets on narrow screens.",
       "Do stack grids and ledgers deliberately at the documented breakpoints and verify the complete 360px width without horizontal overflow.",
-      "Do honor prefers-reduced-motion: remove transitions, reduce animation duration to 0.01ms globally, and reveal every landing content target without transform.",
+      "Do play the defined animation timings consistently across device settings.",
       "Do keep QR marks square, high contrast, textually identified, and attached to the relevant Asset record.",
       "Do present Ticket status, assignment, actions, and immutable history as one accountable record with a stable reading order."
     ],
