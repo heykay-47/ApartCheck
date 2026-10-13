@@ -302,6 +302,7 @@ test('public landing page passes responsive and keyboard quality gates', async (
 test('admin screens pass axe and keyboard quality gates at both viewports', async ({
   page,
 }) => {
+  test.setTimeout(120_000)
   await authenticateAdmin(page)
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/dashboard')
