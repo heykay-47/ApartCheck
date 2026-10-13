@@ -389,7 +389,7 @@ describe('Ticket evidence client workflow', () => {
               }),
               { status: 503 },
             )
-          : new Response(new Blob(['proof-bytes'], { type: 'image/png' }), {
+          : new Response('proof-bytes', {
               status: 200,
               headers: { 'Content-Type': 'image/png' },
             })
@@ -484,7 +484,7 @@ describe('Ticket evidence client workflow', () => {
     expect(signal).toHaveProperty('aborted', true)
 
     resolveResponse(
-      new Response(new Blob(['proof-bytes'], { type: 'image/png' }), {
+      new Response('proof-bytes', {
         status: 200,
         headers: { 'Content-Type': 'image/png' },
       }),
@@ -500,7 +500,7 @@ describe('Ticket evidence client workflow', () => {
       .mockReturnValue('blob:session-evidence')
     const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL')
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob(['proof-bytes'], { type: 'image/png' }), {
+      new Response('proof-bytes', {
         status: 200,
         headers: { 'Content-Type': 'image/png' },
       }),
