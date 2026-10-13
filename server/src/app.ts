@@ -49,6 +49,7 @@ export function createApp(options: AppOptions = {}): Express {
       redact: [
         'req.headers.cookie',
         'req.headers.authorization',
+        'res.headers["set-cookie"]',
         'req.body.password',
         'req.body.temporaryPassword',
       ],
