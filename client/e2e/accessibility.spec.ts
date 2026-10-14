@@ -103,6 +103,20 @@ async function exerciseKeyboardInteractions(
 }
 
 async function assertA11y(page: Page) {
+  // Entrance transitions blend colors mid-fade; audit the settled state.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter(
+          (animation) =>
+            animation.timeline === document.timeline &&
+            animation.playState === 'running' &&
+            animation.effect?.getComputedTiming().endTime !== Infinity,
+        )
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  )
   const results = await new AxeBuilder({ page }).analyze()
   expect(
     results.violations.filter((violation) =>
